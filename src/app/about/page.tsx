@@ -45,8 +45,11 @@ export default function About() {
           <div className="flex-1">
             <h2 className="text-2xl font-bold text-slate-900 mb-6">Mustapha Idris Opeyemi</h2>
             <div className="space-y-4 text-slate-600 leading-relaxed">
-              <p>Mustapha has worked across numerous industries including construction, furniture and home accessories retail, and entertainment. He currently serves as an accountant in an international company, giving him direct exposure to the financial reporting standards and regulatory requirements that apply to larger organisations operating in Nigeria.</p>
+              <p>Mustapha Idris Opeyemi is a professional accountant based in Nigeria with experience spanning accounting, audit, tax services, and financial reporting. He has worked across numerous industries including construction, furniture and home accessories retail, and entertainment. He currently serves as an accountant in an international company, giving him direct exposure to the financial reporting standards and regulatory requirements that apply to larger organisations operating in Nigeria.</p>
+              <p>In addition to his corporate role, Mustapha serves as Associate Manager at Ade Fajemisin and Associates, a reputable accounting and tax firm in Lagos, where he supports clients with accounting, tax advisory, and regulatory compliance including matters relating to LIRS and the Nigeria Revenue Service.</p>
               <p>Over time, he noticed that most accounting software available to Nigerian businesses was either too expensive, too generic, or simply not built for how businesses here operate. Tax codes were wrong. Workflows did not match local practice. Support was nonexistent.</p>
+              <p>That gap led him to start building his own tools. First Excel VBA systems for clients who needed automation without expensive software. Then web applications. Then DigitGlance, a platform built to bring professional accounting technology to Nigerian businesses at a price and scale that makes sense.</p>
+              <p>Today, DigitGlance offers accounting and tax services, custom software development, Excel VBA desktop tools, and an AI-powered accounting assistant focused specifically on Nigerian practice, ICAN standards, NRS regulations, and LIRS compliance.</p>
             </div>
           </div>
         </div>
@@ -107,7 +110,31 @@ export default function About() {
         <div className="max-w-6xl mx-auto">
           <div className="bg-slate-900 text-white rounded-2xl p-10">
             <h2 className="text-2xl font-bold mb-4">Our Accounting and Tax Partnership</h2>
-          </div><p className="text-slate-300 leading-relaxed max-w-3xl">DigitGlance partners with Ade Fajemisin and Associates, a reputable accounting and tax firm in Lagos. Mustapha Idris serves as Associate Manager within the firm, providing direct support on accounting, tax advisory, and regulatory matters. This includes matters relating to LIRS and the Nigeria Revenue Service. Our clients benefit from both the technical tools we build and the professional advisory support the firm provides.</p>
+            <p className="text-slate-300 leading-relaxed max-w-3xl">DigitGlance partners with Ade Fajemisin and Associates, a reputable accounting and tax firm in Lagos. Mustapha Idris serves as Associate Manager within the firm, providing direct support on accounting, tax advisory, and regulatory matters. This includes matters relating to LIRS and the Nigeria Revenue Service. Our clients benefit from both the technical tools we build and the professional advisory support the firm provides.</p>
+          </div>
+        </div>
+      </section>
+
+      {/* INDUSTRIES */}
+      <section className="bg-slate-50 px-6 py-20">
+        <div className="max-w-6xl mx-auto">
+          <h2 className="text-2xl font-bold text-slate-900 mb-3 text-center">Industries We Have Worked In</h2>
+          <p className="text-slate-500 text-center mb-12">Our experience spans multiple sectors giving us a practical understanding of how different businesses operate and what they need.</p>
+          <div className="grid md:grid-cols-3 gap-6">
+            {[
+              { title: "Construction", description: "Project accounting, contract management, and financial reporting for construction companies operating in Nigeria." },
+              { title: "Furniture and Home Accessories Retail", description: "Inventory management, sales tracking, and retail accounting for home accessories businesses." },
+              { title: "Entertainment", description: "Financial management, tax compliance, and business advisory for entertainment industry clients." },
+              { title: "International Business", description: "Financial reporting standards and regulatory compliance for international companies operating in Nigeria." },
+              { title: "Cooperative Societies", description: "Member management, contribution tracking, and financial reporting for cooperative organisations." },
+              { title: "Education", description: "Fee management, payroll, and financial administration systems for private schools and educational institutions." }
+            ].map((industry) => (
+              <div key={industry.title} className="bg-white border border-gray-100 rounded-xl p-6 hover:border-teal-200 transition-all">
+                <h3 className="font-semibold text-slate-900 mb-2">{industry.title}</h3>
+                <p className="text-slate-500 text-sm leading-relaxed">{industry.description}</p>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
