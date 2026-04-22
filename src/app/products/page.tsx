@@ -144,7 +144,7 @@ export default function Products() {
                 <h3 className="font-bold text-slate-900 text-lg">DigitGlance Accounts</h3>
                 <span className="bg-amber-50 text-amber-600 text-xs font-bold px-3 py-1 rounded-full">In Development</span>
               </div>
-              <p className="text-slate-500 text-sm mb-6 leading-relaxed">A complete accounting software for Nigerian SMEs. General ledger, trial balance, financial statements, and tax reporting built around Nigerian standards and FIRS requirements.</p>
+              <p className="text-slate-500 text-sm mb-6 leading-relaxed">A complete accounting software for Nigerian SMEs. General ledger, trial balance, financial statements, and tax reporting built around Nigerian standards and NRS requirements.</p>
               <a href="/contact" className="text-teal-600 text-sm font-medium hover:text-teal-700">Join the Waitlist</a>
             </div>
 

@@ -58,7 +58,7 @@ export default function Home() {
                 </svg>
               </div>
               <h3 className="font-semibold text-slate-900 mb-2">Accounting and Tax Services</h3>
-              <p className="text-slate-500 text-sm">Bookkeeping, tax advisory, payroll, and FIRS and LIRS compliance for businesses in Nigeria.</p>
+              <p className="text-slate-500 text-sm">Bookkeeping, tax advisory, payroll, and NRS and LIRS compliance for businesses in Nigeria.</p>
             </a>
 
             <a href="/products" className="border border-gray-100 rounded-xl p-6 hover:border-teal-200 hover:shadow-sm transition-all">
@@ -129,7 +129,7 @@ export default function Home() {
         <div className="max-w-6xl mx-auto grid md:grid-cols-3 gap-8 text-center">
           <div>
             <p className="text-3xl font-bold text-teal-600 mb-2">Nigeria-Focused</p>
-            <p className="text-slate-500 text-sm">Built around FIRS, LIRS, ICAN standards, and Nigerian business practice</p>
+            <p className="text-slate-500 text-sm">Built around NRS, LIRS, ICAN standards, and Nigerian business practice</p>
           </div>
           <div>
             <p className="text-3xl font-bold text-teal-600 mb-2">Dual Expertise</p>

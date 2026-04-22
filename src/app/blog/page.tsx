@@ -66,8 +66,8 @@ export default function Blog() {
               },
               {
                 category: "Tax Practice",
-                title: "What FIRS Expects in Your Annual Tax Return: A Practical Checklist",
-                description: "Everything a Nigerian business needs to prepare before filing their company income tax return with FIRS.",
+                title: "What NRS Expects in Your Annual Tax Return: A Practical Checklist",
+                description: "Everything a Nigerian business needs to prepare before filing their company income tax return with NRS.",
                 date: "Coming Soon"
               },
               {

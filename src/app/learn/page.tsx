@@ -26,7 +26,7 @@ export default function Learn() {
         <div className="max-w-6xl mx-auto">
           <p className="text-teal-400 text-sm font-medium mb-3 uppercase tracking-wide">DigitGlance Assist</p>
           <h1 className="text-4xl font-bold mb-4">Ask Any Accounting or Tax Question</h1>
-          <p className="text-slate-300 text-lg max-w-2xl">Get practical, Nigeria-focused answers to accounting and tax questions. Powered by AI and trained on Nigerian standards, FIRS regulations, ICAN guidelines, and LIRS practice.</p>
+          <p className="text-slate-300 text-lg max-w-2xl">Get practical, Nigeria-focused answers to accounting and tax questions. Powered by AI and trained on Nigerian standards, NRS regulations, ICAN guidelines, and LIRS practice.</p>
         </div>
       </section>
 
@@ -66,7 +66,7 @@ export default function Learn() {
               "How should I account for prepaid expenses under IFRS?",
               "What is the difference between tax avoidance and tax evasion?",
               "How do I compute capital allowances for a manufacturing company?",
-              "What documents does FIRS require for a VAT audit?",
+              "What documents does NRS require for a VAT audit?",
               "How do I treat foreign exchange gains in financial statements?",
               "What is the thin capitalization rule under Nigerian tax law?",
               "How do I prepare a bank reconciliation statement?",

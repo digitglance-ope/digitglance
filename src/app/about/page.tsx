@@ -45,10 +45,8 @@ export default function About() {
           <div className="flex-1">
             <h2 className="text-2xl font-bold text-slate-900 mb-6">Mustapha Idris Opeyemi</h2>
             <div className="space-y-4 text-slate-600 leading-relaxed">
-              <p>Mustapha is a professional accountant based in Nigeria with experience in accounting, audit, tax services, and financial reporting. He works with businesses to manage their books, meet regulatory requirements, and understand their numbers.</p>
+              <p>Mustapha has worked across numerous industries including construction, furniture and home accessories retail, and entertainment. He currently serves as an accountant in an international company, giving him direct exposure to the financial reporting standards and regulatory requirements that apply to larger organisations operating in Nigeria.</p>
               <p>Over time, he noticed that most accounting software available to Nigerian businesses was either too expensive, too generic, or simply not built for how businesses here operate. Tax codes were wrong. Workflows did not match local practice. Support was nonexistent.</p>
-              <p>That gap led him to start building his own tools. First Excel VBA systems for clients who needed automation without expensive software. Then web applications. Then DigitGlance, a platform built to bring professional accounting technology to Nigerian businesses at a price and scale that makes sense.</p>
-              <p>Today, DigitGlance offers accounting and tax services, custom software development, Excel VBA desktop tools, and an AI-powered accounting assistant focused specifically on Nigerian practice, ICAN standards, FIRS regulations, and LIRS compliance.</p>
             </div>
           </div>
         </div>
@@ -65,7 +63,7 @@ export default function About() {
               <ul className="space-y-3">
                 {[
                   "Financial reporting and bookkeeping",
-                  "Tax advisory and FIRS compliance",
+                  "Tax advisory and NRS compliance",
                   "LIRS and state tax practice",
                   "Payroll management",
                   "Audit support and internal controls",
@@ -109,8 +107,7 @@ export default function About() {
         <div className="max-w-6xl mx-auto">
           <div className="bg-slate-900 text-white rounded-2xl p-10">
             <h2 className="text-2xl font-bold mb-4">Our Accounting and Tax Partnership</h2>
-            <p className="text-slate-300 leading-relaxed max-w-3xl">DigitGlance partners with a reputable accounting and tax firm in Lagos that provides direct support on accounting, tax advisory, and regulatory matters. This includes matters relating to LIRS and FIRS. Our clients benefit from both the technical tools we build and the professional advisory support our partner firm provides.</p>
-          </div>
+          </div><p className="text-slate-300 leading-relaxed max-w-3xl">DigitGlance partners with Ade Fajemisin and Associates, a reputable accounting and tax firm in Lagos. Mustapha Idris serves as Associate Manager within the firm, providing direct support on accounting, tax advisory, and regulatory matters. This includes matters relating to LIRS and the Nigeria Revenue Service. Our clients benefit from both the technical tools we build and the professional advisory support the firm provides.</p>
         </div>
       </section>
 

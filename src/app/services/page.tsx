@@ -41,7 +41,7 @@ export default function Services() {
             </div>
             <div>
               <h2 className="text-2xl font-bold text-slate-900">Accounting and Tax Services</h2>
-              <p className="text-slate-500 text-sm">Professional services backed by our Lagos-based accounting and tax partner firm</p>
+              <p className="text-slate-500 text-sm">Professional services delivered in partnership with Ade Fajemisin and Associates, Lagos</p>
             </div>
           </div>
 
@@ -53,11 +53,11 @@ export default function Services() {
               },
               {
                 title: "Tax Advisory and Compliance",
-                description: "Corporate income tax, VAT, withholding tax, and personal income tax advisory. We prepare and file returns with FIRS and state tax authorities."
+                description: "Corporate income tax, VAT, withholding tax, and personal income tax advisory. We prepare and file returns with NRS and state tax authorities."
               },
               {
-                title: "LIRS and FIRS Compliance",
-                description: "Direct support on Lagos Internal Revenue Service and Federal Inland Revenue Service matters including assessments, objections, and correspondence."
+                title: "LIRS and NRS Compliance",
+                description: "Direct support on Lagos Internal Revenue Service and Nigeria Revenue Service matters including assessments, objections, and correspondence."
               },
               {
                 title: "Payroll Management",
