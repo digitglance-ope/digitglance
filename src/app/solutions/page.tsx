@@ -81,6 +81,18 @@ export default function Solutions() {
                   </div>
                 </div>
                 <div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6 mb-6">
+  <img
+    src="/images/reliancecoop-dashboard1.png"
+    alt="RelianceCoop Manager Dashboard"
+    className="rounded-lg border border-slate-200 shadow-sm w-full object-cover"
+  />
+  <img
+    src="/images/reliancecoop-dashboard2.png"
+    alt="RelianceCoop Manager Reports"
+    className="rounded-lg border border-slate-200 shadow-sm w-full object-cover"
+  />
+</div>
                   <h4 className="font-bold text-slate-900 mb-4">Key Features</h4>
                   <div className="space-y-3">
                     {[
@@ -166,6 +178,18 @@ export default function Solutions() {
                 </div>
 
                 <div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6 mb-6">
+  <img
+    src="/images/SchoolFeeTrackPro-Dashboard1.png"
+    alt="School Fee Track Pro Dashboard"
+    className="rounded-lg border border-slate-200 shadow-sm w-full object-cover"
+  />
+  <img
+    src="/images/SchoolFeeTrackPro-Dashboard2.png"
+    alt="School Fee Track Pro Reports"
+    className="rounded-lg border border-slate-200 shadow-sm w-full object-cover"
+  />
+</div>
                   <h4 className="font-bold text-slate-900 mb-4">Key Features</h4>
                   <div className="space-y-3">
                     {[
