@@ -62,23 +62,17 @@ export default function Solutions() {
                     ))}
                   </div>
 
-                  <div className="flex flex-wrap gap-3">
-                    <a href="https://zdmtnddlsmbrprxxchcp.supabase.co/storage/v1/object/public/downloads/Coop-Reliance-Manager-T1.xlsb" download className="bg-teal-600 text-white font-medium px-5 py-2.5 rounded-lg hover:bg-teal-700 text-sm flex items-center gap-2">
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                      </svg>
-                      Download Application
-                    </a>
-                    <a href="https://zdmtnddlsmbrprxxchcp.supabase.co/storage/v1/object/public/downloads/RelianceCoop-User-Manual-v2.pdf" download className="border border-gray-200 text-slate-700 font-medium px-5 py-2.5 rounded-lg hover:border-teal-300 text-sm flex items-center gap-2">
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                      </svg>
-                      Download User Manual
-                    </a>
-                    <a href="mailto:hello@digitglance.com?subject=Full Version Request - RelianceCoop Manager&amp;body=Name:%0AOrganisation:%0APhone:%0A%0AI would like to purchase the full version of RelianceCoop Manager.">
-                      Get Full Version
-                    </a>
-                  </div>
+                 <div className="flex flex-wrap gap-3">
+  <a href="https://zdmtnddlsmbrprxxchcp.supabase.co/storage/v1/object/public/downloads/Coop-Reliance-Manager-T1.xlsb" className="bg-teal-600 text-white font-medium px-5 py-2.5 rounded-lg hover:bg-teal-700 transition-colors flex items-center gap-2">
+    Download Demo
+  </a>
+  <a href="https://zdmtnddlsmbrprxxchcp.supabase.co/storage/v1/object/public/downloads/RelianceCoop-User-Manual-v2.pdf" className="border border-slate-200 text-slate-700 font-medium px-5 py-2.5 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2">
+    Download User Manual
+  </a>
+  <a href="mailto:hello@digitglance.com?subject=Full Version Request - RelianceCoop Manager&amp;body=Name:%0AOrganisation:%0APhone:%0A%0AI would like to purchase the full version of RelianceCoop Manager." className="border border-teal-600 text-teal-600 font-medium px-5 py-2.5 rounded-lg hover:bg-teal-50 transition-colors flex items-center gap-2">
+    Get Full Version
+  </a>
+</div>
                 </div>
                 <div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6 mb-6">
@@ -158,23 +152,17 @@ export default function Solutions() {
                     ))}
                   </div>
 
-                  <div className="flex flex-wrap gap-3">
-                    <a href="https://zdmtnddlsmbrprxxchcp.supabase.co/storage/v1/object/public/downloads/SCHOOL-FEE-TRACK-PRO-T1.xlsm" download className="bg-slate-800 text-white font-medium px-5 py-2.5 rounded-lg hover:bg-slate-900 text-sm flex items-center gap-2">
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                      </svg>
-                      Download Application
-                    </a>
-                    <a href="https://zdmtnddlsmbrprxxchcp.supabase.co/storage/v1/object/public/downloads/School-Fee-Track-Pro-User-Manual.pdf" download className="border border-gray-200 text-slate-700 font-medium px-5 py-2.5 rounded-lg hover:border-teal-300 text-sm flex items-center gap-2">
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                      </svg>
-                      Download User Manual
-                    </a>
-                    <a href="mailto:hello@digitglance.com?subject=Full Version Request - School Fee Track Pro&amp;body=Name:%0AOrganisation:%0APhone:%0A%0AI would like to purchase the full version of School Fee Track Pro.">
-                       Get Full Version
-                    </a>
-                  </div>
+                 <div className="flex flex-wrap gap-3">
+                <a href="https://zdmtnddlsmbrprxxchcp.supabase.co/storage/v1/object/public/downloads/SCHOOL-FEE-TRACK-PRO-T1.xlsm" className="bg-teal-600 text-white font-medium px-5 py-2.5 rounded-lg hover:bg-teal-700 transition-colors flex items-center gap-2">
+                Download Demo
+               </a>
+              <a href="https://zdmtnddlsmbrprxxchcp.supabase.co/storage/v1/object/public/downloads/School-Fee-Track-Pro-User-Manual.pdf" className="border border-slate-200 text-slate-700 font-medium px-5 py-2.5 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2">
+               Download User Manual
+            </a>
+            <a href="mailto:hello@digitglance.com?subject=Full Version Request - School Fee Track Pro&amp;body=Name:%0ASchool Name:%0APhone:%0ANumber of Students:%0A%0AI would like to purchase the full version of School Fee Track Pro." className="border border-teal-600 text-teal-600 font-medium px-5 py-2.5 rounded-lg hover:bg-teal-50 transition-colors flex items-center gap-2">
+              Get Full Version
+             </a>
+             </div>
                 </div>
 
                 <div>
