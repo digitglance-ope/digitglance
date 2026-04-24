@@ -75,8 +75,8 @@ export default function Solutions() {
                       </svg>
                       Download User Manual
                     </a>
-                    <a href="/contact" className="border border-gray-200 text-slate-700 font-medium px-5 py-2.5 rounded-lg hover:border-teal-300 text-sm">
-                      Request a Demo
+                    <<a href="mailto:hello@digitglance.com?subject=Full Version Request - RelianceCoop Manager&body=Name:%0AOrganisation:%0APhone:%0A%0AI would like to purchase the full version of RelianceCoop Manager." className="border border-gray-200 text-slate-700 font-medium px-5 py-2.5 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2">
+                        Get Full Version
                     </a>
                   </div>
                 </div>
@@ -160,8 +160,8 @@ export default function Solutions() {
                       </svg>
                       Download User Manual
                     </a>
-                    <a href="/contact" className="border border-gray-200 text-slate-700 font-medium px-5 py-2.5 rounded-lg hover:border-teal-300 text-sm">
-                      Request Training
+                    <a href="mailto:hello@digitglance.com?subject=Full Version Request - School Fee Track Pro&body=Name:%0ASchool Name:%0APhone:%0ANumber of Students:%0A%0AI would like to purchase the full version of School Fee Track Pro." className="border border-gray-200 text-slate-700 font-medium px-5 py-2.5 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2">
+                       Get Full Version
                     </a>
                   </div>
                 </div>
