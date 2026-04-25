@@ -63,10 +63,10 @@ export default function Solutions() {
                   </div>
 
                  <div className="flex flex-wrap gap-3">
-  <a href="https://zdmtnddlsmbrprxxchcp.supabase.co/storage/v1/object/public/downloads/Coop-Reliance-Manager-T1.xlsb" className="bg-teal-600 text-white font-medium px-5 py-2.5 rounded-lg hover:bg-teal-700 transition-colors flex items-center gap-2">
+  <a href="https://apkbhpywfyoyfqebnnvj.supabase.co/storage/v1/object/public/downloads/Coop-Reliance-Manager-T1.xlsb" className="bg-teal-600 text-white font-medium px-5 py-2.5 rounded-lg hover:bg-teal-700 transition-colors flex items-center gap-2">
     Download Demo
   </a>
-  <a href="https://zdmtnddlsmbrprxxchcp.supabase.co/storage/v1/object/public/downloads/RelianceCoop-User-Manual-v2.pdf" className="border border-slate-200 text-slate-700 font-medium px-5 py-2.5 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2">
+  <a href="https://apkbhpywfyoyfqebnnvj.supabase.co/storage/v1/object/public/downloads/RelianceCoop-User-Manual-v2.pdf" className="border border-slate-200 text-slate-700 font-medium px-5 py-2.5 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2">
     Download User Manual
   </a>
   <a href="mailto:hello@digitglance.com?subject=Full Version Request - RelianceCoop Manager&amp;body=Name:%0AOrganisation:%0APhone:%0A%0AI would like to purchase the full version of RelianceCoop Manager." className="border border-teal-600 text-teal-600 font-medium px-5 py-2.5 rounded-lg hover:bg-teal-50 transition-colors flex items-center gap-2">
@@ -153,10 +153,10 @@ export default function Solutions() {
                   </div>
 
                  <div className="flex flex-wrap gap-3">
-                <a href="https://zdmtnddlsmbrprxxchcp.supabase.co/storage/v1/object/public/downloads/SCHOOL-FEE-TRACK-PRO-T1.xlsm" className="bg-teal-600 text-white font-medium px-5 py-2.5 rounded-lg hover:bg-teal-700 transition-colors flex items-center gap-2">
+                <a href="https://apkbhpywfyoyfqebnnvj.supabase.co/storage/v1/object/public/downloads/SCHOOL-FEE-TRACK-PRO-T1.xlsm" className="bg-teal-600 text-white font-medium px-5 py-2.5 rounded-lg hover:bg-teal-700 transition-colors flex items-center gap-2">
                 Download Demo
                </a>
-              <a href="https://zdmtnddlsmbrprxxchcp.supabase.co/storage/v1/object/public/downloads/School-Fee-Track-Pro-User-Manual.pdf" className="border border-slate-200 text-slate-700 font-medium px-5 py-2.5 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2">
+              <a href="https://apkbhpywfyoyfqebnnvj.supabase.co/storage/v1/object/public/downloads/School-Fee-Track-Pro-User-Manual.pdf" className="border border-slate-200 text-slate-700 font-medium px-5 py-2.5 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2">
                Download User Manual
             </a>
             <a href="mailto:hello@digitglance.com?subject=Full Version Request - School Fee Track Pro&amp;body=Name:%0ASchool Name:%0APhone:%0ANumber of Students:%0A%0AI would like to purchase the full version of School Fee Track Pro." className="border border-teal-600 text-teal-600 font-medium px-5 py-2.5 rounded-lg hover:bg-teal-50 transition-colors flex items-center gap-2">
