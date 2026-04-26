@@ -1,5 +1,6 @@
 'use client'
 
+import Script from 'next/script'
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
@@ -98,6 +99,12 @@ export default function SubscriptionPage() {
 
   function handlePaystack(plan: typeof PLANS[0]) {
     if (plan.value === 'free') return
+
+    if (!(window as any).PaystackPop) {
+      alert('Payment system is still loading. Please wait a moment and try again.')
+      return
+    }
+
     setProcessingPlan(plan.value)
 
     const handler = (window as any).PaystackPop.setup({
@@ -147,7 +154,7 @@ export default function SubscriptionPage() {
 
   return (
     <>
-      <script src="https://js.paystack.co/v1/inline.js" async />
+      <Script src="https://js.paystack.co/v1/inline.js" strategy="beforeInteractive" />
 
       <div className="min-h-screen bg-slate-50 flex">
         <aside className="w-64 bg-slate-900 min-h-screen flex flex-col fixed top-0 left-0">
@@ -193,7 +200,6 @@ export default function SubscriptionPage() {
             </p>
           </div>
 
-          {/* Current plan banner */}
           <div className="bg-teal-50 border border-teal-200 rounded-xl p-4 mb-8 flex items-center justify-between">
             <div>
               <p className="text-sm font-semibold text-teal-800">You are on the <span className="capitalize">{currentPlan}</span> plan</p>
@@ -206,7 +212,6 @@ export default function SubscriptionPage() {
             )}
           </div>
 
-          {/* Pricing cards */}
           <div className="grid grid-cols-3 gap-6">
             {PLANS.map(plan => {
               const isCurrent = currentPlan === plan.value
