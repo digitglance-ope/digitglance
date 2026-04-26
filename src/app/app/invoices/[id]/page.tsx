@@ -50,6 +50,7 @@ type Profile = {
   bank_account_number: string
   bank_account_name: string
   vat_rate: number
+  logo_url: string
 }
 
 const STATUS_COLORS: Record<string, string> = {
@@ -223,7 +224,19 @@ export default function InvoiceDetailPage() {
           {/* Business header */}
           <div className="flex justify-between items-start mb-8">
             <div>
-              <h2 className="text-2xl font-bold text-slate-900">{profile?.business_name}</h2>
+              <div>
+  {profile?.logo_url && (
+    <img
+      src={profile.logo_url}
+      alt="Business logo"
+      className="h-16 w-auto object-contain mb-3"
+    />
+  )}
+  <h2 className="text-2xl font-bold text-slate-900">{profile?.business_name}</h2>
+  <p className="text-slate-500 text-sm mt-1 whitespace-pre-line">{profile?.business_address}</p>
+  {profile?.phone && <p className="text-slate-500 text-sm">{profile.phone}</p>}
+  {profile?.tin && <p className="text-slate-500 text-sm">TIN: {profile.tin}</p>}
+</div>
               <p className="text-slate-500 text-sm mt-1 whitespace-pre-line">{profile?.business_address}</p>
               {profile?.phone && <p className="text-slate-500 text-sm">{profile.phone}</p>}
               {profile?.tin && <p className="text-slate-500 text-sm">TIN: {profile.tin}</p>}

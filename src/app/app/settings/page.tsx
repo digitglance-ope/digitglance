@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 
@@ -16,24 +16,80 @@ const TEMPLATES = ['classic', 'modern', 'minimal', 'bold', 'corporate']
 
 export default function SettingsPage() {
   const supabase = createClient()
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const [form, setForm] = useState({
     full_name: '', business_name: '', business_address: '', phone: '',
     industry: '', tin: '', vat_rate: 7.5, bank_name: '',
-    bank_account_number: '', bank_account_name: '', theme: 'teal', invoice_template: 'classic',
+    bank_account_number: '', bank_account_name: '', theme: 'teal',
+    invoice_template: 'classic', logo_url: '',
   })
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [uploadingLogo, setUploadingLogo] = useState(false)
   const [success, setSuccess] = useState(false)
   const [activeTab, setActiveTab] = useState<'business' | 'banking' | 'preferences'>('business')
+  const [userId, setUserId] = useState('')
 
   useEffect(() => { load() }, [])
 
   async function load() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
+    setUserId(user.id)
     const { data } = await supabase.from('profiles').select('*').eq('id', user.id).single()
-    if (data) setForm({ full_name: data.full_name || '', business_name: data.business_name || '', business_address: data.business_address || '', phone: data.phone || '', industry: data.industry || '', tin: data.tin || '', vat_rate: data.vat_rate || 7.5, bank_name: data.bank_name || '', bank_account_number: data.bank_account_number || '', bank_account_name: data.bank_account_name || '', theme: data.theme || 'teal', invoice_template: data.invoice_template || 'classic' })
+    if (data) {
+      setForm({
+        full_name: data.full_name || '',
+        business_name: data.business_name || '',
+        business_address: data.business_address || '',
+        phone: data.phone || '',
+        industry: data.industry || '',
+        tin: data.tin || '',
+        vat_rate: data.vat_rate || 7.5,
+        bank_name: data.bank_name || '',
+        bank_account_number: data.bank_account_number || '',
+        bank_account_name: data.bank_account_name || '',
+        theme: data.theme || 'teal',
+        invoice_template: data.invoice_template || 'classic',
+        logo_url: data.logo_url || '',
+      })
+    }
     setLoading(false)
+  }
+
+  async function handleLogoUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file || !userId) return
+
+    if (file.size > 2 * 1024 * 1024) {
+      alert('Logo must be smaller than 2MB.')
+      return
+    }
+
+    setUploadingLogo(true)
+    const ext = file.name.split('.').pop()
+    const path = `${userId}/logo.${ext}`
+
+    const { error } = await supabase.storage.from('logos').upload(path, file, { upsert: true })
+
+    if (error) {
+      alert('Failed to upload logo. Please try again.')
+      setUploadingLogo(false)
+      return
+    }
+
+    const { data: { publicUrl } } = supabase.storage.from('logos').getPublicUrl(path)
+    const urlWithTimestamp = `${publicUrl}?t=${Date.now()}`
+
+    await supabase.from('profiles').update({ logo_url: publicUrl }).eq('id', userId)
+    setForm(prev => ({ ...prev, logo_url: urlWithTimestamp }))
+    setUploadingLogo(false)
+  }
+
+  async function handleRemoveLogo() {
+    if (!confirm('Remove your business logo?')) return
+    await supabase.from('profiles').update({ logo_url: null }).eq('id', userId)
+    setForm(prev => ({ ...prev, logo_url: '' }))
   }
 
   async function handleSave() {
@@ -41,7 +97,8 @@ export default function SettingsPage() {
     setSuccess(false)
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
-    await supabase.from('profiles').update({ ...form }).eq('id', user.id)
+    const { logo_url, ...rest } = form
+    await supabase.from('profiles').update({ ...rest }).eq('id', user.id)
     setSaving(false)
     setSuccess(true)
     setTimeout(() => setSuccess(false), 3000)
@@ -73,7 +130,7 @@ export default function SettingsPage() {
               {item.label}
             </Link>
           ))}
-          <div className="pt-4 border-t border-slate-800 mt-4">
+          <div className="pt-4 border-t border-slate-800 mt-2">
             <Link href="/app/settings" className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium bg-teal-600/10 text-teal-400">
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
               Settings
@@ -104,9 +161,39 @@ export default function SettingsPage() {
         </div>
 
         <div className="bg-white border border-slate-200 rounded-xl p-6">
+
           {activeTab === 'business' && (
-            <div className="space-y-4">
+            <div className="space-y-5">
               <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-4">Business Information</h2>
+
+              {/* Logo upload */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Business Logo</label>
+                <div className="flex items-center gap-5">
+                  <div className="w-24 h-24 border-2 border-dashed border-slate-200 rounded-xl flex items-center justify-center bg-slate-50 overflow-hidden">
+                    {form.logo_url ? (
+                      <img src={form.logo_url} alt="Business logo" className="w-full h-full object-contain p-1" />
+                    ) : (
+                      <svg className="w-8 h-8 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                    )}
+                  </div>
+                  <div>
+                    <input ref={fileInputRef} type="file" accept="image/png,image/jpeg,image/jpg,image/svg+xml" onChange={handleLogoUpload} className="hidden" />
+                    <button onClick={() => fileInputRef.current?.click()} disabled={uploadingLogo} className="block mb-2 bg-teal-600 hover:bg-teal-700 disabled:opacity-50 text-white font-semibold px-4 py-2 rounded-lg text-sm transition-colors">
+                      {uploadingLogo ? 'Uploading...' : form.logo_url ? 'Change Logo' : 'Upload Logo'}
+                    </button>
+                    {form.logo_url && (
+                      <button onClick={handleRemoveLogo} className="block text-xs text-red-400 hover:text-red-600 font-medium transition-colors">
+                        Remove logo
+                      </button>
+                    )}
+                    <p className="text-xs text-slate-400 mt-2">PNG, JPG or SVG. Max 2MB.</p>
+                  </div>
+                </div>
+              </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Full Name</label>
@@ -127,6 +214,7 @@ export default function SettingsPage() {
                 <div>
                   <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Industry</label>
                   <select value={form.industry} onChange={e => update('industry', e.target.value)} className="w-full border border-slate-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-teal-500">
+                    <option value="">Select industry</option>
                     {INDUSTRIES.map(i => <option key={i} value={i}>{i}</option>)}
                   </select>
                 </div>
