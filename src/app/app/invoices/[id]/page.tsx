@@ -79,6 +79,8 @@ export default function InvoiceDetailPage() {
     note: '',
   })
   const [saving, setSaving] = useState(false)
+  const [sendingEmail, setSendingEmail] = useState(false)
+  const [emailSent, setEmailSent] = useState(false)
   const [error, setError] = useState('')
 
   const fmt = (n: number) => `₦${Number(n).toLocaleString('en-NG', { minimumFractionDigits: 2 })}`
@@ -101,6 +103,52 @@ export default function InvoiceDetailPage() {
     setPayments(paymentsRes.data || [])
     setProfile(profileRes.data)
     setLoading(false)
+  }
+
+  async function handleSendInvoiceEmail() {
+    if (!invoice?.customers?.email) {
+      setError('This customer does not have an email address. Add one in the Customers page first.')
+      return
+    }
+
+    setSendingEmail(true)
+    setError('')
+
+    try {
+      const invoiceUrl = `${window.location.origin}/app/invoices/${invoice.id}`
+      const dueDate = new Date(invoice.due_date).toLocaleDateString('en-NG', {
+        day: 'numeric', month: 'long', year: 'numeric'
+      })
+
+      const res = await fetch('/api/send-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'invoice',
+          to: invoice.customers.email,
+          data: {
+            invoice_number: invoice.invoice_number,
+            business_name: profile?.business_name,
+            customer_name: invoice.customers.name,
+            total: invoice.total,
+            due_date: dueDate,
+            invoice_url: invoiceUrl,
+          },
+        }),
+      })
+
+      const result = await res.json()
+      if (result.success) {
+        setEmailSent(true)
+        setTimeout(() => setEmailSent(false), 4000)
+      } else {
+        setError('Failed to send email. Please try again.')
+      }
+    } catch {
+      setError('Failed to send email. Please try again.')
+    }
+
+    setSendingEmail(false)
   }
 
   async function handlePayment() {
@@ -137,6 +185,29 @@ export default function InvoiceDetailPage() {
       balance: newBalance,
       status: newStatus,
     }).eq('id', params.id)
+
+    // Send payment confirmation email if customer has email
+    if (invoice?.customers?.email) {
+      try {
+        await fetch('/api/send-email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            type: 'payment_confirmation',
+            to: invoice.customers.email,
+            data: {
+              business_name: profile?.business_name,
+              customer_name: invoice.customers.name,
+              invoice_number: invoice.invoice_number,
+              amount_paid: Number(paymentForm.amount),
+              balance: newBalance,
+            },
+          }),
+        })
+      } catch {
+        // Payment was recorded successfully, email failure should not block the user
+      }
+    }
 
     setPaymentForm({ amount: '', payment_date: new Date().toISOString().split('T')[0], payment_method: 'Bank Transfer', note: '' })
     setShowPaymentForm(false)
@@ -192,13 +263,27 @@ export default function InvoiceDetailPage() {
             <Link href="/app/invoices" className="text-sm text-slate-500 hover:text-teal-600 mb-1 inline-block">← Back to Invoices</Link>
             <h1 className="text-2xl font-bold text-slate-900">{invoice.invoice_number}</h1>
           </div>
-          <div className="flex gap-3">
+          <div className="flex gap-3 flex-wrap">
             <button onClick={handlePrint} className="border border-slate-200 text-slate-600 font-semibold px-4 py-2.5 rounded-lg text-sm hover:bg-slate-50 transition-colors flex items-center gap-2">
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
               </svg>
               Print
             </button>
+
+            {invoice.customers?.email && (
+              <button
+                onClick={handleSendInvoiceEmail}
+                disabled={sendingEmail}
+                className={`border font-semibold px-4 py-2.5 rounded-lg text-sm transition-colors flex items-center gap-2 ${emailSent ? 'border-green-200 bg-green-50 text-green-700' : 'border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100'} disabled:opacity-50`}
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+                {sendingEmail ? 'Sending...' : emailSent ? 'Sent!' : 'Send Invoice'}
+              </button>
+            )}
+
             {invoice.customers?.phone && (
               <button onClick={handleWhatsApp} className="border border-green-200 bg-green-50 text-green-700 font-semibold px-4 py-2.5 rounded-lg text-sm hover:bg-green-100 transition-colors flex items-center gap-2">
                 <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
@@ -207,6 +292,7 @@ export default function InvoiceDetailPage() {
                 WhatsApp
               </button>
             )}
+
             {invoice.status !== 'paid' && (
               <button onClick={() => setShowPaymentForm(true)} className="bg-teal-600 hover:bg-teal-700 text-white font-semibold px-4 py-2.5 rounded-lg text-sm transition-colors flex items-center gap-2">
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -218,25 +304,20 @@ export default function InvoiceDetailPage() {
           </div>
         </div>
 
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-600 text-sm px-4 py-3 rounded-lg mb-6 print:hidden">
+            {error}
+          </div>
+        )}
+
         {/* Invoice document */}
         <div className="bg-white border border-slate-200 rounded-xl p-8 mb-6">
-
-          {/* Business header */}
           <div className="flex justify-between items-start mb-8">
             <div>
-              <div>
-  {profile?.logo_url && (
-    <img
-      src={profile.logo_url}
-      alt="Business logo"
-      className="h-16 w-auto object-contain mb-3"
-    />
-  )}
-  <h2 className="text-2xl font-bold text-slate-900">{profile?.business_name}</h2>
-  <p className="text-slate-500 text-sm mt-1 whitespace-pre-line">{profile?.business_address}</p>
-  {profile?.phone && <p className="text-slate-500 text-sm">{profile.phone}</p>}
-  {profile?.tin && <p className="text-slate-500 text-sm">TIN: {profile.tin}</p>}
-</div>
+              {profile?.logo_url && (
+                <img src={profile.logo_url} alt="Business logo" className="h-16 w-auto object-contain mb-3" />
+              )}
+              <h2 className="text-2xl font-bold text-slate-900">{profile?.business_name}</h2>
               <p className="text-slate-500 text-sm mt-1 whitespace-pre-line">{profile?.business_address}</p>
               {profile?.phone && <p className="text-slate-500 text-sm">{profile.phone}</p>}
               {profile?.tin && <p className="text-slate-500 text-sm">TIN: {profile.tin}</p>}
@@ -250,7 +331,6 @@ export default function InvoiceDetailPage() {
             </div>
           </div>
 
-          {/* Invoice meta */}
           <div className="grid grid-cols-3 gap-6 mb-8 p-4 bg-slate-50 rounded-xl">
             <div>
               <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Bill To</p>
@@ -269,7 +349,6 @@ export default function InvoiceDetailPage() {
             </div>
           </div>
 
-          {/* Line items */}
           <table className="w-full mb-6">
             <thead>
               <tr className="border-b-2 border-slate-200">
@@ -297,7 +376,6 @@ export default function InvoiceDetailPage() {
             </tbody>
           </table>
 
-          {/* Totals */}
           <div className="flex justify-end mb-6">
             <div className="w-72 space-y-2">
               <div className="flex justify-between text-sm">
@@ -333,7 +411,6 @@ export default function InvoiceDetailPage() {
             </div>
           </div>
 
-          {/* Bank details */}
           {profile?.bank_name && (
             <div className="border-t border-slate-200 pt-6">
               <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Payment Details</p>
@@ -353,7 +430,6 @@ export default function InvoiceDetailPage() {
           )}
         </div>
 
-        {/* Payment history */}
         {payments.length > 0 && (
           <div className="bg-white border border-slate-200 rounded-xl p-6 print:hidden">
             <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-4">Payment History</h3>
@@ -380,7 +456,6 @@ export default function InvoiceDetailPage() {
         )}
       </main>
 
-      {/* Payment modal */}
       {showPaymentForm && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 print:hidden">
           <div className="bg-white rounded-2xl w-full max-w-md p-6">
@@ -403,6 +478,12 @@ export default function InvoiceDetailPage() {
                 <span className="font-bold text-red-600">{fmt(invoice.balance)}</span>
               </div>
             </div>
+
+            {invoice.customers?.email && (
+              <div className="bg-blue-50 border border-blue-100 rounded-lg px-3 py-2 mb-4">
+                <p className="text-xs text-blue-600">A payment confirmation email will be sent to {invoice.customers.email}</p>
+              </div>
+            )}
 
             {error && <div className="bg-red-50 border border-red-200 text-red-600 text-sm px-4 py-3 rounded-lg mb-4">{error}</div>}
 
