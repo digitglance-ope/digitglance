@@ -32,9 +32,20 @@ type ARCustomer = {
   oldestDue: string
 }
 
+type SupplierPayment = {
+  id: string
+  supplier_id: string
+  amount: number
+  payment_date: string
+  payment_method: string
+  reference: string
+  notes: string
+}
+
 export default function ReportsPage() {
   const [invoices, setInvoices] = useState<Invoice[]>([])
   const [suppliers, setSuppliers] = useState<Supplier[]>([])
+  const [supplierPayments, setSupplierPayments] = useState<SupplierPayment[]>([])
   const [loading, setLoading] = useState(true)
   const [startDate, setStartDate] = useState(() => {
     const d = new Date()
@@ -68,6 +79,13 @@ export default function ReportsPage() {
       .eq('user_id', user.id)
       .order('name')
     setSuppliers(supData || [])
+
+    const { data: spData } = await supabase
+      .from('supplier_payments')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('payment_date', { ascending: false })
+    setSupplierPayments(spData || [])
 
     setLoading(false)
   }
@@ -444,20 +462,19 @@ export default function ReportsPage() {
                 <Link href="/app/suppliers" className="text-teal-600 text-sm font-medium hover:underline">Add your first supplier</Link>
               </div>
             ) : (
-              <div>
-                <div className="px-6 py-4 bg-yellow-50 border-b border-yellow-100">
-                  <p className="text-xs text-yellow-700 font-medium">Supplier payment tracking will be available in the next update. Your suppliers are listed below.</p>
-                </div>
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-slate-200 bg-slate-50">
-                      {['Supplier', 'Email', 'Phone'].map(h => (
-                        <th key={h} className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-5 py-3">{h}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {suppliers.map(s => (
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-slate-200 bg-slate-50">
+                    {['Supplier', 'Email', 'Phone', 'Payments Made', 'Total Paid', ''].map(h => (
+                      <th key={h} className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-5 py-3">{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {suppliers.map(s => {
+                    const sPayments = supplierPayments.filter(p => p.supplier_id === s.id)
+                    const totalPaid = sPayments.reduce((sum, p) => sum + p.amount, 0)
+                    return (
                       <tr key={s.id} className="hover:bg-slate-50">
                         <td className="px-5 py-3">
                           <div className="flex items-center gap-3">
@@ -469,11 +486,23 @@ export default function ReportsPage() {
                         </td>
                         <td className="px-5 py-3 text-sm text-slate-600">{s.email || '-'}</td>
                         <td className="px-5 py-3 text-sm text-slate-600">{s.phone || '-'}</td>
+                        <td className="px-5 py-3 text-sm text-slate-600">{sPayments.length} payment{sPayments.length !== 1 ? 's' : ''}</td>
+                        <td className="px-5 py-3 text-sm font-bold text-slate-900">{fmt(totalPaid)}</td>
+                        <td className="px-5 py-3">
+                          <Link href="/app/suppliers" className="text-xs text-teal-600 hover:text-teal-700 font-medium">Record Payment</Link>
+                        </td>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    )
+                  })}
+                </tbody>
+                <tfoot>
+                  <tr className="border-t-2 border-slate-200 bg-slate-50">
+                    <td colSpan={4} className="px-5 py-3 text-sm font-bold text-slate-900">Total Accounts Payable</td>
+                    <td className="px-5 py-3 text-sm font-bold text-slate-900">{fmt(supplierPayments.reduce((sum, p) => sum + p.amount, 0))}</td>
+                    <td></td>
+                  </tr>
+                </tfoot>
+              </table>
             )
           )}
         </div>
