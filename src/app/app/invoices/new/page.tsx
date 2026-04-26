@@ -14,6 +14,12 @@ type LineItem = {
   vatable: boolean
 }
 
+const PLAN_LIMITS: Record<string, number> = {
+  free: 20,
+  starter: 100,
+  pro: Infinity,
+}
+
 export default function NewInvoicePage() {
   const router = useRouter()
   const supabase = createClient()
@@ -21,6 +27,8 @@ export default function NewInvoicePage() {
   const [customers, setCustomers] = useState<Customer[]>([])
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const [limitReached, setLimitReached] = useState(false)
+  const [planInfo, setPlanInfo] = useState({ plan: 'free', used: 0, limit: 20 })
 
   const [form, setForm] = useState({
     customer_id: '',
@@ -42,9 +50,22 @@ export default function NewInvoicePage() {
   async function loadData() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
-    const { data: custData } = await supabase.from('customers').select('id, name, email').eq('user_id', user.id).order('name')
+
+    // Load customers
+    const { data: custData } = await supabase
+      .from('customers')
+      .select('id, name, email')
+      .eq('user_id', user.id)
+      .order('name')
     setCustomers(custData || [])
-    const { data: invData } = await supabase.from('invoices').select('invoice_number').eq('user_id', user.id).order('created_at', { ascending: false }).limit(1)
+
+    // Auto-generate invoice number
+    const { data: invData } = await supabase
+      .from('invoices')
+      .select('invoice_number')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(1)
     const last = invData?.[0]?.invoice_number
     let nextNum = 'INV-001'
     if (last) {
@@ -52,6 +73,38 @@ export default function NewInvoicePage() {
       nextNum = `INV-${String(num).padStart(3, '0')}`
     }
     setForm(prev => ({ ...prev, invoice_number: nextNum }))
+
+    // Plan enforcement check
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('plan')
+      .eq('id', user.id)
+      .single()
+
+    const plan = profile?.plan || 'free'
+    const limit = PLAN_LIMITS[plan] ?? 20
+
+    if (limit !== Infinity) {
+      const now = new Date()
+      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
+      const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59).toISOString()
+
+      const { count } = await supabase
+        .from('invoices')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+        .gte('created_at', monthStart)
+        .lte('created_at', monthEnd)
+
+      const used = count || 0
+      setPlanInfo({ plan, used, limit })
+
+      if (used >= limit) {
+        setLimitReached(true)
+      }
+    } else {
+      setPlanInfo({ plan, used: 0, limit: Infinity })
+    }
   }
 
   function updateItem(index: number, field: string, value: string | number | boolean) {
@@ -87,6 +140,7 @@ export default function NewInvoicePage() {
   const fmt = (n: number) => `₦${n.toLocaleString('en-NG', { minimumFractionDigits: 2 })}`
 
   async function handleSave() {
+    if (limitReached) return
     if (!form.customer_id) { setError('Please select a customer.'); return }
     if (!form.due_date) { setError('Please set a due date.'); return }
     if (items.some(i => !i.description.trim())) { setError('All line items need a description.'); return }
@@ -136,6 +190,62 @@ export default function NewInvoicePage() {
     router.push(`/app/invoices/${invoice.id}`)
   }
 
+  // Plan limit blocked screen
+  if (limitReached) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex">
+        <aside className="w-64 bg-slate-900 min-h-screen flex flex-col fixed top-0 left-0">
+          <div className="p-6 border-b border-slate-800">
+            <Link href="/app/dashboard">
+              <span className="text-xl font-bold text-white">Digit<span className="text-teal-400">Glance</span></span>
+            </Link>
+            <p className="text-xs text-slate-500 mt-1">Invoice System</p>
+          </div>
+          <nav className="flex-1 p-4 space-y-1">
+            {[
+              { href: '/app/dashboard', label: 'Dashboard', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
+              { href: '/app/invoices', label: 'Invoices', icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z', active: true },
+              { href: '/app/customers', label: 'Customers', icon: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z' },
+              { href: '/app/inventory', label: 'Inventory', icon: 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4' },
+              { href: '/app/reports', label: 'Reports', icon: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z' },
+            ].map(item => (
+              <Link key={item.href} href={item.href} className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${(item as any).active ? 'bg-teal-600/10 text-teal-400' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}>
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d={item.icon} />
+                </svg>
+                {item.label}
+              </Link>
+            ))}
+          </nav>
+        </aside>
+        <main className="ml-64 flex-1 p-8 flex items-center justify-center">
+          <div className="bg-white border border-slate-200 rounded-2xl p-12 text-center max-w-md">
+            <div className="w-16 h-16 bg-orange-50 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg className="w-8 h-8 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+              </svg>
+            </div>
+            <h2 className="text-xl font-bold text-slate-900 mb-2">Monthly Limit Reached</h2>
+            <p className="text-slate-500 text-sm mb-2">
+              You have used <span className="font-semibold text-slate-700">{planInfo.used} of {planInfo.limit}</span> invoices allowed on the <span className="font-semibold capitalize">{planInfo.plan}</span> plan this month.
+            </p>
+            <p className="text-slate-500 text-sm mb-8">
+              Upgrade your plan to create more invoices this month.
+            </p>
+            <div className="flex flex-col gap-3">
+              <Link href="/app/subscription" className="bg-teal-600 hover:bg-teal-700 text-white font-semibold px-6 py-3 rounded-lg text-sm transition-colors">
+                Upgrade Plan
+              </Link>
+              <Link href="/app/invoices" className="border border-slate-200 text-slate-600 font-semibold px-6 py-3 rounded-lg text-sm hover:bg-slate-50 transition-colors">
+                Back to Invoices
+              </Link>
+            </div>
+          </div>
+        </main>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-slate-50 flex">
       <aside className="w-64 bg-slate-900 min-h-screen flex flex-col fixed top-0 left-0">
@@ -169,11 +279,18 @@ export default function NewInvoicePage() {
             <Link href="/app/invoices" className="text-sm text-slate-500 hover:text-teal-600 mb-1 inline-block">← Back to Invoices</Link>
             <h1 className="text-2xl font-bold text-slate-900">New Invoice</h1>
           </div>
-          <div className="flex gap-3">
-            <Link href="/app/invoices" className="border border-slate-200 text-slate-600 font-semibold px-5 py-2.5 rounded-lg text-sm hover:bg-slate-50 transition-colors">Cancel</Link>
-            <button onClick={handleSave} disabled={saving} className="bg-teal-600 hover:bg-teal-700 disabled:opacity-50 text-white font-semibold px-5 py-2.5 rounded-lg text-sm transition-colors">
-              {saving ? 'Saving...' : 'Save Invoice'}
-            </button>
+          <div className="flex items-center gap-4">
+            {planInfo.limit !== Infinity && (
+              <p className="text-xs text-slate-400">
+                <span className="font-semibold text-slate-600">{planInfo.used}</span> of {planInfo.limit} invoices used this month
+              </p>
+            )}
+            <div className="flex gap-3">
+              <Link href="/app/invoices" className="border border-slate-200 text-slate-600 font-semibold px-5 py-2.5 rounded-lg text-sm hover:bg-slate-50 transition-colors">Cancel</Link>
+              <button onClick={handleSave} disabled={saving} className="bg-teal-600 hover:bg-teal-700 disabled:opacity-50 text-white font-semibold px-5 py-2.5 rounded-lg text-sm transition-colors">
+                {saving ? 'Saving...' : 'Save Invoice'}
+              </button>
+            </div>
           </div>
         </div>
 
@@ -226,41 +343,19 @@ export default function NewInvoicePage() {
                 {items.map((item, index) => (
                   <div key={index} className="grid grid-cols-12 gap-2 items-center">
                     <div className="col-span-4">
-                      <input
-                        type="text"
-                        value={item.description}
-                        onChange={e => updateItem(index, 'description', e.target.value)}
-                        placeholder="Description"
-                        className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-teal-500"
-                      />
+                      <input type="text" value={item.description} onChange={e => updateItem(index, 'description', e.target.value)} placeholder="Description" className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-teal-500" />
                     </div>
                     <div className="col-span-2">
-                      <input
-                        type="number"
-                        value={item.quantity}
-                        onChange={e => updateItem(index, 'quantity', parseFloat(e.target.value) || 0)}
-                        min="0"
-                        className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-teal-500"
-                      />
+                      <input type="number" value={item.quantity} onChange={e => updateItem(index, 'quantity', parseFloat(e.target.value) || 0)} min="0" className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-teal-500" />
                     </div>
                     <div className="col-span-2">
-                      <input
-                        type="number"
-                        value={item.unit_price}
-                        onChange={e => updateItem(index, 'unit_price', parseFloat(e.target.value) || 0)}
-                        min="0"
-                        className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-teal-500"
-                      />
+                      <input type="number" value={item.unit_price} onChange={e => updateItem(index, 'unit_price', parseFloat(e.target.value) || 0)} min="0" className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-teal-500" />
                     </div>
                     <div className="col-span-2">
                       <div className="px-2 py-2 text-sm text-slate-700 font-medium">{fmt(item.amount)}</div>
                     </div>
                     <div className="col-span-1 flex justify-center">
-                      <button
-                        onClick={() => updateItem(index, 'vatable', !item.vatable)}
-                        className={`w-10 h-5 rounded-full transition-colors relative ${item.vatable ? 'bg-teal-500' : 'bg-slate-200'}`}
-                        title={item.vatable ? 'VAT applicable' : 'VAT not applicable'}
-                      >
+                      <button onClick={() => updateItem(index, 'vatable', !item.vatable)} className={`w-10 h-5 rounded-full transition-colors relative ${item.vatable ? 'bg-teal-500' : 'bg-slate-200'}`} title={item.vatable ? 'VAT applicable' : 'VAT not applicable'}>
                         <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${item.vatable ? 'translate-x-5' : 'translate-x-0.5'}`} />
                       </button>
                     </div>
