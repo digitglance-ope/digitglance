@@ -1,6 +1,6 @@
 'use client'
 
-import Script from 'next/script'
+
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
@@ -154,7 +154,6 @@ export default function SubscriptionPage() {
 
   return (
     <>
-      <Script src="https://js.paystack.co/v1/inline.js" strategy="beforeInteractive" />
 
       <div className="min-h-screen bg-slate-50 flex">
         <aside className="w-64 bg-slate-900 min-h-screen flex flex-col fixed top-0 left-0">
