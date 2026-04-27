@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { resend, FROM_EMAIL, FROM_NAME } from '@/lib/resend'
+import { getResend, FROM_EMAIL, FROM_NAME } from '@/lib/resend'
 
 export async function POST(req: NextRequest) {
   try {
@@ -177,7 +177,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid email type' }, { status: 400 })
     }
 
-    const { data: result, error } = await resend.emails.send({
+    const resend = getResend()
+const { data: result, error } = await resend.emails.send({
       from: `${FROM_NAME} <${FROM_EMAIL}>`,
       to,
       subject,
