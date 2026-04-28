@@ -13,6 +13,26 @@ type Customer = {
   created_at: string
 }
 
+type CustomerInvoice = {
+  id: string
+  invoice_number: string
+  issue_date: string
+  due_date: string
+  status: string
+  total: number
+  amount_paid: number
+  balance: number
+}
+
+type CustomerPayment = {
+  id: string
+  invoice_id: string
+  amount: number
+  payment_date: string
+  payment_method: string
+  note: string
+}
+
 export default function CustomersPage() {
   const [customers, setCustomers] = useState<Customer[]>([])
   const [loading, setLoading] = useState(true)
@@ -23,7 +43,15 @@ export default function CustomersPage() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
+  // Statement
+  const [showStatement, setShowStatement] = useState(false)
+  const [statementCustomer, setStatementCustomer] = useState<Customer | null>(null)
+  const [statementInvoices, setStatementInvoices] = useState<CustomerInvoice[]>([])
+  const [statementPayments, setStatementPayments] = useState<CustomerPayment[]>([])
+  const [loadingStatement, setLoadingStatement] = useState(false)
+
   const supabase = createClient()
+  const fmt = (n: number) => `₦${Number(n).toLocaleString('en-NG', { minimumFractionDigits: 2 })}`
 
   async function loadCustomers() {
     const { data: { user } } = await supabase.auth.getUser()
@@ -38,6 +66,37 @@ export default function CustomersPage() {
   }
 
   useEffect(() => { loadCustomers() }, [])
+
+  async function openStatement(c: Customer) {
+    setStatementCustomer(c)
+    setShowStatement(true)
+    setLoadingStatement(true)
+
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+
+    const { data: invData } = await supabase
+      .from('invoices')
+      .select('id, invoice_number, issue_date, due_date, status, total, amount_paid, balance')
+      .eq('customer_id', c.id)
+      .eq('user_id', user.id)
+      .order('issue_date', { ascending: false })
+    setStatementInvoices(invData || [])
+
+    const invoiceIds = (invData || []).map(i => i.id)
+    if (invoiceIds.length > 0) {
+      const { data: payData } = await supabase
+        .from('payments')
+        .select('id, invoice_id, amount, payment_date, payment_method, note')
+        .in('invoice_id', invoiceIds)
+        .order('payment_date', { ascending: false })
+      setStatementPayments(payData || [])
+    } else {
+      setStatementPayments([])
+    }
+
+    setLoadingStatement(false)
+  }
 
   function openNew() {
     setEditCustomer(null)
@@ -59,7 +118,6 @@ export default function CustomersPage() {
     setError('')
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
-
     if (editCustomer) {
       await supabase.from('customers').update({ ...form }).eq('id', editCustomer.id)
     } else {
@@ -82,9 +140,18 @@ export default function CustomersPage() {
     c.phone?.includes(search)
   )
 
+  const totalInvoiced = statementInvoices.reduce((s, i) => s + i.total, 0)
+  const totalPaid = statementInvoices.reduce((s, i) => s + i.amount_paid, 0)
+  const totalBalance = statementInvoices.reduce((s, i) => s + i.balance, 0)
+
+  const STATUS_COLORS: Record<string, string> = {
+    paid: 'bg-green-100 text-green-700',
+    partial: 'bg-yellow-100 text-yellow-700',
+    outstanding: 'bg-red-100 text-red-700',
+  }
+
   return (
     <div className="min-h-screen bg-slate-50 flex">
-      {/* Sidebar */}
       <aside className="w-64 bg-slate-900 min-h-screen flex flex-col fixed top-0 left-0">
         <div className="p-6 border-b border-slate-800">
           <Link href="/app/dashboard">
@@ -97,20 +164,34 @@ export default function CustomersPage() {
             { href: '/app/dashboard', label: 'Dashboard', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
             { href: '/app/invoices', label: 'Invoices', icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' },
             { href: '/app/customers', label: 'Customers', icon: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z', active: true },
+            { href: '/app/suppliers', label: 'Suppliers', icon: 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4' },
             { href: '/app/inventory', label: 'Inventory', icon: 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4' },
             { href: '/app/reports', label: 'Reports', icon: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z' },
           ].map(item => (
-            <Link key={item.href} href={item.href} className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${item.active ? 'bg-teal-600/10 text-teal-400' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}>
+            <Link key={item.href} href={item.href} className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${(item as any).active ? 'bg-teal-600/10 text-teal-400' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}>
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d={item.icon} />
               </svg>
               {item.label}
             </Link>
           ))}
+          <div className="pt-4 border-t border-slate-800 mt-2 space-y-1">
+            {[
+              { href: '/app/settings', label: 'Settings', icon: 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z' },
+              { href: '/app/users', label: 'Users', icon: 'M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z' },
+              { href: '/app/subscription', label: 'Subscription', icon: 'M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z' },
+            ].map(item => (
+              <Link key={item.href} href={item.href} className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800 transition-colors">
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d={item.icon} />
+                </svg>
+                {item.label}
+              </Link>
+            ))}
+          </div>
         </nav>
       </aside>
 
-      {/* Main */}
       <main className="ml-64 flex-1 p-8">
         <div className="flex items-center justify-between mb-8">
           <div>
@@ -125,7 +206,6 @@ export default function CustomersPage() {
           </button>
         </div>
 
-        {/* Search */}
         <div className="relative mb-6">
           <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -139,7 +219,6 @@ export default function CustomersPage() {
           />
         </div>
 
-        {/* Table */}
         <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
           {loading ? (
             <div className="p-12 text-center text-slate-400 text-sm">Loading customers...</div>
@@ -156,11 +235,9 @@ export default function CustomersPage() {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-slate-200 bg-slate-50">
-                  <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-6 py-3">Name</th>
-                  <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-6 py-3">Email</th>
-                  <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-6 py-3">Phone</th>
-                  <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-6 py-3">Address</th>
-                  <th className="px-6 py-3"></th>
+                  {['Name', 'Email', 'Phone', 'Address', ''].map(h => (
+                    <th key={h} className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-6 py-3">{h}</th>
+                  ))}
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -178,7 +255,8 @@ export default function CustomersPage() {
                     <td className="px-6 py-4 text-sm text-slate-600">{c.phone || '-'}</td>
                     <td className="px-6 py-4 text-sm text-slate-600 max-w-xs truncate">{c.address || '-'}</td>
                     <td className="px-6 py-4">
-                      <div className="flex items-center gap-2 justify-end">
+                      <div className="flex items-center gap-3 justify-end">
+                        <button onClick={() => openStatement(c)} className="text-xs text-teal-600 hover:text-teal-700 font-medium transition-colors">Statement</button>
                         <button onClick={() => openEdit(c)} className="text-xs text-slate-500 hover:text-teal-600 font-medium transition-colors">Edit</button>
                         <button onClick={() => handleDelete(c.id)} className="text-xs text-slate-500 hover:text-red-500 font-medium transition-colors">Delete</button>
                       </div>
@@ -191,7 +269,7 @@ export default function CustomersPage() {
         </div>
       </main>
 
-      {/* Modal */}
+      {/* Add/Edit Customer Modal */}
       {showForm && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl w-full max-w-md p-6">
@@ -203,9 +281,7 @@ export default function CustomersPage() {
                 </svg>
               </button>
             </div>
-
             {error && <div className="bg-red-50 border border-red-200 text-red-600 text-sm px-4 py-3 rounded-lg mb-4">{error}</div>}
-
             <div className="space-y-4">
               {[
                 { label: 'Full Name *', key: 'name', type: 'text', placeholder: 'e.g. John Adebayo' },
@@ -234,13 +310,130 @@ export default function CustomersPage() {
                 />
               </div>
             </div>
-
             <div className="flex gap-3 mt-6">
               <button onClick={() => setShowForm(false)} className="flex-1 border border-slate-200 text-slate-600 font-semibold py-2.5 rounded-lg text-sm hover:bg-slate-50 transition-colors">Cancel</button>
               <button onClick={handleSave} disabled={saving} className="flex-1 bg-teal-600 hover:bg-teal-700 disabled:opacity-50 text-white font-semibold py-2.5 rounded-lg text-sm transition-colors">
                 {saving ? 'Saving...' : editCustomer ? 'Save Changes' : 'Add Customer'}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Customer Statement Modal */}
+      {showStatement && statementCustomer && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl w-full max-w-3xl p-6 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-5">
+              <div>
+                <h2 className="text-lg font-bold text-slate-900">Customer Statement</h2>
+                <p className="text-xs text-slate-500 mt-0.5">{statementCustomer.name}</p>
+              </div>
+              <button onClick={() => setShowStatement(false)} className="text-slate-400 hover:text-slate-600">
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {loadingStatement ? (
+              <div className="py-12 text-center text-slate-400 text-sm">Loading statement...</div>
+            ) : (
+              <>
+                {/* Customer info */}
+                <div className="bg-slate-50 rounded-xl p-4 mb-5">
+                  <div className="grid grid-cols-3 gap-4 text-sm">
+                    <div><span className="text-slate-400 text-xs uppercase tracking-wider">Email</span><p className="text-slate-700 font-medium mt-0.5">{statementCustomer.email || '-'}</p></div>
+                    <div><span className="text-slate-400 text-xs uppercase tracking-wider">Phone</span><p className="text-slate-700 font-medium mt-0.5">{statementCustomer.phone || '-'}</p></div>
+                    <div><span className="text-slate-400 text-xs uppercase tracking-wider">Address</span><p className="text-slate-700 font-medium mt-0.5 truncate">{statementCustomer.address || '-'}</p></div>
+                  </div>
+                </div>
+
+                {/* Summary cards */}
+                <div className="grid grid-cols-3 gap-4 mb-5">
+                  {[
+                    { label: 'Total Invoiced', value: fmt(totalInvoiced), color: 'text-slate-900' },
+                    { label: 'Total Paid', value: fmt(totalPaid), color: 'text-green-600' },
+                    { label: 'Outstanding Balance', value: fmt(totalBalance), color: totalBalance > 0 ? 'text-red-600' : 'text-green-600' },
+                  ].map(card => (
+                    <div key={card.label} className="bg-white border border-slate-200 rounded-xl p-4">
+                      <p className="text-xs text-slate-400 uppercase tracking-wider mb-1">{card.label}</p>
+                      <p className={`text-lg font-bold ${card.color}`}>{card.value}</p>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Invoices table */}
+                {statementInvoices.length === 0 ? (
+                  <p className="text-center text-slate-400 text-sm py-8">No invoices found for this customer.</p>
+                ) : (
+                  <>
+                    <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Invoice History</h3>
+                    <table className="w-full mb-5">
+                      <thead>
+                        <tr className="border-b border-slate-200 bg-slate-50">
+                          {['Invoice #', 'Issue Date', 'Due Date', 'Total', 'Paid', 'Balance', 'Status'].map(h => (
+                            <th key={h} className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-3 py-2">{h}</th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {statementInvoices.map(inv => (
+                          <tr key={inv.id} className="hover:bg-slate-50">
+                            <td className="px-3 py-2.5 text-sm font-semibold text-teal-600">
+                              <Link href={`/app/invoices/${inv.id}`} onClick={() => setShowStatement(false)}>{inv.invoice_number}</Link>
+                            </td>
+                            <td className="px-3 py-2.5 text-sm text-slate-600">{new Date(inv.issue_date).toLocaleDateString('en-NG')}</td>
+                            <td className="px-3 py-2.5 text-sm text-slate-600">{new Date(inv.due_date).toLocaleDateString('en-NG')}</td>
+                            <td className="px-3 py-2.5 text-sm font-medium text-slate-900">{fmt(inv.total)}</td>
+                            <td className="px-3 py-2.5 text-sm text-green-600">{fmt(inv.amount_paid)}</td>
+                            <td className="px-3 py-2.5 text-sm text-red-600 font-medium">{fmt(inv.balance)}</td>
+                            <td className="px-3 py-2.5">
+                              <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-semibold capitalize ${STATUS_COLORS[inv.status] || 'bg-slate-100 text-slate-600'}`}>{inv.status}</span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                      <tfoot>
+                        <tr className="border-t-2 border-slate-200 bg-slate-50">
+                          <td colSpan={3} className="px-3 py-2.5 text-sm font-bold text-slate-900">Totals</td>
+                          <td className="px-3 py-2.5 text-sm font-bold text-slate-900">{fmt(totalInvoiced)}</td>
+                          <td className="px-3 py-2.5 text-sm font-bold text-green-600">{fmt(totalPaid)}</td>
+                          <td className="px-3 py-2.5 text-sm font-bold text-red-600">{fmt(totalBalance)}</td>
+                          <td></td>
+                        </tr>
+                      </tfoot>
+                    </table>
+
+                    {/* Payment history */}
+                    {statementPayments.length > 0 && (
+                      <>
+                        <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Payment History</h3>
+                        <table className="w-full">
+                          <thead>
+                            <tr className="border-b border-slate-200 bg-slate-50">
+                              {['Date', 'Amount', 'Method', 'Note'].map(h => (
+                                <th key={h} className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-3 py-2">{h}</th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-100">
+                            {statementPayments.map(p => (
+                              <tr key={p.id} className="hover:bg-slate-50">
+                                <td className="px-3 py-2.5 text-sm text-slate-600">{new Date(p.payment_date).toLocaleDateString('en-NG')}</td>
+                                <td className="px-3 py-2.5 text-sm font-semibold text-green-600">{fmt(p.amount)}</td>
+                                <td className="px-3 py-2.5 text-sm text-slate-600">{p.payment_method}</td>
+                                <td className="px-3 py-2.5 text-sm text-slate-500">{p.note || '-'}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </>
+                    )}
+                  </>
+                )}
+              </>
+            )}
           </div>
         </div>
       )}
