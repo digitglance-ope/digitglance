@@ -51,11 +51,34 @@ type SupplierInvoice = {
   suppliers: { name: string } | { name: string }[] | null
 }
 
+type InventoryItem = {
+  id: string
+  name: string
+  unit: string
+  unit_price: number
+  cost_price: number
+  stock_quantity: number
+}
+
+type PurchaseLineItem = {
+  inventory_item_id: string | null
+  quantity: number
+  unit_price: number
+}
+
+type SaleLineItem = {
+  inventory_item_id: string | null
+  quantity: number
+}
+
 export default function ReportsPage() {
   const [invoices, setInvoices] = useState<Invoice[]>([])
   const [suppliers, setSuppliers] = useState<Supplier[]>([])
   const [supplierPayments, setSupplierPayments] = useState<SupplierPayment[]>([])
   const [supplierInvoices, setSupplierInvoices] = useState<SupplierInvoice[]>([])
+  const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([])
+  const [purchaseLines, setPurchaseLines] = useState<PurchaseLineItem[]>([])
+  const [saleLines, setSaleLines] = useState<SaleLineItem[]>([])
   const [loading, setLoading] = useState(true)
   const [startDate, setStartDate] = useState(() => {
     const d = new Date()
@@ -64,7 +87,7 @@ export default function ReportsPage() {
   })
   const [endDate, setEndDate] = useState(() => new Date().toISOString().split('T')[0])
   const [statusFilter, setStatusFilter] = useState('all')
-  const [activeTab, setActiveTab] = useState<'summary' | 'vat' | 'vat_liability' | 'receivable' | 'payable'>('summary')
+  const [activeTab, setActiveTab] = useState<'summary' | 'vat' | 'vat_liability' | 'receivable' | 'payable' | 'inventory'>('summary')
   const supabase = createClient()
 
   async function load() {
@@ -106,6 +129,46 @@ export default function ReportsPage() {
       .order('invoice_date', { ascending: false })
     setSupplierInvoices(siData || [])
 
+    // Inventory valuation data
+    const { data: invItems } = await supabase
+      .from('inventory')
+      .select('id, name, unit, unit_price, cost_price, stock_quantity')
+      .eq('user_id', user.id)
+      .order('name')
+    setInventoryItems(invItems || [])
+
+    // Purchase lines for period (from supplier invoice items)
+    const { data: siIds } = await supabase
+      .from('supplier_invoices')
+      .select('id')
+      .eq('user_id', user.id)
+      .gte('invoice_date', startDate)
+      .lte('invoice_date', endDate)
+    const supplierInvIds = (siIds || []).map((s: any) => s.id)
+    if (supplierInvIds.length > 0) {
+      const { data: plData } = await supabase
+        .from('supplier_invoice_items')
+        .select('inventory_item_id, quantity, unit_price')
+        .in('supplier_invoice_id', supplierInvIds)
+        .not('inventory_item_id', 'is', null)
+      setPurchaseLines(plData || [])
+    } else {
+      setPurchaseLines([])
+    }
+
+    // Sale lines for period (from invoice items)
+    const invoiceIds = (invData || []).map((i: any) => i.id)
+    if (invoiceIds.length > 0) {
+      const { data: slData } = await supabase
+        .from('invoice_items')
+        .select('inventory_item_id, quantity')
+        .in('invoice_id', invoiceIds)
+        .not('inventory_item_id', 'is', null)
+      setSaleLines(slData || [])
+    } else {
+      setSaleLines([])
+    }
+
     setLoading(false)
   }
 
@@ -121,12 +184,10 @@ export default function ReportsPage() {
   const outstandingInvoices = invoices.filter(i => i.status === 'outstanding')
   const partialInvoices = invoices.filter(i => i.status === 'partial')
 
-  // VAT liability
   const outputVAT = invoices.reduce((s, i) => s + i.vat_amount, 0)
   const inputVAT = supplierInvoices.reduce((s, i) => s + i.vat_amount, 0)
   const netVATLiability = outputVAT - inputVAT
 
-  // Accounts receivable
   const allOutstanding = invoices.filter(i => i.status === 'outstanding' || i.status === 'partial')
   const arByCustomer = allOutstanding.reduce<Record<string, ARCustomer>>((acc, inv) => {
     const name = inv.customers?.name || 'Unknown'
@@ -138,6 +199,26 @@ export default function ReportsPage() {
   }, {})
   const arList = Object.values(arByCustomer).sort((a, b) => b.totalOwed - a.totalOwed)
   const totalAR = arList.reduce((s, c) => s + c.totalOwed, 0)
+
+  // Inventory valuation calculations
+  const inventoryValuation = inventoryItems.map(item => {
+    const purchased = purchaseLines
+      .filter(p => p.inventory_item_id === item.id)
+      .reduce((sum, p) => sum + p.quantity, 0)
+    const sold = saleLines
+      .filter(s => s.inventory_item_id === item.id)
+      .reduce((sum, s) => sum + s.quantity, 0)
+    const closingStock = item.stock_quantity
+    const openingStock = closingStock - purchased + sold
+    const costPrice = item.cost_price || 0
+    const closingValue = closingStock * costPrice
+    const purchaseValue = purchaseLines
+      .filter(p => p.inventory_item_id === item.id)
+      .reduce((sum, p) => sum + (p.quantity * p.unit_price), 0)
+    return { item, openingStock, purchased, sold, closingStock, costPrice, closingValue, purchaseValue }
+  })
+  const totalClosingValue = inventoryValuation.reduce((s, v) => s + v.closingValue, 0)
+  const totalPurchaseValue = inventoryValuation.reduce((s, v) => s + v.purchaseValue, 0)
 
   function exportCSV() {
     const headers = ['Invoice #', 'Customer', 'Issue Date', 'Due Date', 'Status', 'Subtotal', 'VAT', 'Total', 'Paid', 'Balance']
@@ -183,6 +264,25 @@ export default function ReportsPage() {
     URL.revokeObjectURL(url)
   }
 
+  function exportInventoryCSV() {
+    const headers = ['Item', 'Unit', 'Opening Stock', 'Purchases', 'Sales', 'Closing Stock', 'Cost Price', 'Closing Value']
+    const rows = inventoryValuation.map(v => [
+      v.item.name,
+      v.item.unit,
+      v.openingStock,
+      v.purchased,
+      v.sold,
+      v.closingStock,
+      v.costPrice.toFixed(2),
+      v.closingValue.toFixed(2),
+    ])
+    const csv = [headers, ...rows].map(r => r.join(',')).join('\n')
+    const blob = new Blob([csv], { type: 'text/csv' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a'); a.href = url; a.download = `inventory-valuation-${startDate}-to-${endDate}.csv`; a.click()
+    URL.revokeObjectURL(url)
+  }
+
   const STATUS_COLORS: Record<string, string> = {
     paid: 'bg-green-100 text-green-700',
     partial: 'bg-yellow-100 text-yellow-700',
@@ -197,9 +297,10 @@ export default function ReportsPage() {
     { key: 'vat_liability', label: 'VAT Liability' },
     { key: 'receivable', label: 'Accounts Receivable' },
     { key: 'payable', label: 'Accounts Payable' },
+    { key: 'inventory', label: 'Inventory Valuation' },
   ] as const
 
-  const showDateFilter = activeTab === 'summary' || activeTab === 'vat' || activeTab === 'receivable' || activeTab === 'vat_liability'
+  const showDateFilter = ['summary', 'vat', 'receivable', 'vat_liability', 'inventory'].includes(activeTab)
 
   return (
     <div className="min-h-screen bg-slate-50 flex">
@@ -244,34 +345,14 @@ export default function ReportsPage() {
             <p className="text-slate-500 text-sm mt-1">Financial overview and tax reports</p>
           </div>
           <div className="flex gap-3">
-            {activeTab === 'summary' && (
-              <button onClick={exportCSV} className="border border-slate-200 text-slate-600 font-semibold px-4 py-2.5 rounded-lg text-sm hover:bg-slate-50 transition-colors flex items-center gap-2">
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-                Export CSV
-              </button>
-            )}
-            {activeTab === 'vat' && (
-              <button onClick={exportVATCSV} className="border border-teal-200 bg-teal-50 text-teal-700 font-semibold px-4 py-2.5 rounded-lg text-sm hover:bg-teal-100 transition-colors flex items-center gap-2">
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z" /></svg>
-                Export Output VAT CSV
-              </button>
-            )}
-            {activeTab === 'vat_liability' && (
-              <button onClick={exportVATLiabilityCSV} className="border border-orange-200 bg-orange-50 text-orange-700 font-semibold px-4 py-2.5 rounded-lg text-sm hover:bg-orange-100 transition-colors flex items-center gap-2">
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-                Export VAT Return CSV
-              </button>
-            )}
-            {activeTab === 'receivable' && (
-              <button onClick={exportARCSV} className="border border-slate-200 text-slate-600 font-semibold px-4 py-2.5 rounded-lg text-sm hover:bg-slate-50 transition-colors flex items-center gap-2">
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-                Export CSV
-              </button>
-            )}
+            {activeTab === 'summary' && <button onClick={exportCSV} className="border border-slate-200 text-slate-600 font-semibold px-4 py-2.5 rounded-lg text-sm hover:bg-slate-50 transition-colors flex items-center gap-2"><svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>Export CSV</button>}
+            {activeTab === 'vat' && <button onClick={exportVATCSV} className="border border-teal-200 bg-teal-50 text-teal-700 font-semibold px-4 py-2.5 rounded-lg text-sm hover:bg-teal-100 transition-colors flex items-center gap-2"><svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z" /></svg>Export Output VAT CSV</button>}
+            {activeTab === 'vat_liability' && <button onClick={exportVATLiabilityCSV} className="border border-orange-200 bg-orange-50 text-orange-700 font-semibold px-4 py-2.5 rounded-lg text-sm hover:bg-orange-100 transition-colors flex items-center gap-2"><svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>Export VAT Return CSV</button>}
+            {activeTab === 'receivable' && <button onClick={exportARCSV} className="border border-slate-200 text-slate-600 font-semibold px-4 py-2.5 rounded-lg text-sm hover:bg-slate-50 transition-colors flex items-center gap-2"><svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>Export CSV</button>}
+            {activeTab === 'inventory' && <button onClick={exportInventoryCSV} className="border border-slate-200 text-slate-600 font-semibold px-4 py-2.5 rounded-lg text-sm hover:bg-slate-50 transition-colors flex items-center gap-2"><svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>Export Inventory CSV</button>}
           </div>
         </div>
 
-        {/* Date Filters */}
         {showDateFilter && (
           <div className="bg-white border border-slate-200 rounded-xl p-4 mb-6 flex flex-wrap gap-4 items-end">
             <div>
@@ -296,7 +377,6 @@ export default function ReportsPage() {
           </div>
         )}
 
-        {/* Summary cards */}
         {(activeTab === 'summary' || activeTab === 'vat') && (
           <>
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
@@ -327,18 +407,12 @@ export default function ReportsPage() {
           </>
         )}
 
-        {/* VAT Liability summary cards */}
         {activeTab === 'vat_liability' && (
           <div className="grid grid-cols-3 gap-4 mb-6">
             {[
               { label: 'Output VAT (Sales)', value: fmt(outputVAT), color: 'text-teal-600', bg: 'bg-teal-50 border-teal-200' },
               { label: 'Input VAT (Purchases)', value: fmt(inputVAT), color: 'text-blue-600', bg: 'bg-blue-50 border-blue-200' },
-              {
-                label: netVATLiability >= 0 ? 'Net VAT Payable to NRS' : 'VAT Credit (Refundable)',
-                value: fmt(Math.abs(netVATLiability)),
-                color: netVATLiability >= 0 ? 'text-orange-600' : 'text-green-600',
-                bg: netVATLiability >= 0 ? 'bg-orange-50 border-orange-200' : 'bg-green-50 border-green-200'
-              },
+              { label: netVATLiability >= 0 ? 'Net VAT Payable to NRS' : 'VAT Credit (Refundable)', value: fmt(Math.abs(netVATLiability)), color: netVATLiability >= 0 ? 'text-orange-600' : 'text-green-600', bg: netVATLiability >= 0 ? 'bg-orange-50 border-orange-200' : 'bg-green-50 border-green-200' },
             ].map(card => (
               <div key={card.label} className={`border rounded-xl p-5 ${card.bg}`}>
                 <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">{card.label}</p>
@@ -348,7 +422,6 @@ export default function ReportsPage() {
           </div>
         )}
 
-        {/* AR summary cards */}
         {activeTab === 'receivable' && (
           <div className="grid grid-cols-3 gap-4 mb-6">
             {[
@@ -364,7 +437,21 @@ export default function ReportsPage() {
           </div>
         )}
 
-        {/* Tabs */}
+        {activeTab === 'inventory' && (
+          <div className="grid grid-cols-3 gap-4 mb-6">
+            {[
+              { label: 'Total Items', value: String(inventoryItems.length), color: 'text-slate-900' },
+              { label: 'Total Purchase Value', value: fmt(totalPurchaseValue), color: 'text-blue-600' },
+              { label: 'Total Closing Stock Value', value: fmt(totalClosingValue), color: 'text-teal-600' },
+            ].map(card => (
+              <div key={card.label} className="bg-white border border-slate-200 rounded-xl p-5">
+                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">{card.label}</p>
+                <p className={`text-xl font-bold ${card.color}`}>{card.value}</p>
+              </div>
+            ))}
+          </div>
+        )}
+
         <div className="flex gap-2 mb-4 flex-wrap">
           {tabs.map(tab => (
             <button key={tab.key} onClick={() => setActiveTab(tab.key)} className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${activeTab === tab.key ? 'bg-teal-600 text-white' : 'bg-white border border-slate-200 text-slate-600 hover:border-teal-300'}`}>
@@ -373,7 +460,6 @@ export default function ReportsPage() {
           ))}
         </div>
 
-        {/* Tables */}
         <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
           {loading ? (
             <div className="p-12 text-center text-slate-400 text-sm">Loading...</div>
@@ -382,13 +468,7 @@ export default function ReportsPage() {
               <div className="p-12 text-center text-slate-400 text-sm">No invoices found for this period.</div>
             ) : (
               <table className="w-full">
-                <thead>
-                  <tr className="border-b border-slate-200 bg-slate-50">
-                    {['Invoice #', 'Customer', 'Date', 'Total', 'Paid', 'Balance', 'Status'].map(h => (
-                      <th key={h} className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-5 py-3">{h}</th>
-                    ))}
-                  </tr>
-                </thead>
+                <thead><tr className="border-b border-slate-200 bg-slate-50">{['Invoice #', 'Customer', 'Date', 'Total', 'Paid', 'Balance', 'Status'].map(h => <th key={h} className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-5 py-3">{h}</th>)}</tr></thead>
                 <tbody className="divide-y divide-slate-100">
                   {invoices.map(inv => (
                     <tr key={inv.id} className="hover:bg-slate-50">
@@ -402,15 +482,7 @@ export default function ReportsPage() {
                     </tr>
                   ))}
                 </tbody>
-                <tfoot>
-                  <tr className="border-t-2 border-slate-200 bg-slate-50">
-                    <td colSpan={3} className="px-5 py-3 text-sm font-bold text-slate-900">Totals</td>
-                    <td className="px-5 py-3 text-sm font-bold text-slate-900">{fmt(totalInvoiced)}</td>
-                    <td className="px-5 py-3 text-sm font-bold text-green-600">{fmt(totalCollected)}</td>
-                    <td className="px-5 py-3 text-sm font-bold text-red-600">{fmt(totalOutstanding)}</td>
-                    <td></td>
-                  </tr>
-                </tfoot>
+                <tfoot><tr className="border-t-2 border-slate-200 bg-slate-50"><td colSpan={3} className="px-5 py-3 text-sm font-bold text-slate-900">Totals</td><td className="px-5 py-3 text-sm font-bold text-slate-900">{fmt(totalInvoiced)}</td><td className="px-5 py-3 text-sm font-bold text-green-600">{fmt(totalCollected)}</td><td className="px-5 py-3 text-sm font-bold text-red-600">{fmt(totalOutstanding)}</td><td></td></tr></tfoot>
               </table>
             )
           ) : activeTab === 'vat' ? (
@@ -418,13 +490,7 @@ export default function ReportsPage() {
               <div className="p-12 text-center text-slate-400 text-sm">No VATable sales invoices for this period.</div>
             ) : (
               <table className="w-full">
-                <thead>
-                  <tr className="border-b border-slate-200 bg-slate-50">
-                    {['Invoice #', 'Customer', 'Issue Date', 'Output VAT', 'Invoice Total'].map(h => (
-                      <th key={h} className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-5 py-3">{h}</th>
-                    ))}
-                  </tr>
-                </thead>
+                <thead><tr className="border-b border-slate-200 bg-slate-50">{['Invoice #', 'Customer', 'Issue Date', 'Output VAT', 'Invoice Total'].map(h => <th key={h} className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-5 py-3">{h}</th>)}</tr></thead>
                 <tbody className="divide-y divide-slate-100">
                   {invoices.filter(i => i.vat_amount > 0).map(inv => (
                     <tr key={inv.id} className="hover:bg-slate-50">
@@ -436,13 +502,7 @@ export default function ReportsPage() {
                     </tr>
                   ))}
                 </tbody>
-                <tfoot>
-                  <tr className="border-t-2 border-slate-200 bg-slate-50">
-                    <td colSpan={3} className="px-5 py-3 text-sm font-bold text-slate-900">Total Output VAT</td>
-                    <td className="px-5 py-3 text-sm font-bold text-teal-600">{fmt(outputVAT)}</td>
-                    <td className="px-5 py-3 text-sm font-bold text-slate-900">{fmt(totalInvoiced)}</td>
-                  </tr>
-                </tfoot>
+                <tfoot><tr className="border-t-2 border-slate-200 bg-slate-50"><td colSpan={3} className="px-5 py-3 text-sm font-bold text-slate-900">Total Output VAT</td><td className="px-5 py-3 text-sm font-bold text-teal-600">{fmt(outputVAT)}</td><td className="px-5 py-3 text-sm font-bold text-slate-900">{fmt(totalInvoiced)}</td></tr></tfoot>
               </table>
             )
           ) : activeTab === 'vat_liability' ? (
@@ -450,20 +510,11 @@ export default function ReportsPage() {
               <div className="px-6 py-4 bg-orange-50 border-b border-orange-100">
                 <p className="text-xs text-orange-700 font-medium">This report shows your VAT position for the selected period. Output VAT is collected from customers. Input VAT is paid to suppliers. The difference is what you owe to NRS or can claim as a refund.</p>
               </div>
-
               <div className="p-6">
                 <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-4">Output VAT (from Sales)</h3>
-                {invoices.filter(i => i.vat_amount > 0).length === 0 ? (
-                  <p className="text-slate-400 text-sm mb-6">No VATable sales invoices for this period.</p>
-                ) : (
+                {invoices.filter(i => i.vat_amount > 0).length === 0 ? <p className="text-slate-400 text-sm mb-6">No VATable sales invoices for this period.</p> : (
                   <table className="w-full mb-6">
-                    <thead>
-                      <tr className="border-b border-slate-100">
-                        {['Invoice #', 'Customer', 'Date', 'Output VAT'].map(h => (
-                          <th key={h} className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider pb-2">{h}</th>
-                        ))}
-                      </tr>
-                    </thead>
+                    <thead><tr className="border-b border-slate-100">{['Invoice #', 'Customer', 'Date', 'Output VAT'].map(h => <th key={h} className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider pb-2">{h}</th>)}</tr></thead>
                     <tbody className="divide-y divide-slate-50">
                       {invoices.filter(i => i.vat_amount > 0).map(inv => (
                         <tr key={inv.id}>
@@ -474,48 +525,26 @@ export default function ReportsPage() {
                         </tr>
                       ))}
                     </tbody>
-                    <tfoot>
-                      <tr className="border-t border-slate-200">
-                        <td colSpan={3} className="pt-2 text-sm font-bold text-slate-900">Total Output VAT</td>
-                        <td className="pt-2 text-sm font-bold text-teal-600">{fmt(outputVAT)}</td>
-                      </tr>
-                    </tfoot>
+                    <tfoot><tr className="border-t border-slate-200"><td colSpan={3} className="pt-2 text-sm font-bold text-slate-900">Total Output VAT</td><td className="pt-2 text-sm font-bold text-teal-600">{fmt(outputVAT)}</td></tr></tfoot>
                   </table>
                 )}
-
                 <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-4">Input VAT (from Purchases)</h3>
-                {supplierInvoices.filter(i => i.vat_amount > 0).length === 0 ? (
-                  <p className="text-slate-400 text-sm mb-6">No VATable purchase invoices for this period.</p>
-                ) : (
+                {supplierInvoices.filter(i => i.vat_amount > 0).length === 0 ? <p className="text-slate-400 text-sm mb-6">No VATable purchase invoices for this period.</p> : (
                   <table className="w-full mb-6">
-                    <thead>
-                      <tr className="border-b border-slate-100">
-                        {['Invoice #', 'Supplier', 'Date', 'Input VAT'].map(h => (
-                          <th key={h} className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider pb-2">{h}</th>
-                        ))}
-                      </tr>
-                    </thead>
+                    <thead><tr className="border-b border-slate-100">{['Invoice #', 'Supplier', 'Date', 'Input VAT'].map(h => <th key={h} className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider pb-2">{h}</th>)}</tr></thead>
                     <tbody className="divide-y divide-slate-50">
                       {supplierInvoices.filter(i => i.vat_amount > 0).map(inv => (
                         <tr key={inv.id}>
                           <td className="py-2 text-sm text-purple-600 font-medium">{inv.invoice_number}</td>
-                          <td className="py-2 text-sm text-slate-700">
-  {Array.isArray(inv.suppliers) ? inv.suppliers[0]?.name : inv.suppliers?.name}
-</td>
+                          <td className="py-2 text-sm text-slate-700">{Array.isArray(inv.suppliers) ? inv.suppliers[0]?.name : inv.suppliers?.name}</td>
                           <td className="py-2 text-sm text-slate-500">{new Date(inv.invoice_date).toLocaleDateString('en-NG')}</td>
                           <td className="py-2 text-sm font-semibold text-blue-600">{fmt(inv.vat_amount)}</td>
                         </tr>
                       ))}
                     </tbody>
-                    <tfoot>
-                      <tr className="border-t border-slate-200">
-                        <td colSpan={3} className="pt-2 text-sm font-bold text-slate-900">Total Input VAT</td>
-                        <td className="pt-2 text-sm font-bold text-blue-600">{fmt(inputVAT)}</td>
-                      </tr>
-                    </tfoot>
+                    <tfoot><tr className="border-t border-slate-200"><td colSpan={3} className="pt-2 text-sm font-bold text-slate-900">Total Input VAT</td><td className="pt-2 text-sm font-bold text-blue-600">{fmt(inputVAT)}</td></tr></tfoot>
                   </table>
                 )}
-
                 <div className={`rounded-xl p-5 border ${netVATLiability >= 0 ? 'bg-orange-50 border-orange-200' : 'bg-green-50 border-green-200'}`}>
                   <div className="flex items-center justify-between mb-3">
                     <p className="text-sm font-bold text-slate-900 uppercase tracking-wider">VAT Return Summary</p>
@@ -537,41 +566,69 @@ export default function ReportsPage() {
               <div className="p-12 text-center text-slate-400 text-sm">No outstanding balances for this period.</div>
             ) : (
               <table className="w-full">
-                <thead>
-                  <tr className="border-b border-slate-200 bg-slate-50">
-                    {['Customer', 'Invoices Outstanding', 'Oldest Due Date', 'Overdue', 'Amount Owed'].map(h => (
-                      <th key={h} className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-5 py-3">{h}</th>
-                    ))}
-                  </tr>
-                </thead>
+                <thead><tr className="border-b border-slate-200 bg-slate-50">{['Customer', 'Invoices Outstanding', 'Oldest Due Date', 'Overdue', 'Amount Owed'].map(h => <th key={h} className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-5 py-3">{h}</th>)}</tr></thead>
                 <tbody className="divide-y divide-slate-100">
                   {arList.map(c => {
                     const isOverdue = c.oldestDue < today
                     return (
                       <tr key={c.name} className="hover:bg-slate-50">
-                        <td className="px-5 py-3">
-                          <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 bg-teal-100 text-teal-700 rounded-full flex items-center justify-center text-xs font-bold">{c.name.charAt(0).toUpperCase()}</div>
-                            <span className="text-sm font-medium text-slate-900">{c.name}</span>
-                          </div>
-                        </td>
+                        <td className="px-5 py-3"><div className="flex items-center gap-3"><div className="w-8 h-8 bg-teal-100 text-teal-700 rounded-full flex items-center justify-center text-xs font-bold">{c.name.charAt(0).toUpperCase()}</div><span className="text-sm font-medium text-slate-900">{c.name}</span></div></td>
                         <td className="px-5 py-3 text-sm text-slate-600">{c.invoiceCount} invoice{c.invoiceCount > 1 ? 's' : ''}</td>
                         <td className="px-5 py-3 text-sm text-slate-600">{new Date(c.oldestDue).toLocaleDateString('en-NG')}</td>
-                        <td className="px-5 py-3">
-                          {isOverdue ? <span className="inline-flex px-2 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-700">Overdue</span> : <span className="inline-flex px-2 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700">Current</span>}
-                        </td>
+                        <td className="px-5 py-3">{isOverdue ? <span className="inline-flex px-2 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-700">Overdue</span> : <span className="inline-flex px-2 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700">Current</span>}</td>
                         <td className="px-5 py-3 text-sm font-bold text-red-600">{fmt(c.totalOwed)}</td>
                       </tr>
                     )
                   })}
                 </tbody>
-                <tfoot>
-                  <tr className="border-t-2 border-slate-200 bg-slate-50">
-                    <td colSpan={4} className="px-5 py-3 text-sm font-bold text-slate-900">Total Accounts Receivable</td>
-                    <td className="px-5 py-3 text-sm font-bold text-red-600">{fmt(totalAR)}</td>
-                  </tr>
-                </tfoot>
+                <tfoot><tr className="border-t-2 border-slate-200 bg-slate-50"><td colSpan={4} className="px-5 py-3 text-sm font-bold text-slate-900">Total Accounts Receivable</td><td className="px-5 py-3 text-sm font-bold text-red-600">{fmt(totalAR)}</td></tr></tfoot>
               </table>
+            )
+          ) : activeTab === 'inventory' ? (
+            inventoryItems.length === 0 ? (
+              <div className="p-12 text-center">
+                <p className="text-slate-500 text-sm mb-2">No inventory items found.</p>
+                <Link href="/app/inventory" className="text-teal-600 text-sm font-medium hover:underline">Add inventory items</Link>
+              </div>
+            ) : (
+              <div>
+                <div className="px-6 py-4 bg-slate-50 border-b border-slate-100">
+                  <p className="text-xs text-slate-500">Opening stock is calculated as: Closing Stock minus Purchases plus Sales for the selected period. Cost price must be set on each inventory item for accurate valuation.</p>
+                </div>
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-slate-200 bg-slate-50">
+                      {['Item', 'Unit', 'Opening Stock', 'Purchases', 'Sales', 'Closing Stock', 'Cost Price', 'Closing Value'].map(h => (
+                        <th key={h} className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-5 py-3">{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {inventoryValuation.map(v => (
+                      <tr key={v.item.id} className="hover:bg-slate-50">
+                        <td className="px-5 py-3 text-sm font-semibold text-slate-900">{v.item.name}</td>
+                        <td className="px-5 py-3 text-sm text-slate-500">{v.item.unit}</td>
+                        <td className="px-5 py-3 text-sm text-slate-600">{v.openingStock}</td>
+                        <td className="px-5 py-3 text-sm text-blue-600 font-medium">+{v.purchased}</td>
+                        <td className="px-5 py-3 text-sm text-red-500 font-medium">{v.sold > 0 ? `-${v.sold}` : '0'}</td>
+                        <td className="px-5 py-3">
+                          <span className={`text-sm font-semibold ${v.closingStock <= 0 ? 'text-red-500' : v.closingStock <= 10 ? 'text-yellow-500' : 'text-green-600'}`}>
+                            {v.closingStock}
+                          </span>
+                        </td>
+                        <td className="px-5 py-3 text-sm text-slate-600">{v.costPrice > 0 ? fmt(v.costPrice) : <span className="text-slate-300">Not set</span>}</td>
+                        <td className="px-5 py-3 text-sm font-bold text-teal-600">{v.costPrice > 0 ? fmt(v.closingValue) : <span className="text-slate-300">-</span>}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                  <tfoot>
+                    <tr className="border-t-2 border-slate-200 bg-slate-50">
+                      <td colSpan={7} className="px-5 py-3 text-sm font-bold text-slate-900">Total Inventory Value</td>
+                      <td className="px-5 py-3 text-sm font-bold text-teal-600">{fmt(totalClosingValue)}</td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
             )
           ) : (
             suppliers.length === 0 ? (
@@ -581,25 +638,14 @@ export default function ReportsPage() {
               </div>
             ) : (
               <table className="w-full">
-                <thead>
-                  <tr className="border-b border-slate-200 bg-slate-50">
-                    {['Supplier', 'Email', 'Phone', 'Payments Made', 'Total Paid', ''].map(h => (
-                      <th key={h} className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-5 py-3">{h}</th>
-                    ))}
-                  </tr>
-                </thead>
+                <thead><tr className="border-b border-slate-200 bg-slate-50">{['Supplier', 'Email', 'Phone', 'Payments Made', 'Total Paid', ''].map(h => <th key={h} className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-5 py-3">{h}</th>)}</tr></thead>
                 <tbody className="divide-y divide-slate-100">
                   {suppliers.map(s => {
                     const sPayments = supplierPayments.filter(p => p.supplier_id === s.id)
                     const totalPaid = sPayments.reduce((sum, p) => sum + p.amount, 0)
                     return (
                       <tr key={s.id} className="hover:bg-slate-50">
-                        <td className="px-5 py-3">
-                          <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 bg-purple-100 text-purple-700 rounded-full flex items-center justify-center text-xs font-bold">{s.name.charAt(0).toUpperCase()}</div>
-                            <span className="text-sm font-medium text-slate-900">{s.name}</span>
-                          </div>
-                        </td>
+                        <td className="px-5 py-3"><div className="flex items-center gap-3"><div className="w-8 h-8 bg-purple-100 text-purple-700 rounded-full flex items-center justify-center text-xs font-bold">{s.name.charAt(0).toUpperCase()}</div><span className="text-sm font-medium text-slate-900">{s.name}</span></div></td>
                         <td className="px-5 py-3 text-sm text-slate-600">{s.email || '-'}</td>
                         <td className="px-5 py-3 text-sm text-slate-600">{s.phone || '-'}</td>
                         <td className="px-5 py-3 text-sm text-slate-600">{sPayments.length} payment{sPayments.length !== 1 ? 's' : ''}</td>
@@ -609,13 +655,7 @@ export default function ReportsPage() {
                     )
                   })}
                 </tbody>
-                <tfoot>
-                  <tr className="border-t-2 border-slate-200 bg-slate-50">
-                    <td colSpan={4} className="px-5 py-3 text-sm font-bold text-slate-900">Total Accounts Payable</td>
-                    <td className="px-5 py-3 text-sm font-bold text-slate-900">{fmt(supplierPayments.reduce((sum, p) => sum + p.amount, 0))}</td>
-                    <td></td>
-                  </tr>
-                </tfoot>
+                <tfoot><tr className="border-t-2 border-slate-200 bg-slate-50"><td colSpan={4} className="px-5 py-3 text-sm font-bold text-slate-900">Total Accounts Payable</td><td className="px-5 py-3 text-sm font-bold text-slate-900">{fmt(supplierPayments.reduce((sum, p) => sum + p.amount, 0))}</td><td></td></tr></tfoot>
               </table>
             )
           )}
