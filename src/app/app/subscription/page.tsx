@@ -1,6 +1,5 @@
 'use client'
 
-
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
@@ -17,6 +16,7 @@ const PLANS = [
     value: 'free',
     price: 0,
     originalPrice: 0,
+    includedUsers: 1,
     description: 'Get started at no cost',
     color: 'border-slate-200',
     badge: '',
@@ -38,6 +38,7 @@ const PLANS = [
     value: 'starter',
     price: 5000,
     originalPrice: 7500,
+    includedUsers: 1,
     description: 'For growing businesses',
     color: 'border-teal-500',
     badge: 'Most Popular',
@@ -60,6 +61,7 @@ const PLANS = [
     value: 'pro',
     price: 12000,
     originalPrice: 18000,
+    includedUsers: 2,
     description: 'Full access for established businesses',
     color: 'border-slate-900',
     badge: 'Best Value',
@@ -79,12 +81,15 @@ const PLANS = [
   },
 ]
 
+const EXTRA_USER_PRICE = 2000
+
 export default function SubscriptionPage() {
   const supabase = createClient()
   const [profile, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
   const [processingPlan, setProcessingPlan] = useState('')
   const [userEmail, setUserEmail] = useState('')
+  const [extraUsers, setExtraUsers] = useState<Record<string, number>>({ starter: 0, pro: 0 })
 
   useEffect(() => { load() }, [])
 
@@ -97,6 +102,18 @@ export default function SubscriptionPage() {
     setLoading(false)
   }
 
+  function getTotalPrice(plan: typeof PLANS[0]) {
+    if (plan.value === 'free') return 0
+    return plan.price + (extraUsers[plan.value] || 0) * EXTRA_USER_PRICE
+  }
+
+  function changeExtraUsers(planValue: string, delta: number) {
+    setExtraUsers(prev => ({
+      ...prev,
+      [planValue]: Math.max(0, (prev[planValue] || 0) + delta),
+    }))
+  }
+
   function handlePaystack(plan: typeof PLANS[0]) {
     if (plan.value === 'free') return
 
@@ -106,19 +123,22 @@ export default function SubscriptionPage() {
     }
 
     setProcessingPlan(plan.value)
+    const totalPrice = getTotalPrice(plan)
+    const extra = extraUsers[plan.value] || 0
 
     const handler = (window as any).PaystackPop.setup({
       key: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY,
       email: userEmail,
-      amount: plan.price * 100,
+      amount: totalPrice * 100,
       currency: 'NGN',
       ref: `DG-${plan.value}-${Date.now()}`,
       metadata: {
         plan: plan.value,
+        extra_users: extra,
         business_name: profile?.business_name || '',
       },
       callback: async function(response: any) {
-        await verifyAndUpgrade(plan.value, response.reference)
+        await verifyAndUpgrade(plan.value, response.reference, extra)
       },
       onClose: function() {
         setProcessingPlan('')
@@ -128,7 +148,7 @@ export default function SubscriptionPage() {
     handler.openIframe()
   }
 
-  async function verifyAndUpgrade(planValue: string, reference: string) {
+  async function verifyAndUpgrade(planValue: string, reference: string, extraUserCount: number) {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
 
@@ -140,7 +160,7 @@ export default function SubscriptionPage() {
       user_email: userEmail,
       action: 'Plan Upgraded',
       resource: 'Subscription',
-      details: `Upgraded to ${planValue} plan. Reference: ${reference}`,
+      details: `Upgraded to ${planValue} plan with ${extraUserCount} extra users. Reference: ${reference}`,
     })
 
     setProcessingPlan('')
@@ -154,7 +174,6 @@ export default function SubscriptionPage() {
 
   return (
     <>
-
       <div className="min-h-screen bg-slate-50 flex">
         <aside className="w-64 bg-slate-900 min-h-screen flex flex-col fixed top-0 left-0">
           <div className="p-6 border-b border-slate-800">
@@ -215,9 +234,12 @@ export default function SubscriptionPage() {
             {PLANS.map(plan => {
               const isCurrent = currentPlan === plan.value
               const isProcessing = processingPlan === plan.value
+              const extra = extraUsers[plan.value] || 0
+              const totalPrice = getTotalPrice(plan)
+              const totalUsers = plan.includedUsers + extra
 
               return (
-                <div key={plan.value} className={`bg-white border-2 rounded-2xl p-6 relative ${isCurrent ? 'border-teal-500' : plan.color}`}>
+                <div key={plan.value} className={`bg-white border-2 rounded-2xl p-6 relative flex flex-col ${isCurrent ? 'border-teal-500' : plan.color}`}>
                   {plan.badge && (
                     <div className="absolute -top-3 left-1/2 -translate-x-1/2">
                       <span className={`text-xs font-bold px-3 py-1 rounded-full ${plan.value === 'starter' ? 'bg-teal-600 text-white' : 'bg-slate-900 text-white'}`}>
@@ -235,22 +257,27 @@ export default function SubscriptionPage() {
                   <h3 className="text-lg font-bold text-slate-900 mb-1">{plan.name}</h3>
                   <p className="text-xs text-slate-500 mb-4">{plan.description}</p>
 
-                  <div className="mb-6">
+                  <div className="mb-4">
                     {plan.price === 0 ? (
                       <div className="text-3xl font-bold text-slate-900">Free</div>
                     ) : (
                       <div>
                         <div className="flex items-baseline gap-2">
-                          <span className="text-3xl font-bold text-slate-900">{fmt(plan.price)}</span>
+                          <span className="text-3xl font-bold text-slate-900">{fmt(totalPrice)}</span>
                           <span className="text-sm text-slate-400">/month</span>
                         </div>
+                        {extra > 0 && (
+                          <p className="text-xs text-blue-600 font-medium mt-0.5">
+                            {fmt(plan.price)} base + {fmt(extra * EXTRA_USER_PRICE)} for {extra} extra user{extra > 1 ? 's' : ''}
+                          </p>
+                        )}
                         <p className="text-xs text-slate-400 mt-1 line-through">{fmt(plan.originalPrice)}/month</p>
                         <p className="text-xs text-green-600 font-semibold">Save {fmt(plan.originalPrice - plan.price)} per month</p>
                       </div>
                     )}
                   </div>
 
-                  <div className="space-y-2 mb-6">
+                  <div className="space-y-2 mb-5 flex-1">
                     {plan.features.map(f => (
                       <div key={f} className="flex items-start gap-2 text-sm text-slate-700">
                         <svg className="w-4 h-4 text-teal-500 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
@@ -269,6 +296,42 @@ export default function SubscriptionPage() {
                     ))}
                   </div>
 
+                  {/* User counter for paid plans */}
+                  {plan.value !== 'free' && (
+                    <div className="bg-slate-50 rounded-xl p-3 mb-4 border border-slate-100">
+                      <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Team Size</p>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-bold text-slate-900">{totalUsers} user{totalUsers > 1 ? 's' : ''}</p>
+                          <p className="text-xs text-slate-400">
+                            {plan.includedUsers} included{extra > 0 ? ` + ${extra} extra` : ''}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => changeExtraUsers(plan.value, -1)}
+                            disabled={extra === 0}
+                            className="w-8 h-8 rounded-lg border border-slate-200 bg-white text-slate-600 font-bold text-lg flex items-center justify-center hover:border-teal-400 hover:text-teal-600 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                          >
+                            -
+                          </button>
+                          <span className="w-6 text-center text-sm font-bold text-slate-900">{extra}</span>
+                          <button
+                            onClick={() => changeExtraUsers(plan.value, 1)}
+                            className="w-8 h-8 rounded-lg border border-slate-200 bg-white text-slate-600 font-bold text-lg flex items-center justify-center hover:border-teal-400 hover:text-teal-600 transition-colors"
+                          >
+                            +
+                          </button>
+                        </div>
+                      </div>
+                      {extra > 0 && (
+                        <p className="text-xs text-teal-600 font-medium mt-2">
+                          +{fmt(extra * EXTRA_USER_PRICE)}/month for additional users
+                        </p>
+                      )}
+                    </div>
+                  )}
+
                   {isCurrent ? (
                     <button disabled className="w-full bg-slate-100 text-slate-400 font-semibold py-3 rounded-xl text-sm cursor-not-allowed">
                       Current Plan
@@ -283,7 +346,7 @@ export default function SubscriptionPage() {
                       disabled={isProcessing}
                       className={`w-full font-semibold py-3 rounded-xl text-sm transition-colors ${plan.value === 'starter' ? 'bg-teal-600 hover:bg-teal-700 text-white' : 'bg-slate-900 hover:bg-slate-800 text-white'} disabled:opacity-50`}
                     >
-                      {isProcessing ? 'Processing...' : `Upgrade to ${plan.name}`}
+                      {isProcessing ? 'Processing...' : `Upgrade to ${plan.name} — ${fmt(totalPrice)}/mo`}
                     </button>
                   )}
                 </div>
@@ -291,7 +354,18 @@ export default function SubscriptionPage() {
             })}
           </div>
 
-          <div className="mt-8 bg-white border border-slate-200 rounded-xl p-6">
+          {/* Extra users explainer */}
+          <div className="mt-6 bg-blue-50 border border-blue-100 rounded-xl p-4 flex items-start gap-3">
+            <svg className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            <div>
+              <p className="text-sm font-semibold text-blue-900">Need more team members?</p>
+              <p className="text-xs text-blue-700 mt-0.5">Use the + button on any paid plan to add extra users at ₦2,000 per user per month. Starter includes 1 user, Pro includes 2 users.</p>
+            </div>
+          </div>
+
+          <div className="mt-6 bg-white border border-slate-200 rounded-xl p-6">
             <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-3">Payment Information</h3>
             <div className="grid grid-cols-3 gap-4 text-sm text-slate-500">
               <div className="flex items-start gap-2">
