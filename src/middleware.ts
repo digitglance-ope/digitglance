@@ -27,21 +27,59 @@ export async function middleware(request: NextRequest) {
 
   const { data: { user } } = await supabase.auth.getUser()
 
-  const isAppRoute = request.nextUrl.pathname.startsWith('/app')
-  const isAuthRoute =
-    request.nextUrl.pathname === '/app/login' ||
-    request.nextUrl.pathname === '/app/register'
+  const path = request.nextUrl.pathname
+  const isAppRoute = path.startsWith('/app')
+  const isAuthRoute = path === '/app/login' || path === '/app/register'
+  const isOnboardingRoute = path === '/app/onboarding' || path.startsWith('/app/onboarding')
+  const isResetPasswordRoute = path === '/app/reset-password'
+  const isForgotPasswordRoute = path === '/app/forgot-password'
 
-  if (isAppRoute && !isAuthRoute && !user) {
+  // Allow unauthenticated access to auth and password routes
+  if (isAuthRoute || isResetPasswordRoute || isForgotPasswordRoute) {
+    if (user && isAuthRoute) {
+      const url = request.nextUrl.clone()
+      url.pathname = '/app/dashboard'
+      return NextResponse.redirect(url)
+    }
+    return supabaseResponse
+  }
+
+  // Redirect unauthenticated users to login
+  if (isAppRoute && !user) {
     const url = request.nextUrl.clone()
     url.pathname = '/app/login'
     return NextResponse.redirect(url)
   }
 
-  if (isAuthRoute && user) {
-    const url = request.nextUrl.clone()
-    url.pathname = '/app/dashboard'
-    return NextResponse.redirect(url)
+  // For authenticated users on app routes, check onboarding status
+  if (isAppRoute && user && !isOnboardingRoute) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('onboarding_complete, is_team_member')
+      .eq('id', user.id)
+      .single()
+
+    // Team members skip onboarding entirely - they join an existing account
+    if (profile && !profile.onboarding_complete && !profile.is_team_member) {
+      const url = request.nextUrl.clone()
+      url.pathname = '/app/onboarding'
+      return NextResponse.redirect(url)
+    }
+  }
+
+  // Redirect team members away from onboarding if they land there
+  if (isOnboardingRoute && user) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('onboarding_complete, is_team_member')
+      .eq('id', user.id)
+      .single()
+
+    if (profile?.is_team_member) {
+      const url = request.nextUrl.clone()
+      url.pathname = '/app/dashboard'
+      return NextResponse.redirect(url)
+    }
   }
 
   return supabaseResponse

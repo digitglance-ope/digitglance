@@ -13,6 +13,10 @@ type AccountUser = {
   created_at: string
 }
 
+type OwnerProfile = {
+  business_name: string
+}
+
 const ROLES = [
   { value: 'admin', label: 'Admin', desc: 'Full access except billing' },
   { value: 'manager', label: 'Manager', desc: 'Create and manage invoices and customers' },
@@ -36,6 +40,9 @@ const STATUS_COLORS: Record<string, string> = {
 export default function UsersPage() {
   const supabase = createClient()
   const [users, setUsers] = useState<AccountUser[]>([])
+  const [ownerProfile, setOwnerProfile] = useState<OwnerProfile | null>(null)
+  const [currentUserId, setCurrentUserId] = useState<string>('')
+  const [currentUserEmail, setCurrentUserEmail] = useState<string>('')
   const [loading, setLoading] = useState(true)
   const [showInviteForm, setShowInviteForm] = useState(false)
   const [inviteForm, setInviteForm] = useState({ email: '', full_name: '', role: 'staff' })
@@ -46,12 +53,27 @@ export default function UsersPage() {
   async function load() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
+
+    // Store current user details for use in invite
+    setCurrentUserId(user.id)
+    setCurrentUserEmail(user.email || '')
+
+    // Load the account owner's business profile
+    const { data: profileData } = await supabase
+      .from('profiles')
+      .select('business_name')
+      .eq('id', user.id)
+      .single()
+    setOwnerProfile(profileData)
+
+    // Load all invited users for this account
     const { data } = await supabase
       .from('account_users')
       .select('*')
       .eq('account_owner_id', user.id)
       .order('created_at', { ascending: false })
     setUsers(data || [])
+
     setLoading(false)
   }
 
@@ -62,10 +84,7 @@ export default function UsersPage() {
     setSaving(true)
     setError('')
 
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
-
-    // Step 1: Call server-side API to send the actual Supabase invitation email
+    // Call the server-side API route which uses the service role key
     const res = await fetch('/api/invite-user', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -73,7 +92,9 @@ export default function UsersPage() {
         email: inviteForm.email,
         role: inviteForm.role,
         fullName: inviteForm.full_name,
-        invitedBy: user.email,
+        invitedBy: currentUserEmail,
+        accountOwnerId: currentUserId,
+        businessName: ownerProfile?.business_name || 'DigitGlance',
       }),
     })
 
@@ -85,9 +106,9 @@ export default function UsersPage() {
       return
     }
 
-    // Step 2: Record in account_users table for role tracking
+    // Record in account_users table for role tracking
     const { error: insertError } = await supabase.from('account_users').insert({
-      account_owner_id: user.id,
+      account_owner_id: currentUserId,
       email: inviteForm.email,
       full_name: inviteForm.full_name,
       role: inviteForm.role,
@@ -95,18 +116,17 @@ export default function UsersPage() {
     })
 
     if (insertError && insertError.code !== '23505') {
-      // Non-duplicate errors still show a warning but invitation was sent
       console.error('account_users insert error:', insertError)
     }
 
-    // Step 3: Audit log
+    // Audit log
     await supabase.from('audit_logs').insert({
-      account_owner_id: user.id,
-      user_id: user.id,
-      user_email: user.email,
+      account_owner_id: currentUserId,
+      user_id: currentUserId,
+      user_email: currentUserEmail,
       action: 'User Invited',
       resource: 'Users',
-      details: `Invited ${inviteForm.email} as ${inviteForm.role}`,
+      details: `Invited ${inviteForm.email} as ${inviteForm.role} to ${ownerProfile?.business_name || 'account'}`,
     })
 
     setSaving(false)
@@ -118,13 +138,11 @@ export default function UsersPage() {
   }
 
   async function handleRoleChange(userId: string, newRole: string) {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
     await supabase.from('account_users').update({ role: newRole }).eq('id', userId)
     await supabase.from('audit_logs').insert({
-      account_owner_id: user.id,
-      user_id: user.id,
-      user_email: user.email,
+      account_owner_id: currentUserId,
+      user_id: currentUserId,
+      user_email: currentUserEmail,
       action: 'Role Changed',
       resource: 'Users',
       details: `Changed role to ${newRole} for user ${userId}`,
@@ -133,13 +151,11 @@ export default function UsersPage() {
   }
 
   async function handleStatusChange(userId: string, newStatus: string) {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
     await supabase.from('account_users').update({ status: newStatus }).eq('id', userId)
     await supabase.from('audit_logs').insert({
-      account_owner_id: user.id,
-      user_id: user.id,
-      user_email: user.email,
+      account_owner_id: currentUserId,
+      user_id: currentUserId,
+      user_email: currentUserEmail,
       action: newStatus === 'suspended' ? 'User Suspended' : 'User Activated',
       resource: 'Users',
       details: `User ${userId} status changed to ${newStatus}`,
@@ -149,13 +165,11 @@ export default function UsersPage() {
 
   async function handleRemove(userId: string, email: string) {
     if (!confirm(`Remove ${email} from your account?`)) return
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
     await supabase.from('account_users').delete().eq('id', userId)
     await supabase.from('audit_logs').insert({
-      account_owner_id: user.id,
-      user_id: user.id,
-      user_email: user.email,
+      account_owner_id: currentUserId,
+      user_id: currentUserId,
+      user_email: currentUserEmail,
       action: 'User Removed',
       resource: 'Users',
       details: `Removed ${email} from account`,
@@ -204,7 +218,10 @@ export default function UsersPage() {
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-2xl font-bold text-slate-900">User Control</h1>
-            <p className="text-slate-500 text-sm mt-1">Manage team members and their access levels</p>
+            <p className="text-slate-500 text-sm mt-1">
+              Manage team members for{' '}
+              <span className="font-semibold text-teal-600">{ownerProfile?.business_name || 'your account'}</span>
+            </p>
           </div>
           <button onClick={() => { setShowInviteForm(true); setError('') }} className="flex items-center gap-2 bg-teal-600 hover:bg-teal-700 text-white font-semibold px-5 py-2.5 rounded-lg text-sm transition-colors">
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
@@ -290,12 +307,19 @@ export default function UsersPage() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl w-full max-w-md p-6">
             <div className="flex items-center justify-between mb-5">
-              <h2 className="text-lg font-bold text-slate-900">Invite Team Member</h2>
+              <div>
+                <h2 className="text-lg font-bold text-slate-900">Invite Team Member</h2>
+                {ownerProfile?.business_name && (
+                  <p className="text-xs text-slate-400 mt-0.5">Inviting to: {ownerProfile.business_name}</p>
+                )}
+              </div>
               <button onClick={() => setShowInviteForm(false)} className="text-slate-400 hover:text-slate-600">
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
             </div>
+
             {error && <div className="bg-red-50 border border-red-200 text-red-600 text-sm px-4 py-3 rounded-lg mb-4">{error}</div>}
+
             <div className="space-y-4">
               <div>
                 <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Email Address *</label>
@@ -312,9 +336,13 @@ export default function UsersPage() {
                 </select>
               </div>
             </div>
+
             <div className="bg-blue-50 border border-blue-100 rounded-lg px-4 py-3 mt-4">
-              <p className="text-xs text-blue-700">The invited person will receive an email with a link to set up their password and access your DigitGlance account.</p>
+              <p className="text-xs text-blue-700">
+                The invited person will receive an email from <strong>hello@digitglance.com</strong> with a link to set their password and access <strong>{ownerProfile?.business_name || 'your account'}</strong> directly. They will not go through business setup.
+              </p>
             </div>
+
             <div className="flex gap-3 mt-4">
               <button onClick={() => setShowInviteForm(false)} className="flex-1 border border-slate-200 text-slate-600 font-semibold py-2.5 rounded-lg text-sm hover:bg-slate-50">Cancel</button>
               <button onClick={handleInvite} disabled={saving} className="flex-1 bg-teal-600 hover:bg-teal-700 disabled:opacity-50 text-white font-semibold py-2.5 rounded-lg text-sm">

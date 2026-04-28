@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 
 export async function POST(req: NextRequest) {
   try {
-    const { email, role, fullName, invitedBy } = await req.json()
+    const { email, role, fullName, invitedBy, accountOwnerId, businessName } = await req.json()
 
     if (!email || !role) {
       return NextResponse.json({ error: 'Email and role are required.' }, { status: 400 })
@@ -17,7 +17,14 @@ export async function POST(req: NextRequest) {
 
     const { data, error } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
       redirectTo: `${process.env.NEXT_PUBLIC_APP_URL || 'https://digitglance.com'}/app/dashboard`,
-      data: { role, full_name: fullName || '', invited_by: invitedBy || '' },
+      data: {
+        role,
+        full_name: fullName || '',
+        invited_by: invitedBy || '',
+        account_owner_id: accountOwnerId || '',
+        business_name: businessName || 'DigitGlance',
+        is_team_member: true,
+      },
     })
 
     if (error) {
