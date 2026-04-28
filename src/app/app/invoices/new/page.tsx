@@ -1,11 +1,12 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 
 type Customer = { id: string; name: string; email: string }
+type InventoryItem = { id: string; name: string; unit_price: number; stock: number; unit: string }
 type LineItem = {
   description: string
   quantity: number
@@ -25,10 +26,23 @@ export default function NewInvoicePage() {
   const supabase = createClient()
 
   const [customers, setCustomers] = useState<Customer[]>([])
+  const [inventory, setInventory] = useState<InventoryItem[]>([])
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [limitReached, setLimitReached] = useState(false)
   const [planInfo, setPlanInfo] = useState({ plan: 'free', used: 0, limit: 20 })
+
+  // Quick Add Customer modal
+  const [showAddCustomer, setShowAddCustomer] = useState(false)
+  const [customerForm, setCustomerForm] = useState({ name: '', email: '', phone: '', address: '' })
+  const [savingCustomer, setSavingCustomer] = useState(false)
+  const [customerError, setCustomerError] = useState('')
+
+  // Inventory search
+  const [activeItemIndex, setActiveItemIndex] = useState<number | null>(null)
+  const [inventorySearch, setInventorySearch] = useState('')
+  const [showInventoryDropdown, setShowInventoryDropdown] = useState(false)
+  const inventoryRef = useRef<HTMLDivElement>(null)
 
   const [form, setForm] = useState({
     customer_id: '',
@@ -47,11 +61,21 @@ export default function NewInvoicePage() {
 
   useEffect(() => { loadData() }, [])
 
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (inventoryRef.current && !inventoryRef.current.contains(e.target as Node)) {
+        setShowInventoryDropdown(false)
+        setActiveItemIndex(null)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
   async function loadData() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
 
-    // Load customers
     const { data: custData } = await supabase
       .from('customers')
       .select('id, name, email')
@@ -59,14 +83,20 @@ export default function NewInvoicePage() {
       .order('name')
     setCustomers(custData || [])
 
-    // Auto-generate invoice number
     const { data: invData } = await supabase
+      .from('inventory')
+      .select('id, name, unit_price, stock, unit')
+      .eq('user_id', user.id)
+      .order('name')
+    setInventory(invData || [])
+
+    const { data: lastInv } = await supabase
       .from('invoices')
       .select('invoice_number')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
       .limit(1)
-    const last = invData?.[0]?.invoice_number
+    const last = lastInv?.[0]?.invoice_number
     let nextNum = 'INV-001'
     if (last) {
       const num = parseInt(last.replace('INV-', '')) + 1
@@ -74,7 +104,6 @@ export default function NewInvoicePage() {
     }
     setForm(prev => ({ ...prev, invoice_number: nextNum }))
 
-    // Plan enforcement check
     const { data: profile } = await supabase
       .from('profiles')
       .select('plan')
@@ -88,23 +117,55 @@ export default function NewInvoicePage() {
       const now = new Date()
       const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
       const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59).toISOString()
-
       const { count } = await supabase
         .from('invoices')
         .select('*', { count: 'exact', head: true })
         .eq('user_id', user.id)
         .gte('created_at', monthStart)
         .lte('created_at', monthEnd)
-
       const used = count || 0
       setPlanInfo({ plan, used, limit })
-
-      if (used >= limit) {
-        setLimitReached(true)
-      }
+      if (used >= limit) setLimitReached(true)
     } else {
       setPlanInfo({ plan, used: 0, limit: Infinity })
     }
+  }
+
+  async function handleAddCustomer() {
+    if (!customerForm.name.trim()) { setCustomerError('Customer name is required.'); return }
+    setSavingCustomer(true)
+    setCustomerError('')
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+    const { data: newCustomer, error: custErr } = await supabase
+      .from('customers')
+      .insert({ ...customerForm, user_id: user.id })
+      .select('id, name, email')
+      .single()
+    if (custErr || !newCustomer) {
+      setCustomerError('Failed to add customer. Please try again.')
+      setSavingCustomer(false)
+      return
+    }
+    setCustomers(prev => [...prev, newCustomer].sort((a, b) => a.name.localeCompare(b.name)))
+    setForm(prev => ({ ...prev, customer_id: newCustomer.id }))
+    setCustomerForm({ name: '', email: '', phone: '', address: '' })
+    setSavingCustomer(false)
+    setShowAddCustomer(false)
+  }
+
+  function selectInventoryItem(index: number, item: InventoryItem) {
+    const updated = [...items]
+    updated[index] = {
+      ...updated[index],
+      description: item.name,
+      unit_price: item.unit_price,
+      amount: Number(updated[index].quantity) * item.unit_price,
+    }
+    setItems(updated)
+    setShowInventoryDropdown(false)
+    setActiveItemIndex(null)
+    setInventorySearch('')
   }
 
   function updateItem(index: number, field: string, value: string | number | boolean) {
@@ -138,6 +199,10 @@ export default function NewInvoicePage() {
   const total = afterDiscount + vatAmount
 
   const fmt = (n: number) => `₦${n.toLocaleString('en-NG', { minimumFractionDigits: 2 })}`
+
+  const filteredInventory = inventory.filter(i =>
+    i.name.toLowerCase().includes(inventorySearch.toLowerCase())
+  )
 
   async function handleSave() {
     if (limitReached) return
@@ -190,29 +255,26 @@ export default function NewInvoicePage() {
     router.push(`/app/invoices/${invoice.id}`)
   }
 
-  // Plan limit blocked screen
+  const navItems = [
+    { href: '/app/dashboard', label: 'Dashboard', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
+    { href: '/app/invoices', label: 'Invoices', icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z', active: true },
+    { href: '/app/customers', label: 'Customers', icon: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z' },
+    { href: '/app/inventory', label: 'Inventory', icon: 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4' },
+    { href: '/app/reports', label: 'Reports', icon: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z' },
+  ]
+
   if (limitReached) {
     return (
       <div className="min-h-screen bg-slate-50 flex">
         <aside className="w-64 bg-slate-900 min-h-screen flex flex-col fixed top-0 left-0">
           <div className="p-6 border-b border-slate-800">
-            <Link href="/app/dashboard">
-              <span className="text-xl font-bold text-white">Digit<span className="text-teal-400">Glance</span></span>
-            </Link>
+            <Link href="/app/dashboard"><span className="text-xl font-bold text-white">Digit<span className="text-teal-400">Glance</span></span></Link>
             <p className="text-xs text-slate-500 mt-1">Invoice System</p>
           </div>
           <nav className="flex-1 p-4 space-y-1">
-            {[
-              { href: '/app/dashboard', label: 'Dashboard', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
-              { href: '/app/invoices', label: 'Invoices', icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z', active: true },
-              { href: '/app/customers', label: 'Customers', icon: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z' },
-              { href: '/app/inventory', label: 'Inventory', icon: 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4' },
-              { href: '/app/reports', label: 'Reports', icon: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z' },
-            ].map(item => (
+            {navItems.map(item => (
               <Link key={item.href} href={item.href} className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${(item as any).active ? 'bg-teal-600/10 text-teal-400' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}>
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d={item.icon} />
-                </svg>
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d={item.icon} /></svg>
                 {item.label}
               </Link>
             ))}
@@ -226,19 +288,11 @@ export default function NewInvoicePage() {
               </svg>
             </div>
             <h2 className="text-xl font-bold text-slate-900 mb-2">Monthly Limit Reached</h2>
-            <p className="text-slate-500 text-sm mb-2">
-              You have used <span className="font-semibold text-slate-700">{planInfo.used} of {planInfo.limit}</span> invoices allowed on the <span className="font-semibold capitalize">{planInfo.plan}</span> plan this month.
-            </p>
-            <p className="text-slate-500 text-sm mb-8">
-              Upgrade your plan to create more invoices this month.
-            </p>
+            <p className="text-slate-500 text-sm mb-2">You have used <span className="font-semibold text-slate-700">{planInfo.used} of {planInfo.limit}</span> invoices on the <span className="font-semibold capitalize">{planInfo.plan}</span> plan this month.</p>
+            <p className="text-slate-500 text-sm mb-8">Upgrade your plan to create more invoices.</p>
             <div className="flex flex-col gap-3">
-              <Link href="/app/subscription" className="bg-teal-600 hover:bg-teal-700 text-white font-semibold px-6 py-3 rounded-lg text-sm transition-colors">
-                Upgrade Plan
-              </Link>
-              <Link href="/app/invoices" className="border border-slate-200 text-slate-600 font-semibold px-6 py-3 rounded-lg text-sm hover:bg-slate-50 transition-colors">
-                Back to Invoices
-              </Link>
+              <Link href="/app/subscription" className="bg-teal-600 hover:bg-teal-700 text-white font-semibold px-6 py-3 rounded-lg text-sm transition-colors">Upgrade Plan</Link>
+              <Link href="/app/invoices" className="border border-slate-200 text-slate-600 font-semibold px-6 py-3 rounded-lg text-sm hover:bg-slate-50 transition-colors">Back to Invoices</Link>
             </div>
           </div>
         </main>
@@ -250,23 +304,13 @@ export default function NewInvoicePage() {
     <div className="min-h-screen bg-slate-50 flex">
       <aside className="w-64 bg-slate-900 min-h-screen flex flex-col fixed top-0 left-0">
         <div className="p-6 border-b border-slate-800">
-          <Link href="/app/dashboard">
-            <span className="text-xl font-bold text-white">Digit<span className="text-teal-400">Glance</span></span>
-          </Link>
+          <Link href="/app/dashboard"><span className="text-xl font-bold text-white">Digit<span className="text-teal-400">Glance</span></span></Link>
           <p className="text-xs text-slate-500 mt-1">Invoice System</p>
         </div>
         <nav className="flex-1 p-4 space-y-1">
-          {[
-            { href: '/app/dashboard', label: 'Dashboard', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
-            { href: '/app/invoices', label: 'Invoices', icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z', active: true },
-            { href: '/app/customers', label: 'Customers', icon: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z' },
-            { href: '/app/inventory', label: 'Inventory', icon: 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4' },
-            { href: '/app/reports', label: 'Reports', icon: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z' },
-          ].map(item => (
+          {navItems.map(item => (
             <Link key={item.href} href={item.href} className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${(item as any).active ? 'bg-teal-600/10 text-teal-400' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}>
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d={item.icon} />
-              </svg>
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d={item.icon} /></svg>
               {item.label}
             </Link>
           ))}
@@ -307,7 +351,19 @@ export default function NewInvoicePage() {
                   <input type="text" value={form.invoice_number} onChange={e => setForm(prev => ({ ...prev, invoice_number: e.target.value }))} className="w-full border border-slate-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-teal-500" />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Customer *</label>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider">Customer *</label>
+                    <button
+                      type="button"
+                      onClick={() => { setShowAddCustomer(true); setCustomerError(''); setCustomerForm({ name: '', email: '', phone: '', address: '' }) }}
+                      className="text-xs text-teal-600 hover:text-teal-700 font-medium flex items-center gap-1"
+                    >
+                      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                      </svg>
+                      New Customer
+                    </button>
+                  </div>
                   <select value={form.customer_id} onChange={e => setForm(prev => ({ ...prev, customer_id: e.target.value }))} className="w-full border border-slate-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-teal-500">
                     <option value="">Select customer</option>
                     {customers.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
@@ -342,8 +398,51 @@ export default function NewInvoicePage() {
 
                 {items.map((item, index) => (
                   <div key={index} className="grid grid-cols-12 gap-2 items-center">
-                    <div className="col-span-4">
-                      <input type="text" value={item.description} onChange={e => updateItem(index, 'description', e.target.value)} placeholder="Description" className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-teal-500" />
+                    <div className="col-span-4 relative" ref={activeItemIndex === index ? inventoryRef : null}>
+                      <input
+                        type="text"
+                        value={item.description}
+                        onChange={e => {
+                          updateItem(index, 'description', e.target.value)
+                          setInventorySearch(e.target.value)
+                          setActiveItemIndex(index)
+                          setShowInventoryDropdown(true)
+                        }}
+                        onFocus={() => {
+                          setActiveItemIndex(index)
+                          setInventorySearch(item.description)
+                          setShowInventoryDropdown(true)
+                        }}
+                        placeholder="Type or select from inventory"
+                        className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-teal-500"
+                      />
+                      {showInventoryDropdown && activeItemIndex === index && inventory.length > 0 && (
+                        <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg z-20 max-h-48 overflow-y-auto">
+                          {filteredInventory.length === 0 ? (
+                            <div className="px-3 py-2 text-xs text-slate-400">No inventory items match</div>
+                          ) : (
+                            filteredInventory.map(inv => (
+                              <button
+                                key={inv.id}
+                                type="button"
+                                onClick={() => selectInventoryItem(index, inv)}
+                                className="w-full text-left px-3 py-2 hover:bg-teal-50 transition-colors"
+                              >
+                                <div className="flex items-center justify-between">
+                                  <span className="text-sm text-slate-900 font-medium">{inv.name}</span>
+                                  <span className="text-xs text-teal-600 font-semibold">₦{inv.unit_price.toLocaleString('en-NG')}</span>
+                                </div>
+                                <div className="flex items-center gap-2 mt-0.5">
+                                  <span className="text-xs text-slate-400">{inv.unit}</span>
+                                  <span className={`text-xs font-medium ${inv.stock > 0 ? 'text-green-600' : 'text-red-500'}`}>
+                                    {inv.stock > 0 ? `${inv.stock} in stock` : 'Out of stock'}
+                                  </span>
+                                </div>
+                              </button>
+                            ))
+                          )}
+                        </div>
+                      )}
                     </div>
                     <div className="col-span-2">
                       <input type="number" value={item.quantity} onChange={e => updateItem(index, 'quantity', parseFloat(e.target.value) || 0)} min="0" className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-teal-500" />
@@ -426,6 +525,60 @@ export default function NewInvoicePage() {
           </div>
         </div>
       </main>
+
+      {/* Quick Add Customer Modal */}
+      {showAddCustomer && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl w-full max-w-md p-6">
+            <div className="flex items-center justify-between mb-5">
+              <h2 className="text-lg font-bold text-slate-900">Add New Customer</h2>
+              <button onClick={() => setShowAddCustomer(false)} className="text-slate-400 hover:text-slate-600">
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {customerError && <div className="bg-red-50 border border-red-200 text-red-600 text-sm px-4 py-3 rounded-lg mb-4">{customerError}</div>}
+
+            <div className="space-y-4">
+              {[
+                { label: 'Full Name *', key: 'name', type: 'text', placeholder: 'e.g. John Adebayo' },
+                { label: 'Email Address', key: 'email', type: 'email', placeholder: 'john@example.com' },
+                { label: 'Phone Number', key: 'phone', type: 'tel', placeholder: '08012345678' },
+              ].map(field => (
+                <div key={field.key}>
+                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">{field.label}</label>
+                  <input
+                    type={field.type}
+                    value={customerForm[field.key as keyof typeof customerForm]}
+                    onChange={e => setCustomerForm(prev => ({ ...prev, [field.key]: e.target.value }))}
+                    placeholder={field.placeholder}
+                    className="w-full border border-slate-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-teal-500"
+                  />
+                </div>
+              ))}
+              <div>
+                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Address</label>
+                <textarea
+                  value={customerForm.address}
+                  onChange={e => setCustomerForm(prev => ({ ...prev, address: e.target.value }))}
+                  placeholder="Customer address"
+                  rows={2}
+                  className="w-full border border-slate-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-teal-500 resize-none"
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-3 mt-6">
+              <button onClick={() => setShowAddCustomer(false)} className="flex-1 border border-slate-200 text-slate-600 font-semibold py-2.5 rounded-lg text-sm hover:bg-slate-50 transition-colors">Cancel</button>
+              <button onClick={handleAddCustomer} disabled={savingCustomer} className="flex-1 bg-teal-600 hover:bg-teal-700 disabled:opacity-50 text-white font-semibold py-2.5 rounded-lg text-sm transition-colors">
+                {savingCustomer ? 'Adding...' : 'Add Customer'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
