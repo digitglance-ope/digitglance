@@ -17,7 +17,7 @@ export default function ForgotPasswordPage() {
 
     const supabase = createClient()
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/app/reset-password`,
+      redirectTo: 'https://digitglance.com/app/reset-password',
     })
 
     if (error) {
@@ -52,16 +52,13 @@ export default function ForgotPasswordPage() {
                 </svg>
               </div>
               <h1 className="text-xl font-bold text-white mb-2">Check your email</h1>
-              <p className="text-slate-400 text-sm mb-6">
-                We sent a password reset link to <span className="text-white font-medium">{email}</span>. Click the link in the email to set a new password.
+              <p className="text-slate-400 text-sm mb-2">
+                We sent a password reset link to <span className="text-white font-medium">{email}</span>.
               </p>
               <p className="text-slate-500 text-xs mb-6">
-                Did not receive the email? Check your spam folder or try again.
+                Click the link in the email to set a new password. Check your spam folder if you do not see it within a few minutes. The link expires in 1 hour.
               </p>
-              <button
-                onClick={() => setSent(false)}
-                className="text-teal-400 hover:text-teal-300 text-sm font-medium"
-              >
+              <button onClick={() => setSent(false)} className="text-teal-400 hover:text-teal-300 text-sm font-medium">
                 Try a different email
               </button>
             </div>
