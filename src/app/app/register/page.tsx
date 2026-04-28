@@ -1,12 +1,10 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 
 export default function RegisterPage() {
-  const router = useRouter()
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -31,7 +29,7 @@ export default function RegisterPage() {
     setLoading(true)
     const supabase = createClient()
 
-    const { data, error: signUpError } = await supabase.auth.signUp({
+    const { error: signUpError } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -46,21 +44,8 @@ export default function RegisterPage() {
       return
     }
 
-    if (data.user) {
-      const { error: profileError } = await supabase.from('profiles').insert({
-        id: data.user.id,
-        full_name: fullName,
-        onboarding_complete: false,
-        plan: 'free',
-      })
-
-      if (profileError && profileError.code !== '23505') {
-        setError('Account created but profile setup failed. Please contact support.')
-        setLoading(false)
-        return
-      }
-    }
-
+    // Profile is created automatically by the database trigger.
+    // Just show the confirmation screen.
     setDone(true)
     setLoading(false)
   }
@@ -69,6 +54,14 @@ export default function RegisterPage() {
     return (
       <div className="min-h-screen bg-slate-900 flex items-center justify-center px-4">
         <div className="w-full max-w-md text-center">
+          <div className="text-center mb-8">
+            <Link href="/" className="inline-block">
+              <span className="text-2xl font-bold text-white">
+                Digit<span className="text-teal-400">Glance</span>
+              </span>
+            </Link>
+            <p className="text-slate-400 mt-2 text-sm">Invoice Management System</p>
+          </div>
           <div className="bg-slate-800 border border-slate-700 rounded-2xl p-10">
             <div className="w-16 h-16 bg-teal-500/10 border border-teal-500/20 rounded-full flex items-center justify-center mx-auto mb-5">
               <svg className="w-8 h-8 text-teal-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -76,16 +69,19 @@ export default function RegisterPage() {
               </svg>
             </div>
             <h2 className="text-xl font-bold text-white mb-2">Check your email</h2>
-            <p className="text-slate-400 text-sm leading-relaxed">
-              We sent a confirmation link to <span className="text-white font-medium">{email}</span>. Click the link to verify your account and start using DigitGlance Invoice.
+            <p className="text-slate-400 text-sm leading-relaxed mb-2">
+              We sent a confirmation link to <span className="text-white font-medium">{email}</span>.
             </p>
-            <Link
-              href="/app/login"
-              className="inline-block mt-6 text-teal-400 hover:text-teal-300 text-sm font-medium"
-            >
+            <p className="text-slate-400 text-sm leading-relaxed">
+              Click the link in the email to verify your account and start using DigitGlance Invoice. Check your spam folder if you do not see it within a few minutes.
+            </p>
+            <Link href="/app/login" className="inline-block mt-6 text-teal-400 hover:text-teal-300 text-sm font-medium">
               Back to Sign In
             </Link>
           </div>
+          <p className="text-center text-slate-600 text-xs mt-6">
+            2026 DigitGlance. A trading name of Digitglance Reliance.
+          </p>
         </div>
       </div>
     )
@@ -95,7 +91,6 @@ export default function RegisterPage() {
     <div className="min-h-screen bg-slate-900 flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-md">
 
-        {/* Logo */}
         <div className="text-center mb-8">
           <Link href="/" className="inline-block">
             <span className="text-2xl font-bold text-white">
@@ -105,7 +100,6 @@ export default function RegisterPage() {
           <p className="text-slate-400 mt-2 text-sm">Invoice Management System</p>
         </div>
 
-        {/* Card */}
         <div className="bg-slate-800 border border-slate-700 rounded-2xl p-8">
           <h1 className="text-xl font-bold text-white mb-1">Create your account</h1>
           <p className="text-slate-400 text-sm mb-6">Free plan. No credit card required.</p>
