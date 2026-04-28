@@ -16,7 +16,8 @@ export async function POST(req: NextRequest) {
     )
 
     const { data, error } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
-      redirectTo: `${process.env.NEXT_PUBLIC_APP_URL || 'https://digitglance.com'}/app/dashboard`,
+      // Redirect to the accept-invite page so the user can set their password first
+      redirectTo: `${process.env.NEXT_PUBLIC_APP_URL || 'https://digitglance.com'}/app/accept-invite`,
       data: {
         role,
         full_name: fullName || '',

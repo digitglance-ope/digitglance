@@ -29,14 +29,21 @@ export async function middleware(request: NextRequest) {
 
   const path = request.nextUrl.pathname
   const isAppRoute = path.startsWith('/app')
-  const isAuthRoute = path === '/app/login' || path === '/app/register'
-  const isOnboardingRoute = path === '/app/onboarding' || path.startsWith('/app/onboarding')
-  const isResetPasswordRoute = path === '/app/reset-password'
-  const isForgotPasswordRoute = path === '/app/forgot-password'
 
-  // Allow unauthenticated access to auth and password routes
-  if (isAuthRoute || isResetPasswordRoute || isForgotPasswordRoute) {
-    if (user && isAuthRoute) {
+  // These routes are always accessible without authentication
+  const isPublicAppRoute =
+    path === '/app/login' ||
+    path === '/app/register' ||
+    path === '/app/forgot-password' ||
+    path === '/app/reset-password' ||
+    path === '/app/accept-invite'
+
+  const isOnboardingRoute = path === '/app/onboarding' || path.startsWith('/app/onboarding')
+
+  // Allow public routes through always
+  if (isPublicAppRoute) {
+    // Redirect already-logged-in users away from login/register
+    if (user && (path === '/app/login' || path === '/app/register')) {
       const url = request.nextUrl.clone()
       url.pathname = '/app/dashboard'
       return NextResponse.redirect(url)
@@ -51,7 +58,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
-  // For authenticated users on app routes, check onboarding status
+  // For authenticated users check onboarding
   if (isAppRoute && user && !isOnboardingRoute) {
     const { data: profile } = await supabase
       .from('profiles')
@@ -59,7 +66,7 @@ export async function middleware(request: NextRequest) {
       .eq('id', user.id)
       .single()
 
-    // Team members skip onboarding entirely - they join an existing account
+    // Team members skip onboarding entirely
     if (profile && !profile.onboarding_complete && !profile.is_team_member) {
       const url = request.nextUrl.clone()
       url.pathname = '/app/onboarding'
@@ -71,7 +78,7 @@ export async function middleware(request: NextRequest) {
   if (isOnboardingRoute && user) {
     const { data: profile } = await supabase
       .from('profiles')
-      .select('onboarding_complete, is_team_member')
+      .select('is_team_member')
       .eq('id', user.id)
       .single()
 
