@@ -65,23 +65,41 @@ export default function UsersPage() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
 
-    const token = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
+    // Step 1: Call server-side API to send the actual Supabase invitation email
+    const res = await fetch('/api/invite-user', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: inviteForm.email,
+        role: inviteForm.role,
+        fullName: inviteForm.full_name,
+        invitedBy: user.email,
+      }),
+    })
 
+    const result = await res.json()
+
+    if (!res.ok || result.error) {
+      setError(result.error || 'Failed to send invitation. Please try again.')
+      setSaving(false)
+      return
+    }
+
+    // Step 2: Record in account_users table for role tracking
     const { error: insertError } = await supabase.from('account_users').insert({
       account_owner_id: user.id,
       email: inviteForm.email,
       full_name: inviteForm.full_name,
       role: inviteForm.role,
       status: 'pending',
-      invite_token: token,
     })
 
-    if (insertError) {
-      setError('Failed to send invitation. Please try again.')
-      setSaving(false)
-      return
+    if (insertError && insertError.code !== '23505') {
+      // Non-duplicate errors still show a warning but invitation was sent
+      console.error('account_users insert error:', insertError)
     }
 
+    // Step 3: Audit log
     await supabase.from('audit_logs').insert({
       account_owner_id: user.id,
       user_id: user.id,
@@ -94,17 +112,15 @@ export default function UsersPage() {
     setSaving(false)
     setShowInviteForm(false)
     setInviteForm({ email: '', full_name: '', role: 'staff' })
-    setSuccess(`Invitation sent to ${inviteForm.email}`)
-    setTimeout(() => setSuccess(''), 4000)
+    setSuccess(`Invitation sent to ${inviteForm.email}. They will receive an email to set up their account.`)
+    setTimeout(() => setSuccess(''), 6000)
     load()
   }
 
   async function handleRoleChange(userId: string, newRole: string) {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
-
     await supabase.from('account_users').update({ role: newRole }).eq('id', userId)
-
     await supabase.from('audit_logs').insert({
       account_owner_id: user.id,
       user_id: user.id,
@@ -113,16 +129,13 @@ export default function UsersPage() {
       resource: 'Users',
       details: `Changed role to ${newRole} for user ${userId}`,
     })
-
     load()
   }
 
   async function handleStatusChange(userId: string, newStatus: string) {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
-
     await supabase.from('account_users').update({ status: newStatus }).eq('id', userId)
-
     await supabase.from('audit_logs').insert({
       account_owner_id: user.id,
       user_id: user.id,
@@ -131,7 +144,6 @@ export default function UsersPage() {
       resource: 'Users',
       details: `User ${userId} status changed to ${newStatus}`,
     })
-
     load()
   }
 
@@ -139,9 +151,7 @@ export default function UsersPage() {
     if (!confirm(`Remove ${email} from your account?`)) return
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
-
     await supabase.from('account_users').delete().eq('id', userId)
-
     await supabase.from('audit_logs').insert({
       account_owner_id: user.id,
       user_id: user.id,
@@ -150,7 +160,6 @@ export default function UsersPage() {
       resource: 'Users',
       details: `Removed ${email} from account`,
     })
-
     load()
   }
 
@@ -197,15 +206,19 @@ export default function UsersPage() {
             <h1 className="text-2xl font-bold text-slate-900">User Control</h1>
             <p className="text-slate-500 text-sm mt-1">Manage team members and their access levels</p>
           </div>
-          <button onClick={() => setShowInviteForm(true)} className="flex items-center gap-2 bg-teal-600 hover:bg-teal-700 text-white font-semibold px-5 py-2.5 rounded-lg text-sm transition-colors">
+          <button onClick={() => { setShowInviteForm(true); setError('') }} className="flex items-center gap-2 bg-teal-600 hover:bg-teal-700 text-white font-semibold px-5 py-2.5 rounded-lg text-sm transition-colors">
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
             Invite User
           </button>
         </div>
 
-        {success && <div className="bg-green-50 border border-green-200 text-green-700 text-sm px-4 py-3 rounded-lg mb-6">{success}</div>}
+        {success && (
+          <div className="bg-green-50 border border-green-200 text-green-700 text-sm px-4 py-3 rounded-lg mb-6 flex items-center gap-2">
+            <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+            {success}
+          </div>
+        )}
 
-        {/* Role descriptions */}
         <div className="grid grid-cols-4 gap-4 mb-8">
           {ROLES.map(role => (
             <div key={role.value} className="bg-white border border-slate-200 rounded-xl p-4">
@@ -247,22 +260,14 @@ export default function UsersPage() {
                     </td>
                     <td className="px-5 py-4 text-sm text-slate-600">{u.email}</td>
                     <td className="px-5 py-4">
-                      <select
-                        value={u.role}
-                        onChange={e => handleRoleChange(u.id, e.target.value)}
-                        className="border border-slate-200 rounded-lg px-3 py-1.5 text-xs font-medium focus:outline-none focus:border-teal-500"
-                      >
+                      <select value={u.role} onChange={e => handleRoleChange(u.id, e.target.value)} className="border border-slate-200 rounded-lg px-3 py-1.5 text-xs font-medium focus:outline-none focus:border-teal-500">
                         {ROLES.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
                       </select>
                     </td>
                     <td className="px-5 py-4">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold capitalize ${STATUS_COLORS[u.status] || 'bg-slate-100 text-slate-600'}`}>
-                        {u.status}
-                      </span>
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold capitalize ${STATUS_COLORS[u.status] || 'bg-slate-100 text-slate-600'}`}>{u.status}</span>
                     </td>
-                    <td className="px-5 py-4 text-sm text-slate-500">
-                      {new Date(u.created_at).toLocaleDateString('en-NG')}
-                    </td>
+                    <td className="px-5 py-4 text-sm text-slate-500">{new Date(u.created_at).toLocaleDateString('en-NG')}</td>
                     <td className="px-5 py-4">
                       <div className="flex gap-2 justify-end">
                         {u.status === 'active' ? (
@@ -290,9 +295,7 @@ export default function UsersPage() {
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
             </div>
-
             {error && <div className="bg-red-50 border border-red-200 text-red-600 text-sm px-4 py-3 rounded-lg mb-4">{error}</div>}
-
             <div className="space-y-4">
               <div>
                 <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Email Address *</label>
@@ -309,8 +312,10 @@ export default function UsersPage() {
                 </select>
               </div>
             </div>
-
-            <div className="flex gap-3 mt-6">
+            <div className="bg-blue-50 border border-blue-100 rounded-lg px-4 py-3 mt-4">
+              <p className="text-xs text-blue-700">The invited person will receive an email with a link to set up their password and access your DigitGlance account.</p>
+            </div>
+            <div className="flex gap-3 mt-4">
               <button onClick={() => setShowInviteForm(false)} className="flex-1 border border-slate-200 text-slate-600 font-semibold py-2.5 rounded-lg text-sm hover:bg-slate-50">Cancel</button>
               <button onClick={handleInvite} disabled={saving} className="flex-1 bg-teal-600 hover:bg-teal-700 disabled:opacity-50 text-white font-semibold py-2.5 rounded-lg text-sm">
                 {saving ? 'Sending...' : 'Send Invitation'}
