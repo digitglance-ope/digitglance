@@ -17,29 +17,29 @@ export default function AcceptInvitePage() {
   const [success, setSuccess] = useState(false)
   const [sessionReady, setSessionReady] = useState(false)
   const [checking, setChecking] = useState(true)
+  const [userEmail, setUserEmail] = useState('')
+  const [userName, setUserName] = useState('')
+  const [businessName, setBusinessName] = useState('')
 
   useEffect(() => {
-    // Supabase automatically processes the token from the URL hash
-    // We listen for the INITIAL_SESSION or USER_UPDATED event
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === 'INITIAL_SESSION' && session) {
+      if ((event === 'INITIAL_SESSION' || event === 'SIGNED_IN' || event === 'USER_UPDATED') && session) {
         setSessionReady(true)
-        setChecking(false)
-      } else if (event === 'USER_UPDATED' && session) {
-        setSessionReady(true)
-        setChecking(false)
-      } else if (event === 'SIGNED_IN' && session) {
-        setSessionReady(true)
+        setUserEmail(session.user.email || '')
+        setUserName(session.user.user_metadata?.full_name || '')
+        setBusinessName(session.user.user_metadata?.business_name || 'DigitGlance')
         setChecking(false)
       } else {
         setChecking(false)
       }
     })
 
-    // Also check if session exists already
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
         setSessionReady(true)
+        setUserEmail(session.user.email || '')
+        setUserName(session.user.user_metadata?.full_name || '')
+        setBusinessName(session.user.user_metadata?.business_name || 'DigitGlance')
       }
       setChecking(false)
     })
@@ -69,11 +69,26 @@ export default function AcceptInvitePage() {
       return
     }
 
+    // Send welcome email after successful password setup
+    try {
+      await fetch('/api/send-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'account_ready',
+          to: userEmail,
+          name: userName,
+          businessName,
+        }),
+      })
+    } catch (emailErr) {
+      // Email failure should not block the user from proceeding
+      console.error('Welcome email failed:', emailErr)
+    }
+
     setSuccess(true)
     setLoading(false)
-
-    // Redirect to dashboard after short delay
-    setTimeout(() => router.push('/app/dashboard'), 2000)
+    setTimeout(() => router.push('/app/dashboard'), 3000)
   }
 
   if (checking) {
@@ -90,13 +105,14 @@ export default function AcceptInvitePage() {
   if (!sessionReady) {
     return (
       <div className="min-h-screen bg-slate-900 flex items-center justify-center px-4">
-        <div className="w-full max-w-md text-center">
+        <div className="w-full max-w-md">
           <div className="text-center mb-8">
             <Link href="/" className="inline-block">
               <span className="text-2xl font-bold text-white">Digit<span className="text-teal-400">Glance</span></span>
             </Link>
+            <p className="text-slate-400 mt-2 text-sm">Invoice Management System</p>
           </div>
-          <div className="bg-slate-800 border border-slate-700 rounded-2xl p-8">
+          <div className="bg-slate-800 border border-slate-700 rounded-2xl p-8 text-center">
             <div className="w-14 h-14 bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
               <svg className="w-7 h-7 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -106,6 +122,7 @@ export default function AcceptInvitePage() {
             <p className="text-slate-400 text-sm mb-6">This invitation link has expired or is invalid. Invitation links are valid for 24 hours. Ask your account administrator to send a new invitation.</p>
             <Link href="/app/login" className="text-teal-400 hover:text-teal-300 text-sm font-medium">Back to Sign In</Link>
           </div>
+          <p className="text-center text-slate-600 text-xs mt-6">2026 DigitGlance. A trading name of Digitglance Reliance.</p>
         </div>
       </div>
     )
@@ -114,21 +131,24 @@ export default function AcceptInvitePage() {
   if (success) {
     return (
       <div className="min-h-screen bg-slate-900 flex items-center justify-center px-4">
-        <div className="w-full max-w-md text-center">
+        <div className="w-full max-w-md">
           <div className="text-center mb-8">
             <Link href="/" className="inline-block">
               <span className="text-2xl font-bold text-white">Digit<span className="text-teal-400">Glance</span></span>
             </Link>
+            <p className="text-slate-400 mt-2 text-sm">Invoice Management System</p>
           </div>
-          <div className="bg-slate-800 border border-slate-700 rounded-2xl p-8">
+          <div className="bg-slate-800 border border-slate-700 rounded-2xl p-8 text-center">
             <div className="w-14 h-14 bg-teal-600/20 rounded-full flex items-center justify-center mx-auto mb-4">
               <svg className="w-7 h-7 text-teal-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
               </svg>
             </div>
-            <h1 className="text-xl font-bold text-white mb-2">Account ready</h1>
-            <p className="text-slate-400 text-sm">Your password has been set. Taking you to the dashboard now.</p>
+            <h1 className="text-xl font-bold text-white mb-2">Account activated</h1>
+            <p className="text-slate-400 text-sm mb-2">Your account is ready. A confirmation has been sent to <span className="text-white font-medium">{userEmail}</span>.</p>
+            <p className="text-slate-500 text-xs">Taking you to the dashboard in a moment...</p>
           </div>
+          <p className="text-center text-slate-600 text-xs mt-6">2026 DigitGlance. A trading name of Digitglance Reliance.</p>
         </div>
       </div>
     )
@@ -150,9 +170,12 @@ export default function AcceptInvitePage() {
               <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
             </svg>
           </div>
-
           <h1 className="text-xl font-bold text-white mb-1">Accept your invitation</h1>
-          <p className="text-slate-400 text-sm mb-6">Set a password to activate your account and join the team.</p>
+          {userName && <p className="text-teal-400 text-sm mb-1">Welcome, {userName}</p>}
+          <p className="text-slate-400 text-sm mb-6">
+            Set a password to activate your account and join{' '}
+            <span className="text-white font-medium">{businessName}</span> on DigitGlance.
+          </p>
 
           {error && (
             <div className="bg-red-500/10 border border-red-500/20 text-red-400 text-sm px-4 py-3 rounded-lg mb-5">
@@ -162,9 +185,7 @@ export default function AcceptInvitePage() {
 
           <form onSubmit={handleSetPassword} className="space-y-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
-                New Password
-              </label>
+              <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">New Password</label>
               <div className="relative">
                 <input
                   type={showPassword ? 'text' : 'password'}
@@ -174,30 +195,18 @@ export default function AcceptInvitePage() {
                   placeholder="At least 8 characters"
                   className="w-full bg-slate-900 border border-slate-700 text-white placeholder-slate-600 rounded-lg px-4 py-3 pr-12 text-sm focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500 transition-colors"
                 />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(prev => !prev)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 transition-colors p-1"
-                  tabIndex={-1}
-                >
+                <button type="button" onClick={() => setShowPassword(p => !p)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 p-1" tabIndex={-1}>
                   {showPassword ? (
-                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
-                    </svg>
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" /></svg>
                   ) : (
-                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                    </svg>
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
                   )}
                 </button>
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
-                Confirm Password
-              </label>
+              <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Confirm Password</label>
               <div className="relative">
                 <input
                   type={showConfirm ? 'text' : 'password'}
@@ -207,21 +216,11 @@ export default function AcceptInvitePage() {
                   placeholder="Repeat your password"
                   className="w-full bg-slate-900 border border-slate-700 text-white placeholder-slate-600 rounded-lg px-4 py-3 pr-12 text-sm focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500 transition-colors"
                 />
-                <button
-                  type="button"
-                  onClick={() => setShowConfirm(prev => !prev)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 transition-colors p-1"
-                  tabIndex={-1}
-                >
+                <button type="button" onClick={() => setShowConfirm(p => !p)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 p-1" tabIndex={-1}>
                   {showConfirm ? (
-                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
-                    </svg>
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" /></svg>
                   ) : (
-                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                    </svg>
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
                   )}
                 </button>
               </div>

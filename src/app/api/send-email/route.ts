@@ -4,7 +4,7 @@ import { getResend, FROM_EMAIL, FROM_NAME } from '@/lib/resend'
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
-    const { type, to, data } = body
+    const { type, to, data, name, businessName } = body
 
     if (!type || !to) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
@@ -65,9 +65,7 @@ export async function POST(req: NextRequest) {
               </p>
             </div>
             <div style="padding:16px 32px;text-align:center;">
-              <p style="color:#94a3b8;font-size:11px;margin:0;">
-                Powered by DigitGlance &bull; digitglance.com
-              </p>
+              <p style="color:#94a3b8;font-size:11px;margin:0;">Powered by DigitGlance &bull; digitglance.com</p>
             </div>
           </div>
         </body>
@@ -112,9 +110,7 @@ export async function POST(req: NextRequest) {
               </p>
             </div>
             <div style="padding:16px 32px;text-align:center;">
-              <p style="color:#94a3b8;font-size:11px;margin:0;">
-                Powered by DigitGlance &bull; digitglance.com
-              </p>
+              <p style="color:#94a3b8;font-size:11px;margin:0;">Powered by DigitGlance &bull; digitglance.com</p>
             </div>
           </div>
         </body>
@@ -165,8 +161,61 @@ export async function POST(req: NextRequest) {
               </p>
             </div>
             <div style="padding:16px 32px;text-align:center;">
+              <p style="color:#94a3b8;font-size:11px;margin:0;">Powered by DigitGlance &bull; digitglance.com</p>
+            </div>
+          </div>
+        </body>
+        </html>
+      `
+    } else if (type === 'account_ready') {
+      const displayName = name || 'Team Member'
+      const displayBusiness = businessName || 'DigitGlance'
+      subject = `Your DigitGlance account is ready`
+      html = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        </head>
+        <body style="margin:0;padding:0;background:#f8fafc;font-family:Arial,sans-serif;">
+          <div style="max-width:600px;margin:0 auto;padding:40px 20px;">
+            <div style="background:#0f172a;padding:24px 32px;border-radius:12px 12px 0 0;">
+              <h1 style="margin:0;color:#ffffff;font-size:22px;font-weight:bold;">
+                Digit<span style="color:#2dd4bf;">Glance</span>
+              </h1>
+              <p style="margin:4px 0 0;color:#64748b;font-size:12px;">Invoice Management System</p>
+            </div>
+            <div style="background:#ffffff;padding:32px;border:1px solid #e2e8f0;border-top:none;">
+              <div style="text-align:center;margin-bottom:28px;">
+                <div style="width:60px;height:60px;background:#f0fdfa;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;margin-bottom:16px;">
+                  <svg width="28" height="28" fill="none" viewBox="0 0 24 24" stroke="#0d9488" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+                <h2 style="color:#0f172a;font-size:20px;font-weight:bold;margin:0;">Your account is ready</h2>
+              </div>
+              <p style="color:#475569;font-size:15px;margin:0 0 8px;">Hello ${displayName},</p>
+              <p style="color:#475569;font-size:15px;margin:0 0 24px;line-height:1.6;">
+                Your DigitGlance account has been activated. You now have access to <strong>${displayBusiness}</strong> on DigitGlance and can sign in at any time using the button below.
+              </p>
+              <div style="background:#f0fdfa;border:1px solid #99f6e4;border-radius:8px;padding:16px;margin-bottom:24px;">
+                <p style="color:#0f766e;font-size:13px;margin:0;line-height:1.5;">
+                  You can create invoices, manage customers, track payments, and access all features assigned to your role. Contact your account administrator if you need access to additional features.
+                </p>
+              </div>
+              <div style="text-align:center;margin-bottom:24px;">
+                <a href="https://digitglance.com/app/login" style="background:#0d9488;color:#ffffff;text-decoration:none;padding:14px 32px;border-radius:8px;font-size:14px;font-weight:bold;display:inline-block;">
+                  Sign In to DigitGlance
+                </a>
+              </div>
+              <p style="color:#94a3b8;font-size:12px;margin:24px 0 0;border-top:1px solid #e2e8f0;padding-top:16px;">
+                If you did not expect this email or did not set up a DigitGlance account, contact us at hello@digitglance.com.
+              </p>
+            </div>
+            <div style="padding:16px 32px;text-align:center;">
               <p style="color:#94a3b8;font-size:11px;margin:0;">
-                Powered by DigitGlance &bull; digitglance.com
+                © 2026 DigitGlance. A trading name of Digitglance Reliance. &bull; digitglance.com
               </p>
             </div>
           </div>
@@ -178,7 +227,7 @@ export async function POST(req: NextRequest) {
     }
 
     const resend = getResend()
-const { data: result, error } = await resend.emails.send({
+    const { data: result, error } = await resend.emails.send({
       from: `${FROM_NAME} <${FROM_EMAIL}>`,
       to,
       subject,
