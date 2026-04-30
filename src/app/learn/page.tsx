@@ -46,26 +46,10 @@ function IconUsers({ className }: { className?: string }) {
 }
 
 const audiences = [
-  {
-    icon: IconGrad,
-    title: 'ICAN Students',
-    desc: 'Clear explanations of accounting standards, tax principles, and exam-focused answers.',
-  },
-  {
-    icon: IconGrad,
-    title: 'University Students',
-    desc: 'Financial accounting, management accounting, and taxation concepts with worked examples.',
-  },
-  {
-    icon: IconBriefcase,
-    title: 'Business Owners',
-    desc: 'Practical questions about VAT, PAYE, business expenses, and your tax obligations.',
-  },
-  {
-    icon: IconUsers,
-    title: 'Finance Teams',
-    desc: 'Quick answers on IFRS treatment, tax computations, and Nigerian regulatory requirements.',
-  },
+  { icon: IconGrad,      title: 'ICAN Students',    desc: 'Clear explanations of accounting standards, tax principles, and exam-focused answers.' },
+  { icon: IconGrad,      title: 'University Students', desc: 'Financial accounting, management accounting, and taxation concepts with worked examples.' },
+  { icon: IconBriefcase, title: 'Business Owners',  desc: 'Practical questions about VAT, PAYE, business expenses, and your tax obligations.' },
+  { icon: IconUsers,     title: 'Finance Teams',    desc: 'Quick answers on IFRS treatment, tax computations, and Nigerian regulatory requirements.' },
 ]
 
 const sampleQuestions = [
@@ -83,43 +67,46 @@ const sampleQuestions = [
 
 export default function Learn() {
   return (
-    <main className="min-h-screen bg-[#050d1a]">
+    <main className="min-h-screen bg-white">
       <Navbar />
 
       {/* ── PAGE HEADER ─────────────────────────────────────── */}
-      <section className="relative overflow-hidden bg-[#050d1a] px-5 sm:px-6 py-24">
-        <div className="absolute inset-0 hero-grid" />
-        <div className="orb w-[600px] h-[600px] bg-teal-500/10 top-[-20%] left-[-10%]" />
-        <div className="relative z-10 max-w-6xl mx-auto">
-          <p className="teal-line mb-5 animate-fade-in-up">DigitGlance Assist</p>
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white leading-tight mb-5 animate-fade-in-up anim-delay-100">
+      <section className="section-white px-5 sm:px-6 py-20 border-b border-gray-100">
+        <div className="max-w-6xl mx-auto">
+          <span className="badge-green mb-6 inline-flex animate-fade-in-up">
+            <span className="green-marker" />
+            DigitGlance Assist
+          </span>
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-tight mb-5 animate-fade-in-up anim-delay-100" style={{ color: '#1B4F72' }}>
             Ask Any Accounting<br />
-            <span className="gradient-text">or Tax Question</span>
+            <span style={{ color: '#27AE60' }}>or Tax Question</span>
           </h1>
-          <p className="text-slate-400 text-lg max-w-2xl leading-relaxed animate-fade-in-up anim-delay-200">
+          <p className="text-slate-500 text-lg max-w-2xl leading-relaxed animate-fade-in-up anim-delay-200">
             Get practical, Nigeria-focused answers powered by AI and trained on Nigerian standards, NRS regulations, ICAN guidelines, and LIRS practice.
           </p>
         </div>
       </section>
 
       {/* ── WHO IT IS FOR ───────────────────────────────────── */}
-      <section className="px-5 sm:px-6 py-20">
+      <section className="section-gray px-5 sm:px-6 py-20">
         <div className="max-w-6xl mx-auto">
           <ScrollReveal className="mb-12 text-center">
-            <p className="teal-line mb-3 justify-center">Who It Helps</p>
-            <h2 className="text-3xl sm:text-4xl font-bold text-white mb-3">Who DigitGlance Assist Is For</h2>
-            <p className="text-slate-500 max-w-xl mx-auto">
+            <span className="badge-navy mb-4 inline-flex">Who It Helps</span>
+            <h2 className="text-3xl sm:text-4xl font-extrabold mt-2 mb-3" style={{ color: '#1B4F72' }}>
+              Who DigitGlance Assist Is For
+            </h2>
+            <p className="text-slate-500 max-w-xl mx-auto text-sm">
               Whether you are studying for your ICAN exams or running a business, Assist gives you accurate answers fast.
             </p>
           </ScrollReveal>
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
             {audiences.map((item, i) => (
               <ScrollReveal key={item.title} delay={i * 80}>
-                <div className="glass-card rounded-2xl p-6 text-center h-full">
-                  <div className="w-12 h-12 rounded-xl bg-teal-500/10 border border-teal-500/20 flex items-center justify-center mx-auto mb-5">
-                    <item.icon className="w-6 h-6 text-teal-400" />
+                <div className="card-feature text-center h-full">
+                  <div className="icon-box mx-auto mb-5">
+                    <item.icon className="w-5 h-5 text-[#27AE60]" />
                   </div>
-                  <h3 className="font-bold text-white mb-2">{item.title}</h3>
+                  <h3 className="font-bold mb-2 text-sm" style={{ color: '#1B4F72' }}>{item.title}</h3>
                   <p className="text-slate-500 text-sm leading-relaxed">{item.desc}</p>
                 </div>
               </ScrollReveal>
@@ -129,21 +116,26 @@ export default function Learn() {
       </section>
 
       {/* ── SAMPLE QUESTIONS ────────────────────────────────── */}
-      <section className="px-5 sm:px-6 py-20">
+      <section className="section-white px-5 sm:px-6 py-20">
         <div className="max-w-6xl mx-auto">
           <ScrollReveal className="mb-10">
-            <p className="teal-line mb-3">What You Can Ask</p>
-            <h2 className="text-3xl sm:text-4xl font-bold text-white mb-3">Example Questions</h2>
-            <p className="text-slate-500">Here are examples of questions DigitGlance Assist can answer.</p>
+            <span className="badge-green mb-4 inline-flex">
+              <span className="green-marker" />
+              What You Can Ask
+            </span>
+            <h2 className="text-3xl sm:text-4xl font-extrabold mt-2 mb-3" style={{ color: '#1B4F72' }}>
+              Example Questions
+            </h2>
+            <p className="text-slate-500 text-sm">Here are examples of questions DigitGlance Assist can answer.</p>
           </ScrollReveal>
           <div className="grid sm:grid-cols-2 gap-4">
             {sampleQuestions.map((q, i) => (
               <ScrollReveal key={q} delay={i * 50}>
-                <div className="glass-card rounded-xl px-5 py-4 flex items-start gap-3 group cursor-default">
-                  <div className="w-7 h-7 rounded-lg bg-teal-500/10 border border-teal-500/20 flex items-center justify-center flex-shrink-0 mt-0.5 group-hover:bg-teal-500/20 transition-colors">
-                    <IconQuestion className="w-4 h-4 text-teal-400" />
+                <div className="card rounded-xl px-5 py-4 flex items-start gap-3">
+                  <div className="icon-box flex-shrink-0 mt-0.5" style={{ width: '1.75rem', height: '1.75rem', borderRadius: '0.5rem' }}>
+                    <IconQuestion className="w-3.5 h-3.5 text-[#27AE60]" />
                   </div>
-                  <p className="text-slate-300 text-sm leading-relaxed">{q}</p>
+                  <p className="text-slate-600 text-sm leading-relaxed">{q}</p>
                 </div>
               </ScrollReveal>
             ))}
@@ -152,26 +144,26 @@ export default function Learn() {
       </section>
 
       {/* ── COMING SOON CHAT ─────────────────────────────────── */}
-      <section className="px-5 sm:px-6 py-20">
+      <section className="section-gray px-5 sm:px-6 py-20">
         <div className="max-w-3xl mx-auto">
           <ScrollReveal>
-            <div className="glass-card rounded-2xl overflow-hidden">
+            <div className="card rounded-2xl overflow-hidden">
               {/* Chat header */}
-              <div className="flex items-center gap-3 px-5 py-4 border-b border-white/5 bg-white/2">
-                <div className="w-3 h-3 rounded-full bg-teal-400 animate-glow" />
+              <div className="flex items-center gap-3 px-5 py-4 border-b border-gray-100" style={{ background: '#1B4F72' }}>
+                <div className="w-2.5 h-2.5 rounded-full bg-green-400" />
                 <p className="text-white text-sm font-semibold">DigitGlance Assist</p>
-                <span className="ml-auto bg-amber-500/20 text-amber-400 text-xs font-bold px-3 py-1 rounded-full border border-amber-500/25">
+                <span className="ml-auto bg-amber-400/20 text-amber-300 text-xs font-bold px-3 py-1 rounded-full border border-amber-400/30">
                   Coming Soon
                 </span>
               </div>
 
               {/* Chat body */}
-              <div className="bg-white/1 p-10 min-h-64 flex items-center justify-center">
+              <div className="bg-[#f7fafc] p-10 min-h-64 flex items-center justify-center">
                 <div className="text-center">
-                  <div className="w-16 h-16 rounded-2xl bg-teal-500/10 border border-teal-500/20 flex items-center justify-center mx-auto mb-5">
-                    <IconAI className="w-8 h-8 text-teal-400" />
+                  <div className="icon-box mx-auto mb-5" style={{ width: '4rem', height: '4rem', borderRadius: '1rem' }}>
+                    <IconAI className="w-7 h-7 text-[#27AE60]" />
                   </div>
-                  <h3 className="font-bold text-white mb-2">DigitGlance Assist is being built</h3>
+                  <h3 className="font-bold mb-2" style={{ color: '#1B4F72' }}>DigitGlance Assist is being built</h3>
                   <p className="text-slate-500 text-sm max-w-sm">
                     The AI assistant is currently in development. It will be available soon with full support for Nigerian accounting and tax questions.
                   </p>
@@ -179,15 +171,15 @@ export default function Learn() {
               </div>
 
               {/* Chat input */}
-              <div className="border-t border-white/5 px-4 py-3 flex gap-3 bg-white/1">
+              <div className="border-t border-gray-100 px-4 py-3 flex gap-3 bg-white">
                 <input
                   disabled
                   placeholder="Ask an accounting or tax question..."
-                  className="flex-1 bg-white/5 border border-white/8 rounded-xl px-4 py-2.5 text-sm text-slate-600 cursor-not-allowed placeholder:text-slate-600 outline-none"
+                  className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-slate-400 cursor-not-allowed placeholder:text-slate-400 outline-none"
                 />
                 <button
                   disabled
-                  className="bg-white/5 text-slate-600 px-4 py-2.5 rounded-xl text-sm font-medium cursor-not-allowed border border-white/8"
+                  className="bg-gray-100 text-slate-400 px-4 py-2.5 rounded-xl text-sm font-medium cursor-not-allowed border border-gray-200"
                 >
                   Send
                 </button>
@@ -198,12 +190,12 @@ export default function Learn() {
       </section>
 
       {/* ── DISCLAIMER ──────────────────────────────────────── */}
-      <section className="px-5 sm:px-6 pb-16">
+      <section className="section-white px-5 sm:px-6 pb-16">
         <div className="max-w-3xl mx-auto">
           <ScrollReveal>
-            <div className="rounded-2xl bg-amber-500/5 border border-amber-500/15 px-6 py-5">
-              <p className="text-amber-300/80 text-sm leading-relaxed">
-                <span className="font-semibold text-amber-400">Disclaimer:</span> DigitGlance Assist provides general accounting and tax guidance for educational purposes. It does not replace professional advice. For specific tax matters, regulatory filings, or legal questions, always consult a qualified accountant or tax adviser.
+            <div className="rounded-2xl bg-amber-50 border border-amber-200 px-6 py-5">
+              <p className="text-amber-800 text-sm leading-relaxed">
+                <span className="font-semibold">Disclaimer:</span> DigitGlance Assist provides general accounting and tax guidance for educational purposes. It does not replace professional advice. For specific tax matters, regulatory filings, or legal questions, always consult a qualified accountant or tax adviser.
               </p>
             </div>
           </ScrollReveal>

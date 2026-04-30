@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import Link from 'next/link'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import ScrollReveal from '@/components/ScrollReveal'
@@ -61,45 +62,43 @@ const sections = [
 
 export default function PrivacyPage() {
   return (
-    <main className="min-h-screen bg-[#050d1a]">
+    <main className="min-h-screen bg-white">
       <Navbar />
 
       {/* ── HEADER ──────────────────────────────────────────── */}
-      <section className="relative overflow-hidden bg-[#050d1a] px-5 sm:px-6 py-20">
-        <div className="absolute inset-0 hero-grid" />
-        <div className="orb w-[400px] h-[400px] bg-teal-500/8 top-[-20%] right-[5%]" />
-        <div className="relative z-10 max-w-3xl mx-auto">
-          <p className="teal-line mb-5 animate-fade-in-up">Legal</p>
-          <h1 className="text-4xl sm:text-5xl font-bold text-white mb-4 animate-fade-in-up anim-delay-100">
+      <section className="section-white px-5 sm:px-6 py-20 border-b border-gray-100">
+        <div className="relative max-w-3xl mx-auto">
+          <span className="badge-navy mb-6 inline-flex animate-fade-in-up">Legal</span>
+          <h1 className="text-4xl sm:text-5xl font-extrabold mb-4 animate-fade-in-up anim-delay-100" style={{ color: '#1B4F72' }}>
             Privacy Policy
           </h1>
-          <p className="text-slate-500 animate-fade-in-up anim-delay-200">Last updated: April 2026</p>
+          <p className="text-slate-400 animate-fade-in-up anim-delay-200">Last updated: April 2026</p>
         </div>
       </section>
 
       {/* ── CONTENT ─────────────────────────────────────────── */}
-      <section className="px-5 sm:px-6 py-16">
+      <section className="section-gray px-5 sm:px-6 py-16">
         <div className="max-w-3xl mx-auto">
 
           {/* Intro notice */}
           <ScrollReveal className="mb-10">
-            <div className="glass-card rounded-2xl p-6 border-l-2 border-teal-500">
-              <p className="text-slate-300 text-sm leading-relaxed">
+            <div className="card rounded-2xl p-6 border-l-4" style={{ borderLeftColor: '#27AE60' }}>
+              <p className="text-slate-600 text-sm leading-relaxed">
                 This Privacy Policy applies to DigitGlance, a trading name of Digitglance Reliance, and covers all services including the DigitGlance Invoice application available at digitglance.com. By using our services, you agree to the collection and use of information as described in this policy.
               </p>
             </div>
           </ScrollReveal>
 
           {/* Sections */}
-          <div className="space-y-6">
+          <div className="space-y-5">
             {sections.map((sec, i) => (
               <ScrollReveal key={sec.title} delay={i * 40}>
-                <div className="glass-card rounded-2xl p-6 sm:p-8">
-                  <h2 className="text-white font-bold text-base mb-3 flex items-center gap-2">
-                    <span className="w-1 h-4 rounded-full bg-teal-400 inline-block teal-glow-sm" />
+                <div className="card rounded-2xl p-6 sm:p-8">
+                  <h2 className="font-extrabold text-sm mb-3 flex items-center gap-2" style={{ color: '#1B4F72' }}>
+                    <span className="w-1 h-4 rounded-full inline-block flex-shrink-0" style={{ background: '#27AE60' }} />
                     {sec.title}
                   </h2>
-                  <p className="text-slate-400 text-sm leading-relaxed">{sec.content}</p>
+                  <p className="text-slate-500 text-sm leading-relaxed">{sec.content}</p>
                 </div>
               </ScrollReveal>
             ))}
@@ -107,14 +106,14 @@ export default function PrivacyPage() {
 
           {/* Contact CTA */}
           <ScrollReveal className="mt-12">
-            <div className="text-center glass-card rounded-2xl p-8">
-              <p className="text-slate-400 text-sm mb-4">Questions about your privacy?</p>
-              <a
-                href="mailto:hello@digitglance.com"
-                className="btn-primary inline-flex text-sm py-2.5 px-6"
+            <div className="text-center card rounded-2xl p-8">
+              <p className="text-slate-500 text-sm mb-4">Questions about your privacy?</p>
+              <Link
+                href="/contact"
+                className="btn-green inline-flex text-sm py-2.5 px-6"
               >
                 Contact Us
-              </a>
+              </Link>
             </div>
           </ScrollReveal>
         </div>
