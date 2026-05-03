@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Digitglance — POS & Inventory</title>
+<meta name="viewport" content="width=1440" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Serif:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --teal-900: #06504F;
+    --teal-700: #0E8383;
+    --teal-600: #119999;
+    --teal-100: #DBF1F0;
+    --teal-50:  #ECF8F7;
+    --lime-700: #2BAA00;
+    --lime-600: #37D200;
+    --lime-100: #DFF8D2;
+    --ink-900:  oklch(20% 0.015 220);
+    --ink-700:  oklch(35% 0.012 220);
+    --ink-500:  oklch(52% 0.010 220);
+    --ink-400:  oklch(64% 0.008 220);
+    --ink-300:  oklch(78% 0.006 220);
+    --paper:    oklch(99% 0.004 180);
+    --paper-2:  oklch(97.5% 0.005 180);
+    --paper-3:  oklch(95% 0.006 180);
+    --line:     oklch(91% 0.006 200);
+    --line-2:   oklch(86% 0.007 200);
+    --amber:    oklch(72% 0.14 70);
+    --amber-bg: oklch(95% 0.04 80);
+    --rose:     oklch(58% 0.18 25);
+    --rose-bg:  oklch(95% 0.03 25);
+    --violet:   oklch(55% 0.15 285);
+
+    --r-xs: 4px;
+    --r-sm: 6px;
+    --r-md: 8px;
+    --r-lg: 12px;
+    --r-xl: 16px;
+
+    --font-sans: 'IBM Plex Sans', system-ui, -apple-system, Helvetica, Arial, sans-serif;
+    --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+    --font-serif: 'IBM Plex Serif', Georgia, serif;
+  }
+  [data-theme="dark"] {
+    --paper:    oklch(18% 0.012 220);
+    --paper-2:  oklch(22% 0.012 220);
+    --paper-3:  oklch(26% 0.012 220);
+    --ink-900:  oklch(96% 0.005 200);
+    --ink-700:  oklch(85% 0.006 200);
+    --ink-500:  oklch(70% 0.008 200);
+    --ink-400:  oklch(58% 0.010 220);
+    --ink-300:  oklch(40% 0.012 220);
+    --line:     oklch(30% 0.012 220);
+    --line-2:   oklch(38% 0.012 220);
+    --teal-50:  oklch(28% 0.04 190);
+    --teal-100: oklch(34% 0.06 190);
+    --lime-100: oklch(32% 0.10 145);
+    --amber-bg: oklch(32% 0.06 80);
+    --rose-bg:  oklch(32% 0.06 25);
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: var(--font-sans);
+    background: var(--paper-2);
+    color: var(--ink-900);
+    font-size: 14px;
+    line-height: 1.4;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  button { font-family: inherit; cursor: pointer; }
+  input, textarea, select { font-family: inherit; color: inherit; }
+  input:focus, button:focus, select:focus, textarea:focus { outline: 2px solid var(--teal-700); outline-offset: 1px; }
+  ::selection { background: var(--teal-100); color: var(--teal-900); }
+
+  .mono { font-family: var(--font-mono); font-feature-settings: "tnum"; }
+  .tnum { font-variant-numeric: tabular-nums; }
+
+  /* Reusable atoms */
+  .hairline { border: 1px solid var(--line); }
+  .pill {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 2px 8px; border-radius: 999px;
+    font-size: 11px; font-weight: 500;
+    background: var(--paper-3); color: var(--ink-700);
+    border: 1px solid var(--line);
+  }
+  .pill.green { background: var(--lime-100); color: var(--teal-900); border-color: transparent; }
+  .pill.teal  { background: var(--teal-100); color: var(--teal-900); border-color: transparent; }
+  .pill.amber { background: var(--amber-bg); color: oklch(45% 0.12 70); border-color: transparent; }
+  .pill.rose  { background: var(--rose-bg); color: var(--rose); border-color: transparent; }
+
+  .kbd {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 18px; height: 18px; padding: 0 4px;
+    font-family: var(--font-mono); font-size: 10.5px; font-weight: 500;
+    background: var(--paper); color: var(--ink-700);
+    border: 1px solid var(--line-2);
+    border-bottom-width: 2px;
+    border-radius: 4px;
+  }
+
+  /* Density toggle */
+  [data-density="compact"] { font-size: 13px; }
+  [data-density="compact"] .row-pad { padding: 6px 12px !important; }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-thumb { background: var(--line-2); border-radius: 999px; border: 2px solid var(--paper-2); }
+  ::-webkit-scrollbar-track { background: transparent; }
+
+  /* Loading shell */
+  #__boot {
+    position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
+    background: var(--paper-2); color: var(--ink-500); font-family: var(--font-mono); font-size: 12px;
+  }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<div id="__boot">loading digitglance…</div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script type="text/babel" src="tweaks-panel.jsx"></script>
+<script type="text/babel" src="data.jsx"></script>
+<script type="text/babel" src="primitives.jsx"></script>
+<script type="text/babel" src="dashboard.jsx"></script>
+<script type="text/babel" src="pos.jsx"></script>
+<script type="text/babel" src="inventory.jsx"></script>
+<script type="text/babel" src="modules.jsx"></script>
+<script type="text/babel" src="mobile.jsx"></script>
+<script type="text/babel" src="app.jsx"></script>
+</body>
+</html>
