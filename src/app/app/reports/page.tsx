@@ -80,6 +80,7 @@ export default function ReportsPage() {
   const [purchaseLines, setPurchaseLines] = useState<PurchaseLineItem[]>([])
   const [saleLines, setSaleLines] = useState<SaleLineItem[]>([])
   const [loading, setLoading] = useState(true)
+  const [plan, setPlan] = useState<string | null>(null)
   const [startDate, setStartDate] = useState(() => {
     const d = new Date()
     d.setDate(1)
@@ -94,6 +95,8 @@ export default function ReportsPage() {
     setLoading(true)
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
+    const { data: profile } = await supabase.from('profiles').select('plan').eq('id', user.id).single()
+    setPlan(profile?.plan || 'free')
 
     let query = supabase
       .from('invoices')
@@ -349,7 +352,7 @@ export default function ReportsPage() {
             {activeTab === 'vat' && <button onClick={exportVATCSV} className="border border-teal-200 bg-teal-50 text-teal-700 font-semibold px-4 py-2.5 rounded-lg text-sm hover:bg-teal-100 transition-colors flex items-center gap-2"><svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z" /></svg>Export Output VAT CSV</button>}
             {activeTab === 'vat_liability' && <button onClick={exportVATLiabilityCSV} className="border border-orange-200 bg-orange-50 text-orange-700 font-semibold px-4 py-2.5 rounded-lg text-sm hover:bg-orange-100 transition-colors flex items-center gap-2"><svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>Export VAT Return CSV</button>}
             {activeTab === 'receivable' && <button onClick={exportARCSV} className="border border-slate-200 text-slate-600 font-semibold px-4 py-2.5 rounded-lg text-sm hover:bg-slate-50 transition-colors flex items-center gap-2"><svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>Export CSV</button>}
-            {activeTab === 'inventory' && <button onClick={exportInventoryCSV} className="border border-slate-200 text-slate-600 font-semibold px-4 py-2.5 rounded-lg text-sm hover:bg-slate-50 transition-colors flex items-center gap-2"><svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>Export Inventory CSV</button>}
+            {activeTab === 'inventory' && plan === 'pro' && <button onClick={exportInventoryCSV} className="border border-slate-200 text-slate-600 font-semibold px-4 py-2.5 rounded-lg text-sm hover:bg-slate-50 transition-colors flex items-center gap-2"><svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>Export Inventory CSV</button>}
           </div>
         </div>
 
@@ -437,7 +440,7 @@ export default function ReportsPage() {
           </div>
         )}
 
-        {activeTab === 'inventory' && (
+        {activeTab === 'inventory' && plan === 'pro' && (
           <div className="grid grid-cols-3 gap-4 mb-6">
             {[
               { label: 'Total Items', value: String(inventoryItems.length), color: 'text-slate-900' },
@@ -454,8 +457,11 @@ export default function ReportsPage() {
 
         <div className="flex gap-2 mb-4 flex-wrap">
           {tabs.map(tab => (
-            <button key={tab.key} onClick={() => setActiveTab(tab.key)} className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${activeTab === tab.key ? 'bg-teal-600 text-white' : 'bg-white border border-slate-200 text-slate-600 hover:border-teal-300'}`}>
+            <button key={tab.key} onClick={() => setActiveTab(tab.key)} className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5 ${activeTab === tab.key ? 'bg-teal-600 text-white' : 'bg-white border border-slate-200 text-slate-600 hover:border-teal-300'}`}>
               {tab.label}
+              {tab.key === 'inventory' && plan !== 'pro' && (
+                <span className={`text-xs font-bold px-1.5 py-0.5 rounded ${activeTab === tab.key ? 'bg-white/20 text-white' : 'bg-purple-100 text-purple-600'}`}>Pro</span>
+              )}
             </button>
           ))}
         </div>
@@ -585,7 +591,20 @@ export default function ReportsPage() {
               </table>
             )
           ) : activeTab === 'inventory' ? (
-            inventoryItems.length === 0 ? (
+            plan !== 'pro' ? (
+              <div className="p-12 text-center">
+                <div className="w-14 h-14 bg-purple-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                  <svg className="w-7 h-7 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                  </svg>
+                </div>
+                <h3 className="text-base font-bold text-slate-900 mb-1">Pro Plan Required</h3>
+                <p className="text-slate-500 text-sm mb-4 leading-relaxed">Inventory Valuation is available on the Pro plan. Upgrade to track stock value, cost of goods, and opening/closing stock for any period.</p>
+                <Link href="/app/subscription" className="inline-block bg-teal-600 text-white font-semibold px-5 py-2.5 rounded-lg text-sm hover:bg-teal-700 transition-colors">
+                  Upgrade to Pro →
+                </Link>
+              </div>
+            ) : inventoryItems.length === 0 ? (
               <div className="p-12 text-center">
                 <p className="text-slate-500 text-sm mb-2">No inventory items found.</p>
                 <Link href="/app/inventory" className="text-teal-600 text-sm font-medium hover:underline">Add inventory items</Link>

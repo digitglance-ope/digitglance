@@ -56,6 +56,7 @@ export default function SuppliersPage() {
   const [payments, setPayments] = useState<Payment[]>([])
   const [inventory, setInventory] = useState<InventoryItem[]>([])
   const [loading, setLoading] = useState(true)
+  const [plan, setPlan] = useState<string | null>(null)
   const [search, setSearch] = useState('')
 
   // Supplier form
@@ -111,11 +112,13 @@ export default function SuppliersPage() {
   async function load() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
-    const [suppRes, payRes, invRes] = await Promise.all([
+    const [suppRes, payRes, invRes, profileRes] = await Promise.all([
       supabase.from('suppliers').select('*').eq('user_id', user.id).order('name'),
       supabase.from('supplier_payments').select('*').eq('user_id', user.id).order('payment_date', { ascending: false }),
       supabase.from('inventory').select('id, name, unit_price, stock, unit').eq('user_id', user.id).order('name'),
+      supabase.from('profiles').select('plan').eq('id', user.id).single(),
     ])
+    setPlan(profileRes.data?.plan || 'free')
     setSuppliers(suppRes.data || [])
     setPayments(payRes.data || [])
     setInventory(invRes.data || [])
@@ -352,6 +355,24 @@ export default function SuppliersPage() {
       </aside>
 
       <main className="ml-64 flex-1 p-8">
+        {plan === 'free' && (
+          <div className="flex items-center justify-center min-h-[70vh]">
+            <div className="text-center max-w-md">
+              <div className="w-16 h-16 bg-amber-100 rounded-2xl flex items-center justify-center mx-auto mb-5">
+                <svg className="w-8 h-8 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+              </div>
+              <h2 className="text-xl font-bold text-slate-900 mb-2">Supplier Management</h2>
+              <p className="text-slate-500 text-sm mb-1">Available on <span className="font-semibold text-slate-700">Starter</span> and <span className="font-semibold text-slate-700">Pro</span> plans.</p>
+              <p className="text-slate-400 text-sm mb-6 leading-relaxed">Track supplier invoices, record payments, manage purchase costs, and generate supplier statements — all in one place.</p>
+              <Link href="/app/subscription" className="inline-block bg-teal-600 text-white font-semibold px-6 py-2.5 rounded-lg text-sm hover:bg-teal-700 transition-colors">
+                Upgrade Plan →
+              </Link>
+            </div>
+          </div>
+        )}
+        {plan !== 'free' && <>
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-2xl font-bold text-slate-900">Suppliers</h1>
@@ -418,6 +439,7 @@ export default function SuppliersPage() {
             </table>
           )}
         </div>
+        </>}
       </main>
 
       {/* Add/Edit Supplier Modal */}
