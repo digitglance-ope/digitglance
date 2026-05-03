@@ -82,6 +82,29 @@ export default function Article4() {
               One of the most common points of confusion among Nigerian entrepreneurs is whether their business pays personal income tax or company income tax. The answer depends entirely on how your business is structured, and getting it wrong can lead to double taxation, penalties, or missed filing obligations. This article explains the difference clearly.
             </p>
 
+            <div className="grid md:grid-cols-2 gap-4 my-8">
+              <div className="bg-blue-50 border border-blue-100 rounded-xl p-5">
+                <p className="text-xs font-bold text-blue-600 uppercase tracking-wider mb-2">Sole Trader / Business Name</p>
+                <p className="text-xl font-bold text-slate-900 mb-2">Personal Income Tax</p>
+                <ul className="space-y-1.5 text-sm text-slate-600">
+                  <li>Governed by <span className="font-medium">PITA</span></li>
+                  <li>Filed with your <span className="font-medium">State Revenue Service</span></li>
+                  <li>Deadline: <span className="font-medium">March 31 annually</span></li>
+                  <li>Graduated rates: <span className="font-medium">7% to 24%</span></li>
+                </ul>
+              </div>
+              <div className="bg-purple-50 border border-purple-100 rounded-xl p-5">
+                <p className="text-xs font-bold text-purple-600 uppercase tracking-wider mb-2">Limited Liability Company</p>
+                <p className="text-xl font-bold text-slate-900 mb-2">Company Income Tax</p>
+                <ul className="space-y-1.5 text-sm text-slate-600">
+                  <li>Governed by <span className="font-medium">CITA</span></li>
+                  <li>Filed with <span className="font-medium">NRS (formerly FIRS)</span></li>
+                  <li>Deadline: <span className="font-medium">6 months after year end</span></li>
+                  <li>Rates: <span className="font-medium">0% / 20% / 30%</span></li>
+                </ul>
+              </div>
+            </div>
+
             <h2 className="text-2xl font-bold text-slate-900 mt-10 mb-4">Personal Income Tax in Nigeria</h2>
             <p className="text-slate-600 leading-relaxed mb-4">
               Personal income tax, governed by the Personal Income Tax Act (PITA), applies to individuals. This includes sole traders, freelancers, and self-employed persons who run their businesses in their own name without incorporating a separate legal entity.

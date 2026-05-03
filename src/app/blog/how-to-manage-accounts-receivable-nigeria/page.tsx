@@ -82,6 +82,19 @@ export default function Article3() {
               A Nigerian business can be profitable on paper and still collapse from cash flow problems. One of the leading causes is poor accounts receivable management. Money owed by customers that sits uncollected for weeks or months is money your business cannot use to pay suppliers, staff, or operational costs. This guide gives you practical steps to take control of what customers owe you.
             </p>
 
+            <div className="grid grid-cols-3 gap-3 my-8">
+              {[
+                { value: '60 days', label: 'Average collection lag with poor AR management' },
+                { value: '30–50%', label: 'Recommended deposit for new or large orders' },
+                { value: '2–3 days', label: 'Before due date — send your reminder' },
+              ].map(s => (
+                <div key={s.label} className="bg-teal-50 border border-teal-100 rounded-xl p-4 text-center">
+                  <p className="text-xl font-bold text-teal-700 mb-1">{s.value}</p>
+                  <p className="text-xs text-slate-500 leading-tight">{s.label}</p>
+                </div>
+              ))}
+            </div>
+
             <h2 className="text-2xl font-bold text-slate-900 mt-10 mb-4">What is Accounts Receivable?</h2>
             <p className="text-slate-600 leading-relaxed mb-4">
               Accounts receivable is the total amount of money owed to your business by customers for goods or services you have already delivered. When you sell on credit, you record the amount as accounts receivable until the customer pays. It sits on your balance sheet as a current asset.
@@ -119,12 +132,22 @@ export default function Article3() {
             <p className="text-slate-600 leading-relaxed mb-4">
               Once an invoice passes its due date, escalate systematically:
             </p>
-            <ul className="list-disc pl-6 text-slate-600 space-y-2 mb-6">
-              <li>Day 1 overdue: Send an email or message noting the invoice is now overdue and requesting payment.</li>
-              <li>Day 7 overdue: Call the customer directly and confirm when payment will be made.</li>
-              <li>Day 14 overdue: Send a formal written notice and consider pausing further supplies or services.</li>
-              <li>Day 30 overdue: Escalate to a formal demand letter and consider involving a debt recovery process.</li>
-            </ul>
+            <div className="space-y-3 my-6">
+              {[
+                { day: 'Day 1', label: 'First Notice', desc: 'Send an email or message noting the invoice is now overdue and requesting payment.', bg: 'bg-amber-50', border: 'border-amber-100', dayColor: 'text-amber-600' },
+                { day: 'Day 7', label: 'Direct Call', desc: 'Call the customer directly and confirm a specific date when payment will be made.', bg: 'bg-orange-50', border: 'border-orange-100', dayColor: 'text-orange-600' },
+                { day: 'Day 14', label: 'Formal Notice', desc: 'Send a formal written notice and consider pausing further supplies or services.', bg: 'bg-red-50', border: 'border-red-100', dayColor: 'text-red-600' },
+                { day: 'Day 30', label: 'Escalate', desc: 'Issue a formal demand letter and consider involving a debt recovery process.', bg: 'bg-red-50', border: 'border-red-200', dayColor: 'text-red-700' },
+              ].map((step, i) => (
+                <div key={i} className={`flex items-start gap-4 p-4 rounded-xl border ${step.bg} ${step.border}`}>
+                  <div className="flex-shrink-0 text-center w-16">
+                    <p className={`text-sm font-bold ${step.dayColor}`}>{step.day}</p>
+                    <p className="text-xs text-slate-500 mt-0.5 leading-tight">{step.label}</p>
+                  </div>
+                  <p className="text-sm text-slate-600 leading-relaxed flex-1">{step.desc}</p>
+                </div>
+              ))}
+            </div>
 
             <div className="bg-teal-50 border border-teal-100 rounded-xl p-6 my-8">
               <p className="text-sm font-semibold text-teal-800 mb-2">Key Principle</p>

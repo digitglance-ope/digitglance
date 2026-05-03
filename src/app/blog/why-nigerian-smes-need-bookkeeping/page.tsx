@@ -82,6 +82,19 @@ export default function Article5() {
               The majority of small businesses in Nigeria operate without any structured financial records. Revenue goes into personal bank accounts mixed with personal spending. Expenses are untracked. No one knows the actual profit margin. This works until it does not, and when it stops working, it usually ends the business. Proper bookkeeping is not optional for a business that intends to survive and grow.
             </p>
 
+            <div className="grid grid-cols-3 gap-3 my-8">
+              {[
+                { value: '80%', label: 'Of confusion eliminated by a separate business bank account' },
+                { value: '1 hr/week', label: 'Minimum time investment to maintain clean records' },
+                { value: '₦25M', label: 'Turnover threshold that triggers mandatory VAT registration' },
+              ].map(s => (
+                <div key={s.label} className="bg-teal-50 border border-teal-100 rounded-xl p-4 text-center">
+                  <p className="text-xl font-bold text-teal-700 mb-1">{s.value}</p>
+                  <p className="text-xs text-slate-500 leading-tight">{s.label}</p>
+                </div>
+              ))}
+            </div>
+
             <h2 className="text-2xl font-bold text-slate-900 mt-10 mb-4">What Bookkeeping Actually Is</h2>
             <p className="text-slate-600 leading-relaxed mb-4">
               Bookkeeping is the systematic recording of all financial transactions in your business. Every sale, every purchase, every expense, every payment received and every payment made needs to be recorded. That is it. It is not accounting. It is not tax filing. It is just recording what happened financially, so that you have an accurate picture of your business at any point.
@@ -115,30 +128,25 @@ export default function Article5() {
 
             <h2 className="text-2xl font-bold text-slate-900 mt-10 mb-4">The Five Records Every Nigerian SME Must Keep</h2>
 
-            <h3 className="text-lg font-bold text-slate-900 mt-8 mb-3">1. Sales records</h3>
-            <p className="text-slate-600 leading-relaxed mb-4">
-              Every sale must be recorded with the date, the customer, what was sold, the quantity, the amount, and whether it was paid or outstanding. This forms your revenue record and feeds directly into your VAT return.
-            </p>
-
-            <h3 className="text-lg font-bold text-slate-900 mt-8 mb-3">2. Purchase records</h3>
-            <p className="text-slate-600 leading-relaxed mb-4">
-              Every purchase from a supplier must be recorded with the supplier name, invoice date, what was bought, and the amount. This is your cost of goods and also the basis for your Input VAT claim.
-            </p>
-
-            <h3 className="text-lg font-bold text-slate-900 mt-8 mb-3">3. Expense records</h3>
-            <p className="text-slate-600 leading-relaxed mb-4">
-              All business expenses including rent, utilities, salaries, transport, and marketing must be recorded with receipts where possible. These reduce your taxable profit and give you a true picture of your operating costs.
-            </p>
-
-            <h3 className="text-lg font-bold text-slate-900 mt-8 mb-3">4. Bank and cash records</h3>
-            <p className="text-slate-600 leading-relaxed mb-4">
-              Maintain a record of all money received and paid out through your business bank account and petty cash. Reconcile your records against your bank statement at least monthly.
-            </p>
-
-            <h3 className="text-lg font-bold text-slate-900 mt-8 mb-3">5. Inventory records</h3>
-            <p className="text-slate-600 leading-relaxed mb-4">
-              If your business holds physical stock, track what you have, what you buy, and what you sell. Inventory that cannot be accounted for is a loss you are not seeing.
-            </p>
+            <div className="space-y-3 my-6">
+              {[
+                { n: '1', title: 'Sales records', desc: 'Every sale must be recorded with the date, the customer, what was sold, the quantity, the amount, and whether it was paid or outstanding. This forms your revenue record and feeds directly into your VAT return.' },
+                { n: '2', title: 'Purchase records', desc: 'Every purchase from a supplier must be recorded with the supplier name, invoice date, what was bought, and the amount. This is your cost of goods and also the basis for your Input VAT claim.' },
+                { n: '3', title: 'Expense records', desc: 'All business expenses including rent, utilities, salaries, transport, and marketing must be recorded with receipts where possible. These reduce your taxable profit and give you a true picture of your operating costs.' },
+                { n: '4', title: 'Bank and cash records', desc: 'Maintain a record of all money received and paid out through your business bank account and petty cash. Reconcile your records against your bank statement at least monthly.' },
+                { n: '5', title: 'Inventory records', desc: 'If your business holds physical stock, track what you have, what you buy, and what you sell. Inventory that cannot be accounted for is a loss you are not seeing.' },
+              ].map(record => (
+                <div key={record.n} className="flex items-start gap-4 p-4 border border-slate-200 rounded-xl hover:border-teal-200 transition-colors">
+                  <div className="w-9 h-9 rounded-lg bg-teal-600 text-white font-bold text-sm flex items-center justify-center flex-shrink-0">
+                    {record.n}
+                  </div>
+                  <div>
+                    <p className="font-semibold text-slate-900 text-sm mb-1">{record.title}</p>
+                    <p className="text-slate-600 text-sm leading-relaxed">{record.desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
 
             <h2 className="text-2xl font-bold text-slate-900 mt-10 mb-4">How to Start Today Without an Accountant</h2>
             <p className="text-slate-600 leading-relaxed mb-4">

@@ -82,6 +82,20 @@ export default function Article1() {
               Value Added Tax is one of the most misunderstood obligations for Nigerian small businesses. Many business owners either charge it incorrectly, fail to remit it, or do not know they are required to register for it at all. This guide walks you through everything you need to know to calculate VAT correctly and stay on the right side of the Nigeria Revenue Service.
             </p>
 
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 my-8">
+              {[
+                { value: '7.5%', label: 'Current VAT Rate' },
+                { value: '₦25M', label: 'Registration Threshold' },
+                { value: '21st', label: 'Monthly Filing Deadline' },
+                { value: '₦50,000', label: 'First-Month Late Penalty' },
+              ].map(s => (
+                <div key={s.label} className="bg-teal-50 border border-teal-100 rounded-xl p-4 text-center">
+                  <p className="text-2xl font-bold text-teal-700 mb-1">{s.value}</p>
+                  <p className="text-xs text-slate-500 leading-tight">{s.label}</p>
+                </div>
+              ))}
+            </div>
+
             <h2 className="text-2xl font-bold text-slate-900 mt-10 mb-4">What is VAT in Nigeria?</h2>
             <p className="text-slate-600 leading-relaxed mb-4">
               VAT is a consumption tax charged on the supply of goods and services in Nigeria. The current rate is 7.5 percent, introduced by the Finance Act 2019 which raised it from the previous rate of 5 percent. It is collected by businesses on behalf of the government and remitted to NRS every month.

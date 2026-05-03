@@ -82,6 +82,19 @@ export default function Article2() {
               Walk into almost any market or small business in Nigeria and ask for an invoice. Chances are you will be handed a receipt, or vice versa. Many business owners treat these two documents as the same thing. They are not, and confusing them can create accounting errors, tax problems, and disputes with customers that are difficult to resolve.
             </p>
 
+            <div className="grid md:grid-cols-2 gap-4 my-8">
+              <div className="bg-blue-50 border border-blue-100 rounded-xl p-5">
+                <p className="text-xs font-bold text-blue-600 uppercase tracking-wider mb-2">Invoice</p>
+                <p className="text-3xl font-bold text-slate-900 mb-2">Request</p>
+                <p className="text-sm text-slate-600 leading-relaxed">Issued before or at point of sale. Payment is still owed. Used to track accounts receivable.</p>
+              </div>
+              <div className="bg-green-50 border border-green-100 rounded-xl p-5">
+                <p className="text-xs font-bold text-green-600 uppercase tracking-wider mb-2">Receipt</p>
+                <p className="text-3xl font-bold text-slate-900 mb-2">Confirmation</p>
+                <p className="text-sm text-slate-600 leading-relaxed">Issued after payment is received. Confirms the transaction is complete. Proof of purchase.</p>
+              </div>
+            </div>
+
             <h2 className="text-2xl font-bold text-slate-900 mt-10 mb-4">What is an Invoice?</h2>
             <p className="text-slate-600 leading-relaxed mb-4">
               An invoice is a document you send to a customer before or at the point of payment. It is a request for money. It tells the customer what goods or services were provided, the quantities, the prices, and the total amount they owe you. An invoice does not confirm that payment has been made. It confirms that the sale has occurred and that money is owed.
