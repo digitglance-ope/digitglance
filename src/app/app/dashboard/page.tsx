@@ -2,6 +2,52 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 
+const PRODUCTS = [
+  {
+    slug: 'invoice',
+    name: 'Invoice',
+    description: 'Create invoices, track payments, manage customers and suppliers, and generate VAT reports.',
+    href: '/app/invoice/dashboard',
+    status: 'active' as const,
+    icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z',
+    color: 'teal',
+  },
+  {
+    slug: 'pos',
+    name: 'Point of Sale',
+    description: 'Fast checkout, cash and card sales, end-of-day reconciliation, and sales reports.',
+    href: '#',
+    status: 'soon' as const,
+    icon: 'M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z',
+    color: 'blue',
+  },
+  {
+    slug: 'accounting',
+    name: 'Accounting',
+    description: 'Full double-entry bookkeeping, P&L statements, balance sheet, and tax preparation.',
+    href: '#',
+    status: 'soon' as const,
+    icon: 'M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z',
+    color: 'purple',
+  },
+  {
+    slug: 'school',
+    name: 'School Manager',
+    description: 'Student enrollment, fee collection, class scheduling, and results management.',
+    href: '#',
+    status: 'soon' as const,
+    icon: 'M12 14l9-5-9-5-9 5 9 5z M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z',
+    color: 'orange',
+  },
+]
+
+const COLOR_MAP: Record<string, { bg: string; icon: string; badge: string; btn: string }> = {
+  teal:   { bg: 'bg-teal-50 border-teal-200',   icon: 'bg-teal-100 text-teal-600',   badge: 'bg-teal-100 text-teal-700',   btn: 'bg-teal-600 hover:bg-teal-700 text-white' },
+  blue:   { bg: 'bg-blue-50 border-blue-200',   icon: 'bg-blue-100 text-blue-600',   badge: 'bg-blue-100 text-blue-700',   btn: 'bg-blue-600 hover:bg-blue-700 text-white' },
+  purple: { bg: 'bg-purple-50 border-purple-200', icon: 'bg-purple-100 text-purple-600', badge: 'bg-purple-100 text-purple-700', btn: 'bg-purple-600 hover:bg-purple-700 text-white' },
+  orange: { bg: 'bg-orange-50 border-orange-200', icon: 'bg-orange-100 text-orange-600', badge: 'bg-orange-100 text-orange-700', btn: 'bg-orange-600 hover:bg-orange-700 text-white' },
+}
+
 export default async function DashboardPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -10,67 +56,12 @@ export default async function DashboardPage() {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('*')
+    .select('full_name, business_name, plan, onboarding_complete')
     .eq('id', user.id)
     .single()
 
   if (!profile?.onboarding_complete) {
     redirect('/app/onboarding')
-  }
-
-  // Get current month date range
-  const now = new Date()
-  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
-  const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59).toISOString()
-
-  // Total invoices count
-  const { count: totalInvoices } = await supabase
-    .from('invoices')
-    .select('*', { count: 'exact', head: true })
-    .eq('user_id', user.id)
-
-  // Outstanding balance (all unpaid and partial invoices)
-  const { data: outstandingData } = await supabase
-    .from('invoices')
-    .select('balance')
-    .eq('user_id', user.id)
-    .in('status', ['outstanding', 'partial'])
-
-  const totalOutstanding = outstandingData?.reduce((sum, inv) => sum + (inv.balance || 0), 0) || 0
-
-  // Paid this month (sum of amount_paid on invoices updated this month with paid status)
-  const { data: paidData } = await supabase
-    .from('invoices')
-    .select('amount_paid')
-    .eq('user_id', user.id)
-    .eq('status', 'paid')
-    .gte('updated_at', monthStart)
-    .lte('updated_at', monthEnd)
-
-  const totalPaidThisMonth = paidData?.reduce((sum, inv) => sum + (inv.amount_paid || 0), 0) || 0
-
-  // Invoices created this month
-  const { count: invoicesThisMonth } = await supabase
-    .from('invoices')
-    .select('*', { count: 'exact', head: true })
-    .eq('user_id', user.id)
-    .gte('created_at', monthStart)
-    .lte('created_at', monthEnd)
-
-  // Recent invoices for the table
-  const { data: recentInvoices } = await supabase
-    .from('invoices')
-    .select('id, invoice_number, customer_name, total, status, due_date, created_at')
-    .eq('user_id', user.id)
-    .order('created_at', { ascending: false })
-    .limit(5)
-
-  const fmt = (n: number) => `₦${n.toLocaleString('en-NG')}`
-
-  const statusStyles: Record<string, string> = {
-    paid: 'bg-green-100 text-green-700',
-    partial: 'bg-yellow-100 text-yellow-700',
-    outstanding: 'bg-red-100 text-red-700',
   }
 
   async function handleSignOut() {
@@ -81,201 +72,86 @@ export default async function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 flex">
+    <div className="min-h-screen bg-slate-50">
 
-      {/* Sidebar */}
-      <aside className="w-64 bg-slate-900 min-h-screen flex flex-col fixed top-0 left-0">
-        <div className="p-6 border-b border-slate-800">
-          <span className="text-xl font-bold text-white">
-            Digit<span className="text-teal-400">Glance</span>
+      {/* Top nav */}
+      <header className="bg-white border-b border-slate-200 sticky top-0 z-10">
+        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
+          <span className="text-xl font-bold text-slate-900">
+            Digit<span className="text-teal-500">Glance</span>
           </span>
-          <p className="text-xs text-slate-500 mt-1">Invoice System</p>
-        </div>
-
-        <nav className="flex-1 p-4 space-y-1">
-          <p className="text-xs font-semibold text-slate-600 uppercase tracking-wider px-3 mb-3">Main Menu</p>
-
-          <Link href="/app/dashboard" className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-teal-600/10 text-teal-400 text-sm font-medium">
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-            </svg>
-            Dashboard
-          </Link>
-
-          {[
-            { href: '/app/invoices', label: 'Invoices', icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' },
-            { href: '/app/customers', label: 'Customers', icon: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z' },
-            { href: '/app/inventory', label: 'Inventory', icon: 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4' },
-            { href: '/app/reports', label: 'Reports', icon: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z' },
-          ].map(item => (
-            <Link key={item.href} href={item.href} className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 text-sm font-medium transition-colors">
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d={item.icon} />
-              </svg>
-              {item.label}
-            </Link>
-          ))}
-
-          <div className="pt-4">
-            <p className="text-xs font-semibold text-slate-600 uppercase tracking-wider px-3 mb-3">Account</p>
-            {[
-              { href: '/app/settings', label: 'Settings', icon: 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z' },
-              { href: '/app/subscription', label: 'Subscription', icon: 'M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z' },
-            ].map(item => (
-              <Link key={item.href} href={item.href} className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 text-sm font-medium transition-colors">
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d={item.icon} />
-                </svg>
-                {item.label}
-              </Link>
-            ))}
-          </div>
-        </nav>
-
-        {/* User footer */}
-        <div className="p-4 border-t border-slate-800">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-8 h-8 bg-teal-600 rounded-full flex items-center justify-center text-white text-xs font-bold">
-              {profile?.full_name?.charAt(0) || user.email?.charAt(0) || 'U'}
-            </div>
-            <div className="min-w-0">
-              <p className="text-sm font-medium text-white truncate">{profile?.business_name || 'Your Business'}</p>
+          <div className="flex items-center gap-4">
+            <div className="text-right hidden sm:block">
+              <p className="text-sm font-semibold text-slate-900">{profile?.business_name || 'Your Business'}</p>
               <p className="text-xs text-slate-500 capitalize">{profile?.plan || 'free'} plan</p>
             </div>
+            <div className="w-9 h-9 bg-teal-600 rounded-full flex items-center justify-center text-white text-sm font-bold">
+              {profile?.full_name?.charAt(0) || user.email?.charAt(0) || 'U'}
+            </div>
+            <form action={handleSignOut}>
+              <button type="submit" className="text-sm text-slate-500 hover:text-red-500 transition-colors font-medium">
+                Sign out
+              </button>
+            </form>
           </div>
-          <form action={handleSignOut}>
-            <button type="submit" className="w-full text-left text-xs text-slate-500 hover:text-red-400 transition-colors px-1">
-              Sign out
-            </button>
-          </form>
         </div>
-      </aside>
+      </header>
 
-      {/* Main content */}
-      <main className="ml-64 flex-1 p-8">
-        <div className="mb-8 flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-slate-900">
-              Welcome back, {profile?.full_name?.split(' ')[0] || 'there'}
-            </h1>
-            <p className="text-slate-500 mt-1 text-sm">{profile?.business_name}</p>
-          </div>
-          <Link
-            href="/app/invoices/new"
-            className="inline-flex items-center gap-2 bg-teal-600 hover:bg-teal-700 text-white font-semibold px-4 py-2.5 rounded-lg transition-colors text-sm"
-          >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-            </svg>
-            New Invoice
-          </Link>
-        </div>
+      {/* Hero */}
+      <div className="max-w-6xl mx-auto px-6 pt-12 pb-8">
+        <h1 className="text-3xl font-bold text-slate-900 mb-1">
+          Welcome back, {profile?.full_name?.split(' ')[0] || 'there'}
+        </h1>
+        <p className="text-slate-500 text-base">Choose a tool to continue working</p>
+      </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
-          {[
-            {
-              label: 'Total Invoices',
-              value: String(totalInvoices || 0),
-              icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z',
-              color: 'text-blue-600 bg-blue-50',
-            },
-            {
-              label: 'Outstanding',
-              value: fmt(totalOutstanding),
-              icon: 'M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z',
-              color: 'text-orange-600 bg-orange-50',
-            },
-            {
-              label: 'Paid This Month',
-              value: fmt(totalPaidThisMonth),
-              icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z',
-              color: 'text-teal-600 bg-teal-50',
-            },
-            {
-              label: 'Invoices This Month',
-              value: String(invoicesThisMonth || 0),
-              icon: 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z',
-              color: 'text-purple-600 bg-purple-50',
-            },
-          ].map(stat => (
-            <div key={stat.label} className="bg-white border border-slate-200 rounded-xl p-5">
-              <div className="flex items-center justify-between mb-4">
-                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{stat.label}</p>
-                <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${stat.color}`}>
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d={stat.icon} />
-                  </svg>
+      {/* Product grid */}
+      <div className="max-w-6xl mx-auto px-6 pb-16">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          {PRODUCTS.map(product => {
+            const c = COLOR_MAP[product.color]
+            const isActive = product.status === 'active'
+
+            return (
+              <div
+                key={product.slug}
+                className={`relative bg-white border rounded-2xl p-6 flex flex-col transition-shadow ${isActive ? 'border-slate-200 hover:shadow-md' : 'border-slate-200 opacity-60'}`}
+              >
+                {/* Status badge */}
+                <div className="flex items-center justify-between mb-5">
+                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${c.icon}`}>
+                    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d={product.icon} />
+                    </svg>
+                  </div>
+                  <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${isActive ? c.badge : 'bg-slate-100 text-slate-500'}`}>
+                    {isActive ? 'Active' : 'Coming Soon'}
+                  </span>
                 </div>
-              </div>
-              <p className="text-2xl font-bold text-slate-900">{stat.value}</p>
-            </div>
-          ))}
-        </div>
 
-        {/* Recent Invoices */}
-        {recentInvoices && recentInvoices.length > 0 ? (
-          <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
-            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
-              <h2 className="text-sm font-bold text-slate-900">Recent Invoices</h2>
-              <Link href="/app/invoices" className="text-xs text-teal-600 hover:text-teal-700 font-medium">
-                View all
-              </Link>
-            </div>
-            <table className="w-full">
-              <thead className="bg-slate-50">
-                <tr>
-                  {['Invoice', 'Customer', 'Amount', 'Status', 'Due Date'].map(h => (
-                    <th key={h} className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {recentInvoices.map(inv => (
-                  <tr key={inv.id} className="hover:bg-slate-50 transition-colors">
-                    <td className="px-6 py-4">
-                      <Link href={`/app/invoices/${inv.id}`} className="text-sm font-semibold text-teal-600 hover:text-teal-700">
-                        {inv.invoice_number}
-                      </Link>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-slate-700">{inv.customer_name}</td>
-                    <td className="px-6 py-4 text-sm font-semibold text-slate-900">{fmt(inv.total)}</td>
-                    <td className="px-6 py-4">
-                      <span className={`inline-flex px-2 py-1 rounded-full text-xs font-semibold capitalize ${statusStyles[inv.status] || 'bg-slate-100 text-slate-600'}`}>
-                        {inv.status}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-slate-500">
-                      {inv.due_date ? new Date(inv.due_date).toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' }) : '-'}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <div className="bg-white border border-slate-200 rounded-xl p-12 text-center">
-            <div className="w-16 h-16 bg-teal-50 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="w-8 h-8 text-teal-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-            </div>
-            <h3 className="text-lg font-bold text-slate-900 mb-2">Create your first invoice</h3>
-            <p className="text-slate-500 text-sm mb-6 max-w-sm mx-auto">
-              Start invoicing your clients professionally. Track payments, send reminders, and generate reports.
-            </p>
-            <Link
-              href="/app/invoices/new"
-              className="inline-flex items-center gap-2 bg-teal-600 hover:bg-teal-700 text-white font-semibold px-6 py-3 rounded-lg transition-colors text-sm"
-            >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-              </svg>
-              New Invoice
-            </Link>
-          </div>
-        )}
-      </main>
+                <h2 className="text-base font-bold text-slate-900 mb-2">{product.name}</h2>
+                <p className="text-sm text-slate-500 leading-relaxed flex-1 mb-6">{product.description}</p>
+
+                {isActive ? (
+                  <Link
+                    href={product.href}
+                    className={`w-full text-center font-semibold py-2.5 rounded-xl text-sm transition-colors ${c.btn}`}
+                  >
+                    Open {product.name}
+                  </Link>
+                ) : (
+                  <button
+                    disabled
+                    className="w-full text-center font-semibold py-2.5 rounded-xl text-sm bg-slate-100 text-slate-400 cursor-not-allowed"
+                  >
+                    Notify Me
+                  </button>
+                )}
+              </div>
+            )
+          })}
+        </div>
+      </div>
     </div>
   )
 }

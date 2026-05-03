@@ -1,0 +1,654 @@
+'use client'
+
+import { useState, useEffect } from 'react'
+import Link from 'next/link'
+import { createClient } from '@/lib/supabase/client'
+import AppSidebar from '@/components/AppSidebar'
+
+type Invoice = {
+  id: string
+  invoice_number: string
+  issue_date: string
+  due_date: string
+  status: string
+  subtotal: number
+  vat_amount: number
+  total: number
+  amount_paid: number
+  balance: number
+  customers: { name: string } | null
+}
+
+type Supplier = {
+  id: string
+  name: string
+  email: string
+  phone: string
+}
+
+type ARCustomer = {
+  name: string
+  totalOwed: number
+  invoiceCount: number
+  oldestDue: string
+}
+
+type SupplierPayment = {
+  id: string
+  supplier_id: string
+  amount: number
+  payment_date: string
+  payment_method: string
+  reference: string
+  notes: string
+}
+
+type SupplierInvoice = {
+  id: string
+  invoice_number: string
+  invoice_date: string
+  vat_amount: number
+  total: number
+  suppliers: { name: string } | { name: string }[] | null
+}
+
+type InventoryItem = {
+  id: string
+  name: string
+  unit: string
+  unit_price: number
+  cost_price: number
+  stock_quantity: number
+}
+
+type PurchaseLineItem = {
+  inventory_item_id: string | null
+  quantity: number
+  unit_price: number
+}
+
+type SaleLineItem = {
+  inventory_item_id: string | null
+  quantity: number
+}
+
+export default function ReportsPage() {
+  const [invoices, setInvoices] = useState<Invoice[]>([])
+  const [suppliers, setSuppliers] = useState<Supplier[]>([])
+  const [supplierPayments, setSupplierPayments] = useState<SupplierPayment[]>([])
+  const [supplierInvoices, setSupplierInvoices] = useState<SupplierInvoice[]>([])
+  const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([])
+  const [purchaseLines, setPurchaseLines] = useState<PurchaseLineItem[]>([])
+  const [saleLines, setSaleLines] = useState<SaleLineItem[]>([])
+  const [loading, setLoading] = useState(true)
+  const [plan, setPlan] = useState<string | null>(null)
+  const [startDate, setStartDate] = useState(() => {
+    const d = new Date()
+    d.setDate(1)
+    return d.toISOString().split('T')[0]
+  })
+  const [endDate, setEndDate] = useState(() => new Date().toISOString().split('T')[0])
+  const [statusFilter, setStatusFilter] = useState('all')
+  const [activeTab, setActiveTab] = useState<'summary' | 'vat' | 'vat_liability' | 'receivable' | 'payable' | 'inventory'>('summary')
+  const supabase = createClient()
+
+  async function load() {
+    setLoading(true)
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+    const { data: profile } = await supabase.from('profiles').select('plan').eq('id', user.id).single()
+    setPlan(profile?.plan || 'free')
+
+    let query = supabase
+      .from('invoices')
+      .select('*, customers(name)')
+      .eq('user_id', user.id)
+      .gte('issue_date', startDate)
+      .lte('issue_date', endDate)
+      .order('issue_date', { ascending: false })
+    if (statusFilter !== 'all') query = query.eq('status', statusFilter)
+    const { data: invData } = await query
+    setInvoices(invData || [])
+
+    const { data: supData } = await supabase
+      .from('suppliers')
+      .select('id, name, email, phone')
+      .eq('user_id', user.id)
+      .order('name')
+    setSuppliers(supData || [])
+
+    const { data: spData } = await supabase
+      .from('supplier_payments')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('payment_date', { ascending: false })
+    setSupplierPayments(spData || [])
+
+    const { data: siData } = await supabase
+      .from('supplier_invoices')
+      .select('id, invoice_number, invoice_date, vat_amount, total, suppliers(name)')
+      .eq('user_id', user.id)
+      .gte('invoice_date', startDate)
+      .lte('invoice_date', endDate)
+      .order('invoice_date', { ascending: false })
+    setSupplierInvoices(siData || [])
+
+    // Inventory valuation data
+    const { data: invItems } = await supabase
+      .from('inventory')
+      .select('id, name, unit, unit_price, cost_price, stock_quantity')
+      .eq('user_id', user.id)
+      .order('name')
+    setInventoryItems(invItems || [])
+
+    // Purchase lines for period (from supplier invoice items)
+    const { data: siIds } = await supabase
+      .from('supplier_invoices')
+      .select('id')
+      .eq('user_id', user.id)
+      .gte('invoice_date', startDate)
+      .lte('invoice_date', endDate)
+    const supplierInvIds = (siIds || []).map((s: any) => s.id)
+    if (supplierInvIds.length > 0) {
+      const { data: plData } = await supabase
+        .from('supplier_invoice_items')
+        .select('inventory_item_id, quantity, unit_price')
+        .in('supplier_invoice_id', supplierInvIds)
+        .not('inventory_item_id', 'is', null)
+      setPurchaseLines(plData || [])
+    } else {
+      setPurchaseLines([])
+    }
+
+    // Sale lines for period (from invoice items)
+    const invoiceIds = (invData || []).map((i: any) => i.id)
+    if (invoiceIds.length > 0) {
+      const { data: slData } = await supabase
+        .from('invoice_items')
+        .select('inventory_item_id, quantity')
+        .in('invoice_id', invoiceIds)
+        .not('inventory_item_id', 'is', null)
+      setSaleLines(slData || [])
+    } else {
+      setSaleLines([])
+    }
+
+    setLoading(false)
+  }
+
+  useEffect(() => { load() }, [startDate, endDate, statusFilter])
+
+  const fmt = (n: number) => `₦${Number(n).toLocaleString('en-NG', { minimumFractionDigits: 2 })}`
+
+  const totalInvoiced = invoices.reduce((s, i) => s + i.total, 0)
+  const totalCollected = invoices.reduce((s, i) => s + i.amount_paid, 0)
+  const totalOutstanding = invoices.reduce((s, i) => s + i.balance, 0)
+  const totalVAT = invoices.reduce((s, i) => s + i.vat_amount, 0)
+  const paidInvoices = invoices.filter(i => i.status === 'paid')
+  const outstandingInvoices = invoices.filter(i => i.status === 'outstanding')
+  const partialInvoices = invoices.filter(i => i.status === 'partial')
+
+  const outputVAT = invoices.reduce((s, i) => s + i.vat_amount, 0)
+  const inputVAT = supplierInvoices.reduce((s, i) => s + i.vat_amount, 0)
+  const netVATLiability = outputVAT - inputVAT
+
+  const allOutstanding = invoices.filter(i => i.status === 'outstanding' || i.status === 'partial')
+  const arByCustomer = allOutstanding.reduce<Record<string, ARCustomer>>((acc, inv) => {
+    const name = inv.customers?.name || 'Unknown'
+    if (!acc[name]) acc[name] = { name, totalOwed: 0, invoiceCount: 0, oldestDue: inv.due_date }
+    acc[name].totalOwed += inv.balance
+    acc[name].invoiceCount += 1
+    if (inv.due_date < acc[name].oldestDue) acc[name].oldestDue = inv.due_date
+    return acc
+  }, {})
+  const arList = Object.values(arByCustomer).sort((a, b) => b.totalOwed - a.totalOwed)
+  const totalAR = arList.reduce((s, c) => s + c.totalOwed, 0)
+
+  // Inventory valuation calculations
+  const inventoryValuation = inventoryItems.map(item => {
+    const purchased = purchaseLines
+      .filter(p => p.inventory_item_id === item.id)
+      .reduce((sum, p) => sum + p.quantity, 0)
+    const sold = saleLines
+      .filter(s => s.inventory_item_id === item.id)
+      .reduce((sum, s) => sum + s.quantity, 0)
+    const closingStock = item.stock_quantity
+    const openingStock = closingStock - purchased + sold
+    const costPrice = item.cost_price || 0
+    const closingValue = closingStock * costPrice
+    const purchaseValue = purchaseLines
+      .filter(p => p.inventory_item_id === item.id)
+      .reduce((sum, p) => sum + (p.quantity * p.unit_price), 0)
+    return { item, openingStock, purchased, sold, closingStock, costPrice, closingValue, purchaseValue }
+  })
+  const totalClosingValue = inventoryValuation.reduce((s, v) => s + v.closingValue, 0)
+  const totalPurchaseValue = inventoryValuation.reduce((s, v) => s + v.purchaseValue, 0)
+
+  function exportCSV() {
+    const headers = ['Invoice #', 'Customer', 'Issue Date', 'Due Date', 'Status', 'Subtotal', 'VAT', 'Total', 'Paid', 'Balance']
+    const rows = invoices.map(i => [i.invoice_number, i.customers?.name || '', i.issue_date, i.due_date, i.status, i.subtotal, i.vat_amount, i.total, i.amount_paid, i.balance])
+    const csv = [headers, ...rows].map(r => r.join(',')).join('\n')
+    const blob = new Blob([csv], { type: 'text/csv' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a'); a.href = url; a.download = `report-${startDate}-to-${endDate}.csv`; a.click()
+    URL.revokeObjectURL(url)
+  }
+
+  function exportVATCSV() {
+    const headers = ['Invoice #', 'Customer', 'Issue Date', 'VAT Amount', 'Total']
+    const rows = invoices.filter(i => i.vat_amount > 0).map(i => [i.invoice_number, i.customers?.name || '', i.issue_date, i.vat_amount.toFixed(2), i.total.toFixed(2)])
+    const csv = [headers, ...rows].map(r => r.join(',')).join('\n')
+    const blob = new Blob([csv], { type: 'text/csv' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a'); a.href = url; a.download = `vat-report-${startDate}-to-${endDate}.csv`; a.click()
+    URL.revokeObjectURL(url)
+  }
+
+  function exportVATLiabilityCSV() {
+    const headers = ['Description', 'Amount']
+    const rows = [
+      ['Output VAT (Sales)', outputVAT.toFixed(2)],
+      ['Input VAT (Purchases)', inputVAT.toFixed(2)],
+      ['Net VAT Liability', netVATLiability.toFixed(2)],
+    ]
+    const csv = [headers, ...rows].map(r => r.join(',')).join('\n')
+    const blob = new Blob([csv], { type: 'text/csv' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a'); a.href = url; a.download = `vat-liability-${startDate}-to-${endDate}.csv`; a.click()
+    URL.revokeObjectURL(url)
+  }
+
+  function exportARCSV() {
+    const headers = ['Customer', 'Invoices Outstanding', 'Amount Owed', 'Oldest Due Date']
+    const rows = arList.map(c => [c.name, c.invoiceCount, c.totalOwed.toFixed(2), c.oldestDue])
+    const csv = [headers, ...rows].map(r => r.join(',')).join('\n')
+    const blob = new Blob([csv], { type: 'text/csv' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a'); a.href = url; a.download = `accounts-receivable-${startDate}-to-${endDate}.csv`; a.click()
+    URL.revokeObjectURL(url)
+  }
+
+  function exportInventoryCSV() {
+    const headers = ['Item', 'Unit', 'Opening Stock', 'Purchases', 'Sales', 'Closing Stock', 'Cost Price', 'Closing Value']
+    const rows = inventoryValuation.map(v => [
+      v.item.name,
+      v.item.unit,
+      v.openingStock,
+      v.purchased,
+      v.sold,
+      v.closingStock,
+      v.costPrice.toFixed(2),
+      v.closingValue.toFixed(2),
+    ])
+    const csv = [headers, ...rows].map(r => r.join(',')).join('\n')
+    const blob = new Blob([csv], { type: 'text/csv' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a'); a.href = url; a.download = `inventory-valuation-${startDate}-to-${endDate}.csv`; a.click()
+    URL.revokeObjectURL(url)
+  }
+
+  const STATUS_COLORS: Record<string, string> = {
+    paid: 'bg-green-100 text-green-700',
+    partial: 'bg-yellow-100 text-yellow-700',
+    outstanding: 'bg-red-100 text-red-700',
+  }
+
+  const today = new Date().toISOString().split('T')[0]
+
+  const tabs = [
+    { key: 'summary', label: 'Invoice Summary' },
+    { key: 'vat', label: 'Output VAT' },
+    { key: 'vat_liability', label: 'VAT Liability' },
+    { key: 'receivable', label: 'Accounts Receivable' },
+    { key: 'payable', label: 'Accounts Payable' },
+    { key: 'inventory', label: 'Inventory Valuation' },
+  ] as const
+
+  const showDateFilter = ['summary', 'vat', 'receivable', 'vat_liability', 'inventory'].includes(activeTab)
+
+  return (
+    <div className="min-h-screen bg-slate-50 flex">
+      <AppSidebar product="invoice" />
+
+      <main className="ml-64 flex-1 p-8">
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-2xl font-bold text-slate-900">Reports</h1>
+            <p className="text-slate-500 text-sm mt-1">Financial overview and tax reports</p>
+          </div>
+          <div className="flex gap-3">
+            {activeTab === 'summary' && <button onClick={exportCSV} className="border border-slate-200 text-slate-600 font-semibold px-4 py-2.5 rounded-lg text-sm hover:bg-slate-50 transition-colors flex items-center gap-2"><svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>Export CSV</button>}
+            {activeTab === 'vat' && <button onClick={exportVATCSV} className="border border-teal-200 bg-teal-50 text-teal-700 font-semibold px-4 py-2.5 rounded-lg text-sm hover:bg-teal-100 transition-colors flex items-center gap-2"><svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z" /></svg>Export Output VAT CSV</button>}
+            {activeTab === 'vat_liability' && <button onClick={exportVATLiabilityCSV} className="border border-orange-200 bg-orange-50 text-orange-700 font-semibold px-4 py-2.5 rounded-lg text-sm hover:bg-orange-100 transition-colors flex items-center gap-2"><svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>Export VAT Return CSV</button>}
+            {activeTab === 'receivable' && <button onClick={exportARCSV} className="border border-slate-200 text-slate-600 font-semibold px-4 py-2.5 rounded-lg text-sm hover:bg-slate-50 transition-colors flex items-center gap-2"><svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>Export CSV</button>}
+            {activeTab === 'inventory' && plan === 'pro' && <button onClick={exportInventoryCSV} className="border border-slate-200 text-slate-600 font-semibold px-4 py-2.5 rounded-lg text-sm hover:bg-slate-50 transition-colors flex items-center gap-2"><svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>Export Inventory CSV</button>}
+          </div>
+        </div>
+
+        {showDateFilter && (
+          <div className="bg-white border border-slate-200 rounded-xl p-4 mb-6 flex flex-wrap gap-4 items-end">
+            <div>
+              <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">From</label>
+              <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className="border border-slate-200 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-teal-500" />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">To</label>
+              <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} className="border border-slate-200 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-teal-500" />
+            </div>
+            {activeTab === 'summary' && (
+              <div>
+                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Status</label>
+                <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="border border-slate-200 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-teal-500">
+                  <option value="all">All Statuses</option>
+                  <option value="paid">Paid</option>
+                  <option value="partial">Partial</option>
+                  <option value="outstanding">Outstanding</option>
+                </select>
+              </div>
+            )}
+          </div>
+        )}
+
+        {(activeTab === 'summary' || activeTab === 'vat') && (
+          <>
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+              {[
+                { label: 'Total Invoiced', value: fmt(totalInvoiced), color: 'text-slate-900' },
+                { label: 'Total Collected', value: fmt(totalCollected), color: 'text-green-600' },
+                { label: 'Outstanding', value: fmt(totalOutstanding), color: 'text-red-600' },
+                { label: 'Output VAT', value: fmt(totalVAT), color: 'text-teal-600' },
+              ].map(card => (
+                <div key={card.label} className="bg-white border border-slate-200 rounded-xl p-5">
+                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">{card.label}</p>
+                  <p className={`text-xl font-bold ${card.color}`}>{card.value}</p>
+                </div>
+              ))}
+            </div>
+            <div className="grid grid-cols-3 gap-4 mb-6">
+              {[
+                { label: 'Paid', count: paidInvoices.length, color: 'text-green-600' },
+                { label: 'Partial', count: partialInvoices.length, color: 'text-yellow-600' },
+                { label: 'Outstanding', count: outstandingInvoices.length, color: 'text-red-600' },
+              ].map(s => (
+                <div key={s.label} className="bg-white border border-slate-200 rounded-xl p-4 flex items-center justify-between">
+                  <span className="text-sm font-medium text-slate-600">{s.label} Invoices</span>
+                  <span className={`text-2xl font-bold ${s.color}`}>{s.count}</span>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+
+        {activeTab === 'vat_liability' && (
+          <div className="grid grid-cols-3 gap-4 mb-6">
+            {[
+              { label: 'Output VAT (Sales)', value: fmt(outputVAT), color: 'text-teal-600', bg: 'bg-teal-50 border-teal-200' },
+              { label: 'Input VAT (Purchases)', value: fmt(inputVAT), color: 'text-blue-600', bg: 'bg-blue-50 border-blue-200' },
+              { label: netVATLiability >= 0 ? 'Net VAT Payable to NRS' : 'VAT Credit (Refundable)', value: fmt(Math.abs(netVATLiability)), color: netVATLiability >= 0 ? 'text-orange-600' : 'text-green-600', bg: netVATLiability >= 0 ? 'bg-orange-50 border-orange-200' : 'bg-green-50 border-green-200' },
+            ].map(card => (
+              <div key={card.label} className={`border rounded-xl p-5 ${card.bg}`}>
+                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">{card.label}</p>
+                <p className={`text-2xl font-bold ${card.color}`}>{card.value}</p>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {activeTab === 'receivable' && (
+          <div className="grid grid-cols-3 gap-4 mb-6">
+            {[
+              { label: 'Total Owed to You', value: fmt(totalAR), color: 'text-red-600' },
+              { label: 'Customers with Balance', value: String(arList.length), color: 'text-slate-900' },
+              { label: 'Overdue Invoices', value: String(allOutstanding.filter(i => i.due_date < today).length), color: 'text-orange-600' },
+            ].map(card => (
+              <div key={card.label} className="bg-white border border-slate-200 rounded-xl p-5">
+                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">{card.label}</p>
+                <p className={`text-xl font-bold ${card.color}`}>{card.value}</p>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {activeTab === 'inventory' && plan === 'pro' && (
+          <div className="grid grid-cols-3 gap-4 mb-6">
+            {[
+              { label: 'Total Items', value: String(inventoryItems.length), color: 'text-slate-900' },
+              { label: 'Total Purchase Value', value: fmt(totalPurchaseValue), color: 'text-blue-600' },
+              { label: 'Total Closing Stock Value', value: fmt(totalClosingValue), color: 'text-teal-600' },
+            ].map(card => (
+              <div key={card.label} className="bg-white border border-slate-200 rounded-xl p-5">
+                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">{card.label}</p>
+                <p className={`text-xl font-bold ${card.color}`}>{card.value}</p>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <div className="flex gap-2 mb-4 flex-wrap">
+          {tabs.map(tab => (
+            <button key={tab.key} onClick={() => setActiveTab(tab.key)} className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5 ${activeTab === tab.key ? 'bg-teal-600 text-white' : 'bg-white border border-slate-200 text-slate-600 hover:border-teal-300'}`}>
+              {tab.label}
+              {tab.key === 'inventory' && plan !== 'pro' && (
+                <span className={`text-xs font-bold px-1.5 py-0.5 rounded ${activeTab === tab.key ? 'bg-white/20 text-white' : 'bg-purple-100 text-purple-600'}`}>Pro</span>
+              )}
+            </button>
+          ))}
+        </div>
+
+        <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
+          {loading ? (
+            <div className="p-12 text-center text-slate-400 text-sm">Loading...</div>
+          ) : activeTab === 'summary' ? (
+            invoices.length === 0 ? (
+              <div className="p-12 text-center text-slate-400 text-sm">No invoices found for this period.</div>
+            ) : (
+              <table className="w-full">
+                <thead><tr className="border-b border-slate-200 bg-slate-50">{['Invoice #', 'Customer', 'Date', 'Total', 'Paid', 'Balance', 'Status'].map(h => <th key={h} className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-5 py-3">{h}</th>)}</tr></thead>
+                <tbody className="divide-y divide-slate-100">
+                  {invoices.map(inv => (
+                    <tr key={inv.id} className="hover:bg-slate-50">
+                      <td className="px-5 py-3 text-sm font-semibold text-teal-600"><Link href={`/app/invoice/invoices/${inv.id}`}>{inv.invoice_number}</Link></td>
+                      <td className="px-5 py-3 text-sm text-slate-900">{inv.customers?.name}</td>
+                      <td className="px-5 py-3 text-sm text-slate-600">{new Date(inv.issue_date).toLocaleDateString('en-NG')}</td>
+                      <td className="px-5 py-3 text-sm font-medium text-slate-900">{fmt(inv.total)}</td>
+                      <td className="px-5 py-3 text-sm text-green-600">{fmt(inv.amount_paid)}</td>
+                      <td className="px-5 py-3 text-sm text-red-600">{fmt(inv.balance)}</td>
+                      <td className="px-5 py-3"><span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold capitalize ${STATUS_COLORS[inv.status]}`}>{inv.status}</span></td>
+                    </tr>
+                  ))}
+                </tbody>
+                <tfoot><tr className="border-t-2 border-slate-200 bg-slate-50"><td colSpan={3} className="px-5 py-3 text-sm font-bold text-slate-900">Totals</td><td className="px-5 py-3 text-sm font-bold text-slate-900">{fmt(totalInvoiced)}</td><td className="px-5 py-3 text-sm font-bold text-green-600">{fmt(totalCollected)}</td><td className="px-5 py-3 text-sm font-bold text-red-600">{fmt(totalOutstanding)}</td><td></td></tr></tfoot>
+              </table>
+            )
+          ) : activeTab === 'vat' ? (
+            invoices.filter(i => i.vat_amount > 0).length === 0 ? (
+              <div className="p-12 text-center text-slate-400 text-sm">No VATable sales invoices for this period.</div>
+            ) : (
+              <table className="w-full">
+                <thead><tr className="border-b border-slate-200 bg-slate-50">{['Invoice #', 'Customer', 'Issue Date', 'Output VAT', 'Invoice Total'].map(h => <th key={h} className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-5 py-3">{h}</th>)}</tr></thead>
+                <tbody className="divide-y divide-slate-100">
+                  {invoices.filter(i => i.vat_amount > 0).map(inv => (
+                    <tr key={inv.id} className="hover:bg-slate-50">
+                      <td className="px-5 py-3 text-sm font-semibold text-teal-600"><Link href={`/app/invoice/invoices/${inv.id}`}>{inv.invoice_number}</Link></td>
+                      <td className="px-5 py-3 text-sm text-slate-900">{inv.customers?.name}</td>
+                      <td className="px-5 py-3 text-sm text-slate-600">{new Date(inv.issue_date).toLocaleDateString('en-NG')}</td>
+                      <td className="px-5 py-3 text-sm font-semibold text-teal-600">{fmt(inv.vat_amount)}</td>
+                      <td className="px-5 py-3 text-sm font-medium text-slate-900">{fmt(inv.total)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+                <tfoot><tr className="border-t-2 border-slate-200 bg-slate-50"><td colSpan={3} className="px-5 py-3 text-sm font-bold text-slate-900">Total Output VAT</td><td className="px-5 py-3 text-sm font-bold text-teal-600">{fmt(outputVAT)}</td><td className="px-5 py-3 text-sm font-bold text-slate-900">{fmt(totalInvoiced)}</td></tr></tfoot>
+              </table>
+            )
+          ) : activeTab === 'vat_liability' ? (
+            <div>
+              <div className="px-6 py-4 bg-orange-50 border-b border-orange-100">
+                <p className="text-xs text-orange-700 font-medium">This report shows your VAT position for the selected period. Output VAT is collected from customers. Input VAT is paid to suppliers. The difference is what you owe to NRS or can claim as a refund.</p>
+              </div>
+              <div className="p-6">
+                <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-4">Output VAT (from Sales)</h3>
+                {invoices.filter(i => i.vat_amount > 0).length === 0 ? <p className="text-slate-400 text-sm mb-6">No VATable sales invoices for this period.</p> : (
+                  <table className="w-full mb-6">
+                    <thead><tr className="border-b border-slate-100">{['Invoice #', 'Customer', 'Date', 'Output VAT'].map(h => <th key={h} className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider pb-2">{h}</th>)}</tr></thead>
+                    <tbody className="divide-y divide-slate-50">
+                      {invoices.filter(i => i.vat_amount > 0).map(inv => (
+                        <tr key={inv.id}>
+                          <td className="py-2 text-sm text-teal-600 font-medium">{inv.invoice_number}</td>
+                          <td className="py-2 text-sm text-slate-700">{inv.customers?.name}</td>
+                          <td className="py-2 text-sm text-slate-500">{new Date(inv.issue_date).toLocaleDateString('en-NG')}</td>
+                          <td className="py-2 text-sm font-semibold text-teal-600">{fmt(inv.vat_amount)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                    <tfoot><tr className="border-t border-slate-200"><td colSpan={3} className="pt-2 text-sm font-bold text-slate-900">Total Output VAT</td><td className="pt-2 text-sm font-bold text-teal-600">{fmt(outputVAT)}</td></tr></tfoot>
+                  </table>
+                )}
+                <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-4">Input VAT (from Purchases)</h3>
+                {supplierInvoices.filter(i => i.vat_amount > 0).length === 0 ? <p className="text-slate-400 text-sm mb-6">No VATable purchase invoices for this period.</p> : (
+                  <table className="w-full mb-6">
+                    <thead><tr className="border-b border-slate-100">{['Invoice #', 'Supplier', 'Date', 'Input VAT'].map(h => <th key={h} className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider pb-2">{h}</th>)}</tr></thead>
+                    <tbody className="divide-y divide-slate-50">
+                      {supplierInvoices.filter(i => i.vat_amount > 0).map(inv => (
+                        <tr key={inv.id}>
+                          <td className="py-2 text-sm text-purple-600 font-medium">{inv.invoice_number}</td>
+                          <td className="py-2 text-sm text-slate-700">{Array.isArray(inv.suppliers) ? inv.suppliers[0]?.name : inv.suppliers?.name}</td>
+                          <td className="py-2 text-sm text-slate-500">{new Date(inv.invoice_date).toLocaleDateString('en-NG')}</td>
+                          <td className="py-2 text-sm font-semibold text-blue-600">{fmt(inv.vat_amount)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                    <tfoot><tr className="border-t border-slate-200"><td colSpan={3} className="pt-2 text-sm font-bold text-slate-900">Total Input VAT</td><td className="pt-2 text-sm font-bold text-blue-600">{fmt(inputVAT)}</td></tr></tfoot>
+                  </table>
+                )}
+                <div className={`rounded-xl p-5 border ${netVATLiability >= 0 ? 'bg-orange-50 border-orange-200' : 'bg-green-50 border-green-200'}`}>
+                  <div className="flex items-center justify-between mb-3">
+                    <p className="text-sm font-bold text-slate-900 uppercase tracking-wider">VAT Return Summary</p>
+                    <span className="text-xs text-slate-500">{startDate} to {endDate}</span>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm"><span className="text-slate-600">Output VAT (collected from customers)</span><span className="font-semibold text-teal-600">{fmt(outputVAT)}</span></div>
+                    <div className="flex justify-between text-sm"><span className="text-slate-600">Input VAT (paid to suppliers)</span><span className="font-semibold text-blue-600">-{fmt(inputVAT)}</span></div>
+                    <div className={`flex justify-between font-bold text-base border-t pt-2 mt-2 ${netVATLiability >= 0 ? 'border-orange-200' : 'border-green-200'}`}>
+                      <span className="text-slate-900">{netVATLiability >= 0 ? 'Net VAT Payable to NRS' : 'VAT Credit (Refundable)'}</span>
+                      <span className={netVATLiability >= 0 ? 'text-orange-600' : 'text-green-600'}>{fmt(Math.abs(netVATLiability))}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : activeTab === 'receivable' ? (
+            arList.length === 0 ? (
+              <div className="p-12 text-center text-slate-400 text-sm">No outstanding balances for this period.</div>
+            ) : (
+              <table className="w-full">
+                <thead><tr className="border-b border-slate-200 bg-slate-50">{['Customer', 'Invoices Outstanding', 'Oldest Due Date', 'Overdue', 'Amount Owed'].map(h => <th key={h} className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-5 py-3">{h}</th>)}</tr></thead>
+                <tbody className="divide-y divide-slate-100">
+                  {arList.map(c => {
+                    const isOverdue = c.oldestDue < today
+                    return (
+                      <tr key={c.name} className="hover:bg-slate-50">
+                        <td className="px-5 py-3"><div className="flex items-center gap-3"><div className="w-8 h-8 bg-teal-100 text-teal-700 rounded-full flex items-center justify-center text-xs font-bold">{c.name.charAt(0).toUpperCase()}</div><span className="text-sm font-medium text-slate-900">{c.name}</span></div></td>
+                        <td className="px-5 py-3 text-sm text-slate-600">{c.invoiceCount} invoice{c.invoiceCount > 1 ? 's' : ''}</td>
+                        <td className="px-5 py-3 text-sm text-slate-600">{new Date(c.oldestDue).toLocaleDateString('en-NG')}</td>
+                        <td className="px-5 py-3">{isOverdue ? <span className="inline-flex px-2 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-700">Overdue</span> : <span className="inline-flex px-2 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700">Current</span>}</td>
+                        <td className="px-5 py-3 text-sm font-bold text-red-600">{fmt(c.totalOwed)}</td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+                <tfoot><tr className="border-t-2 border-slate-200 bg-slate-50"><td colSpan={4} className="px-5 py-3 text-sm font-bold text-slate-900">Total Accounts Receivable</td><td className="px-5 py-3 text-sm font-bold text-red-600">{fmt(totalAR)}</td></tr></tfoot>
+              </table>
+            )
+          ) : activeTab === 'inventory' ? (
+            plan !== 'pro' ? (
+              <div className="p-12 text-center">
+                <div className="w-14 h-14 bg-purple-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                  <svg className="w-7 h-7 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                  </svg>
+                </div>
+                <h3 className="text-base font-bold text-slate-900 mb-1">Pro Plan Required</h3>
+                <p className="text-slate-500 text-sm mb-4 leading-relaxed">Inventory Valuation is available on the Pro plan. Upgrade to track stock value, cost of goods, and opening/closing stock for any period.</p>
+                <Link href="/app/subscription" className="inline-block bg-teal-600 text-white font-semibold px-5 py-2.5 rounded-lg text-sm hover:bg-teal-700 transition-colors">
+                  Upgrade to Pro →
+                </Link>
+              </div>
+            ) : inventoryItems.length === 0 ? (
+              <div className="p-12 text-center">
+                <p className="text-slate-500 text-sm mb-2">No inventory items found.</p>
+                <Link href="/app/invoice/inventory" className="text-teal-600 text-sm font-medium hover:underline">Add inventory items</Link>
+              </div>
+            ) : (
+              <div>
+                <div className="px-6 py-4 bg-slate-50 border-b border-slate-100">
+                  <p className="text-xs text-slate-500">Opening stock is calculated as: Closing Stock minus Purchases plus Sales for the selected period. Cost price must be set on each inventory item for accurate valuation.</p>
+                </div>
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-slate-200 bg-slate-50">
+                      {['Item', 'Unit', 'Opening Stock', 'Purchases', 'Sales', 'Closing Stock', 'Cost Price', 'Closing Value'].map(h => (
+                        <th key={h} className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-5 py-3">{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {inventoryValuation.map(v => (
+                      <tr key={v.item.id} className="hover:bg-slate-50">
+                        <td className="px-5 py-3 text-sm font-semibold text-slate-900">{v.item.name}</td>
+                        <td className="px-5 py-3 text-sm text-slate-500">{v.item.unit}</td>
+                        <td className="px-5 py-3 text-sm text-slate-600">{v.openingStock}</td>
+                        <td className="px-5 py-3 text-sm text-blue-600 font-medium">+{v.purchased}</td>
+                        <td className="px-5 py-3 text-sm text-red-500 font-medium">{v.sold > 0 ? `-${v.sold}` : '0'}</td>
+                        <td className="px-5 py-3">
+                          <span className={`text-sm font-semibold ${v.closingStock <= 0 ? 'text-red-500' : v.closingStock <= 10 ? 'text-yellow-500' : 'text-green-600'}`}>
+                            {v.closingStock}
+                          </span>
+                        </td>
+                        <td className="px-5 py-3 text-sm text-slate-600">{v.costPrice > 0 ? fmt(v.costPrice) : <span className="text-slate-300">Not set</span>}</td>
+                        <td className="px-5 py-3 text-sm font-bold text-teal-600">{v.costPrice > 0 ? fmt(v.closingValue) : <span className="text-slate-300">-</span>}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                  <tfoot>
+                    <tr className="border-t-2 border-slate-200 bg-slate-50">
+                      <td colSpan={7} className="px-5 py-3 text-sm font-bold text-slate-900">Total Inventory Value</td>
+                      <td className="px-5 py-3 text-sm font-bold text-teal-600">{fmt(totalClosingValue)}</td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            )
+          ) : (
+            suppliers.length === 0 ? (
+              <div className="p-12 text-center">
+                <p className="text-slate-500 text-sm mb-2">No suppliers added yet.</p>
+                <Link href="/app/invoice/suppliers" className="text-teal-600 text-sm font-medium hover:underline">Add your first supplier</Link>
+              </div>
+            ) : (
+              <table className="w-full">
+                <thead><tr className="border-b border-slate-200 bg-slate-50">{['Supplier', 'Email', 'Phone', 'Payments Made', 'Total Paid', ''].map(h => <th key={h} className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-5 py-3">{h}</th>)}</tr></thead>
+                <tbody className="divide-y divide-slate-100">
+                  {suppliers.map(s => {
+                    const sPayments = supplierPayments.filter(p => p.supplier_id === s.id)
+                    const totalPaid = sPayments.reduce((sum, p) => sum + p.amount, 0)
+                    return (
+                      <tr key={s.id} className="hover:bg-slate-50">
+                        <td className="px-5 py-3"><div className="flex items-center gap-3"><div className="w-8 h-8 bg-purple-100 text-purple-700 rounded-full flex items-center justify-center text-xs font-bold">{s.name.charAt(0).toUpperCase()}</div><span className="text-sm font-medium text-slate-900">{s.name}</span></div></td>
+                        <td className="px-5 py-3 text-sm text-slate-600">{s.email || '-'}</td>
+                        <td className="px-5 py-3 text-sm text-slate-600">{s.phone || '-'}</td>
+                        <td className="px-5 py-3 text-sm text-slate-600">{sPayments.length} payment{sPayments.length !== 1 ? 's' : ''}</td>
+                        <td className="px-5 py-3 text-sm font-bold text-slate-900">{fmt(totalPaid)}</td>
+                        <td className="px-5 py-3"><Link href="/app/invoice/suppliers" className="text-xs text-teal-600 hover:text-teal-700 font-medium">Record Payment</Link></td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+                <tfoot><tr className="border-t-2 border-slate-200 bg-slate-50"><td colSpan={4} className="px-5 py-3 text-sm font-bold text-slate-900">Total Accounts Payable</td><td className="px-5 py-3 text-sm font-bold text-slate-900">{fmt(supplierPayments.reduce((sum, p) => sum + p.amount, 0))}</td><td></td></tr></tfoot>
+              </table>
+            )
+          )}
+        </div>
+      </main>
+    </div>
+  )
+}
