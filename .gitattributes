@@ -1,0 +1,11 @@
+# Treat all Excel files as binary — prevents CRLF corruption
+*.xlsx binary
+*.xlsb binary
+*.xls  binary
+*.xlsm binary
+
+# Treat PDFs as binary
+*.pdf  binary
+
+# Default text file handling
+* text=auto
