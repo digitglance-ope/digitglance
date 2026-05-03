@@ -15,19 +15,9 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   }
 }
 
-function StatusBadge({ cell }: { cell: string }) {
-  const positive = ['On Track', 'Current', 'Fully Paid', 'Paid', 'Active', 'Operational']
-  const negative = ['Over Budget', 'Owing', 'Outstanding', 'Under Target', 'Overdue', 'Due Service']
-  const partial = ['Partial', 'At Risk', 'Pending', 'Under Review']
-
-  if (positive.includes(cell))
-    return <span className="bg-green-500/20 text-green-400 px-2 py-0.5 rounded text-xs font-semibold">{cell}</span>
-  if (negative.includes(cell))
-    return <span className="bg-red-500/20 text-red-400 px-2 py-0.5 rounded text-xs font-semibold">{cell}</span>
-  if (partial.includes(cell))
-    return <span className="bg-yellow-500/20 text-yellow-400 px-2 py-0.5 rounded text-xs font-semibold">{cell}</span>
-  return null
-}
+const STATUS_POSITIVE = new Set(['On Track', 'Current', 'Fully Paid', 'Paid', 'Active', 'Operational'])
+const STATUS_NEGATIVE = new Set(['Over Budget', 'Owing', 'Outstanding', 'Under Target', 'Overdue', 'Due Service'])
+const STATUS_PARTIAL = new Set(['Partial', 'At Risk', 'Pending', 'Under Review'])
 
 export default function TemplatePage({ params }: { params: { slug: string } }) {
   const template = getTemplate(params.slug)
@@ -199,18 +189,21 @@ export default function TemplatePage({ params }: { params: { slug: string } }) {
                         {file.previewRows.map((row, ri) => (
                           <tr key={ri} className={ri % 2 === 0 ? 'bg-slate-900' : 'bg-slate-800/40'}>
                             <td className="px-3 py-2.5 text-slate-600 border-r border-slate-800 text-center">{ri + 1}</td>
-                            {row.map((cell, ci) => {
-                              const statusNode = <StatusBadge cell={cell} />
-                              return (
-                                <td key={ci} className="px-4 py-2.5 border-r border-slate-800 whitespace-nowrap">
-                                  {statusNode ? statusNode : ci === 0 ? (
-                                    <span className="text-slate-200 font-medium">{cell}</span>
-                                  ) : (
-                                    <span className="text-slate-400">{cell}</span>
-                                  )}
-                                </td>
-                              )
-                            })}
+                            {row.map((cell, ci) => (
+                              <td key={ci} className="px-4 py-2.5 border-r border-slate-800 whitespace-nowrap">
+                                {STATUS_POSITIVE.has(cell) ? (
+                                  <span className="bg-green-500/20 text-green-400 px-2 py-0.5 rounded text-xs font-semibold">{cell}</span>
+                                ) : STATUS_NEGATIVE.has(cell) ? (
+                                  <span className="bg-red-500/20 text-red-400 px-2 py-0.5 rounded text-xs font-semibold">{cell}</span>
+                                ) : STATUS_PARTIAL.has(cell) ? (
+                                  <span className="bg-yellow-500/20 text-yellow-400 px-2 py-0.5 rounded text-xs font-semibold">{cell}</span>
+                                ) : ci === 0 ? (
+                                  <span className="text-slate-200 font-medium">{cell}</span>
+                                ) : (
+                                  <span className="text-slate-400">{cell}</span>
+                                )}
+                              </td>
+                            ))}
                           </tr>
                         ))}
                         {/* Fade row */}

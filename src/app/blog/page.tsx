@@ -1,6 +1,8 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
+import { templates as allTemplates } from '@/lib/templates'
 
 interface Article {
   slug: string | null
@@ -10,20 +12,6 @@ interface Article {
   date: string
   readTime?: string
   featured?: boolean
-}
-
-interface Template {
-  slug: string
-  industry: string
-  description: string
-  files: string[]
-  available: boolean
-  borderColor: string
-  bgColor: string
-  iconBgColor: string
-  badgeBg: string
-  badgeText: string
-  iconPath: string
 }
 
 const articles: Article[] = [
@@ -91,87 +79,6 @@ const articles: Article[] = [
   },
 ]
 
-const templates: Template[] = [
-  {
-    slug: 'construction',
-    industry: 'Construction',
-    description: 'Track project costs, material usage, labour, and contract billing for construction businesses of any size.',
-    files: ['Project Cost Tracker', 'Material Usage Log', 'Labour Cost Sheet', 'Contract Billing Tracker', 'Equipment Maintenance Log'],
-    available: true,
-    borderColor: 'border-amber-100',
-    bgColor: 'bg-amber-50',
-    iconBgColor: 'bg-amber-100',
-    badgeBg: 'bg-amber-100',
-    badgeText: 'text-amber-700',
-    iconPath: 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4',
-  },
-  {
-    slug: 'school',
-    industry: 'School and Education',
-    description: 'Manage student fee collection, staff payroll, school expenses, attendance records, and budget planning.',
-    files: ['Student Fee Tracker', 'Staff Payroll Sheet', 'School Expense Tracker', 'Attendance Register', 'Budget Planning Sheet'],
-    available: true,
-    borderColor: 'border-blue-100',
-    bgColor: 'bg-blue-50',
-    iconBgColor: 'bg-blue-100',
-    badgeBg: 'bg-blue-100',
-    badgeText: 'text-blue-700',
-    iconPath: 'M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253',
-  },
-  {
-    slug: 'trading',
-    industry: 'Trading and Retail',
-    description: 'Sales and inventory tracking, daily cashbook, customer ledger, supplier payables, and profit analysis.',
-    files: ['Sales and Inventory Tracker', 'Daily Cashbook', 'Customer Ledger', 'Supplier Payables Tracker', 'Profit Analysis Sheet'],
-    available: false,
-    borderColor: 'border-green-100',
-    bgColor: 'bg-green-50',
-    iconBgColor: 'bg-green-100',
-    badgeBg: 'bg-green-100',
-    badgeText: 'text-green-700',
-    iconPath: 'M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z',
-  },
-  {
-    slug: 'manufacturing',
-    industry: 'Manufacturing',
-    description: 'Production cost sheets, raw material inventory, WIP tracking, finished goods, and COGS calculation.',
-    files: ['Production Cost Sheet', 'Raw Material Inventory', 'WIP Tracker', 'Finished Goods Inventory', 'COGS Calculator'],
-    available: false,
-    borderColor: 'border-slate-200',
-    bgColor: 'bg-slate-50',
-    iconBgColor: 'bg-slate-200',
-    badgeBg: 'bg-slate-200',
-    badgeText: 'text-slate-600',
-    iconPath: 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z',
-  },
-  {
-    slug: 'hotel',
-    industry: 'Hotel and Hospitality',
-    description: 'Room booking tracker, daily revenue report, hotel expenses, staff payroll, and occupancy dashboard.',
-    files: ['Room Booking Tracker', 'Daily Revenue Report', 'Hotel Expense Tracker', 'Staff Payroll Sheet', 'Occupancy Rate Dashboard'],
-    available: false,
-    borderColor: 'border-purple-100',
-    bgColor: 'bg-purple-50',
-    iconBgColor: 'bg-purple-100',
-    badgeBg: 'bg-purple-100',
-    badgeText: 'text-purple-700',
-    iconPath: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6',
-  },
-  {
-    slug: 'rental',
-    industry: 'Rental Property',
-    description: 'Rent collection, tenant ledger, property expenses, vacancy tracker, and property ROI calculator.',
-    files: ['Rent Collection Tracker', 'Tenant Ledger', 'Property Expense Tracker', 'Vacancy Tracker', 'Property ROI Calculator'],
-    available: false,
-    borderColor: 'border-teal-100',
-    bgColor: 'bg-teal-50',
-    iconBgColor: 'bg-teal-100',
-    badgeBg: 'bg-teal-100',
-    badgeText: 'text-teal-700',
-    iconPath: 'M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z',
-  },
-]
-
 const CATEGORIES = ['All Articles', 'Tax Practice', 'Accounting for SMEs', 'Excel and Automation', 'Student Resources']
 
 const CheckIcon = ({ className }: { className: string }) => (
@@ -197,59 +104,88 @@ export default function Blog() {
 
   const comingSoonArticles = filteredArticles.filter(a => !a.slug)
 
+  const availableTemplates = allTemplates.filter(t => t.available)
+  const comingSoonTemplates = allTemplates.filter(t => !t.available)
+
   return (
     <main className="min-h-screen bg-white">
 
       {/* NAVIGATION */}
       <nav className="sticky top-0 z-50 bg-white border-b border-gray-100 px-6 py-4">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
-          <a href="/" className="text-xl font-bold text-slate-900">
+          <Link href="/" className="text-xl font-bold text-slate-900">
             Digit<span className="text-teal-600">Glance</span>
-          </a>
+          </Link>
           <div className="hidden md:flex items-center gap-8 text-sm font-medium text-slate-600">
-            <a href="/services" className="hover:text-teal-600">Services</a>
-            <a href="/products" className="hover:text-teal-600">Products</a>
-            <a href="/solutions" className="hover:text-teal-600">Solutions</a>
-            <a href="/learn" className="hover:text-teal-600">Learn</a>
-            <a href="/blog" className="text-teal-600">Blog</a>
-            <a href="/app/login" className="hover:text-teal-600">Sign In</a>
+            <Link href="/services" className="hover:text-teal-600">Services</Link>
+            <Link href="/products" className="hover:text-teal-600">Products</Link>
+            <Link href="/solutions" className="hover:text-teal-600">Solutions</Link>
+            <Link href="/learn" className="hover:text-teal-600">Learn</Link>
+            <Link href="/blog" className="text-teal-600">Blog</Link>
+            <Link href="/app/login" className="hover:text-teal-600">Sign In</Link>
           </div>
-          <a href="/contact" className="bg-teal-600 text-white text-sm font-medium px-5 py-2 rounded-lg hover:bg-teal-700">
+          <Link href="/contact" className="bg-teal-600 text-white text-sm font-medium px-5 py-2 rounded-lg hover:bg-teal-700">
             Book a Consultation
-          </a>
+          </Link>
         </div>
       </nav>
 
-      {/* HERO */}
-      <section className="bg-slate-900 text-white px-6 py-24 overflow-hidden relative">
-        <div className="absolute inset-0 opacity-5">
-          <div className="absolute top-10 right-10 w-96 h-96 rounded-full border border-teal-400" />
-          <div className="absolute top-20 right-20 w-64 h-64 rounded-full border border-teal-400" />
-          <div className="absolute -bottom-10 left-20 w-80 h-80 rounded-full border border-teal-400" />
+      {/* HERO — 2-column layout, compact */}
+      <section className="bg-slate-900 text-white px-6 py-12 overflow-hidden relative">
+        <div className="absolute inset-0 opacity-5 pointer-events-none">
+          <div className="absolute -top-10 right-10 w-96 h-96 rounded-full border border-teal-400" />
+          <div className="absolute top-10 right-20 w-64 h-64 rounded-full border border-teal-400" />
         </div>
         <div className="max-w-6xl mx-auto relative">
-          <p className="text-teal-400 text-sm font-semibold mb-4 uppercase tracking-widest">
-            Knowledge Centre
-          </p>
-          <h1 className="text-4xl md:text-5xl font-bold mb-5 leading-tight max-w-3xl">
-            Practical Accounting and Tax Knowledge for Nigerian Businesses
-          </h1>
-          <p className="text-slate-300 text-lg max-w-2xl mb-10 leading-relaxed">
-            Articles, guides, and free Excel templates written for SME owners, accountants, and students operating in Nigeria.
-          </p>
-          <div className="flex flex-wrap gap-4">
-            <a href="#articles" className="bg-teal-600 text-white font-semibold px-8 py-4 rounded-xl hover:bg-teal-700 transition-colors">
-              Browse Articles
-            </a>
-            <a href="#templates" className="border border-slate-600 text-white font-semibold px-8 py-4 rounded-xl hover:border-teal-400 hover:text-teal-400 transition-colors">
-              Free Excel Templates
-            </a>
+          <div className="grid md:grid-cols-[1fr_340px] gap-8 items-center">
+            {/* Left: heading + buttons */}
+            <div>
+              <p className="text-teal-400 text-xs font-bold mb-3 uppercase tracking-widest">Knowledge Centre</p>
+              <h1 className="text-3xl md:text-4xl font-bold mb-4 leading-tight">
+                Practical Accounting and Tax Knowledge for Nigerian Businesses
+              </h1>
+              <p className="text-slate-300 text-base max-w-xl mb-7 leading-relaxed">
+                Articles, guides, and free Excel templates written for SME owners, accountants, and students operating in Nigeria.
+              </p>
+              <div className="flex flex-wrap gap-3">
+                <a href="#articles" className="bg-teal-600 text-white font-semibold px-7 py-3 rounded-xl hover:bg-teal-700 transition-colors text-sm">
+                  Browse Articles
+                </a>
+                <a href="#templates" className="border border-slate-600 text-white font-semibold px-7 py-3 rounded-xl hover:border-teal-400 hover:text-teal-400 transition-colors text-sm">
+                  Free Excel Templates
+                </a>
+              </div>
+            </div>
+
+            {/* Right: stats card */}
+            <div className="hidden md:block bg-slate-800/60 border border-slate-700 rounded-2xl p-6">
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">What you will find here</p>
+              <div className="space-y-4">
+                {[
+                  { value: `${articles.filter(a => a.slug).length}`, label: 'Articles published', dot: 'bg-teal-400' },
+                  { value: `${articles.filter(a => !a.slug).length}`, label: 'Articles coming soon', dot: 'bg-slate-500' },
+                  { value: `${allTemplates.length}`, label: 'Industry template packs', dot: 'bg-teal-400' },
+                  { value: `${availableTemplates.length * 5}+`, label: 'Free Excel templates', dot: 'bg-green-400' },
+                ].map(stat => (
+                  <div key={stat.label} className="flex items-center gap-3">
+                    <span className={`w-2 h-2 rounded-full flex-shrink-0 ${stat.dot}`} />
+                    <span className="text-2xl font-bold text-white w-14 flex-shrink-0">{stat.value}</span>
+                    <span className="text-slate-400 text-sm">{stat.label}</span>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-5 pt-5 border-t border-slate-700">
+                <p className="text-xs text-slate-500 leading-relaxed">
+                  All content covers Nigerian tax law, FIRS regulations, NRS compliance, and business accounting practice.
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
       {/* CATEGORY FILTER */}
-      <section id="articles" className="px-6 py-6 border-b border-gray-100 bg-white">
+      <section id="articles" className="px-6 py-5 border-b border-gray-100 bg-white">
         <div className="max-w-6xl mx-auto flex flex-wrap items-center gap-3">
           <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Filter:</span>
           {CATEGORIES.map(cat => (
@@ -270,33 +206,29 @@ export default function Blog() {
 
       {/* FEATURED ARTICLE */}
       {showFeaturedSeparately && featuredArticle && (
-        <section className="px-6 pt-16 pb-8">
+        <section className="px-6 pt-12 pb-6">
           <div className="max-w-6xl mx-auto">
-            <p className="text-teal-600 text-xs font-bold uppercase tracking-widest mb-6">
-              Featured Article
-            </p>
-            <a href={`/blog/${featuredArticle.slug}`} className="block group">
+            <p className="text-teal-600 text-xs font-bold uppercase tracking-widest mb-5">Featured Article</p>
+            <Link href={`/blog/${featuredArticle.slug}`} className="block group">
               <div className="grid md:grid-cols-2 border border-gray-100 rounded-2xl overflow-hidden hover:border-teal-200 hover:shadow-md transition-all">
-                <div className="bg-gradient-to-br from-slate-800 to-slate-900 flex items-center justify-center p-12 min-h-[240px]">
+                <div className="bg-gradient-to-br from-slate-800 to-slate-900 flex items-center justify-center p-10 min-h-[200px]">
                   <div className="text-center">
-                    <div className="w-16 h-16 bg-teal-600/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                      <svg className="w-8 h-8 text-teal-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                    <div className="w-14 h-14 bg-teal-600/20 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                      <svg className="w-7 h-7 text-teal-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z" />
                       </svg>
                     </div>
-                    <p className="text-teal-400 text-xs font-semibold uppercase tracking-widest">
-                      {featuredArticle.category}
-                    </p>
+                    <p className="text-teal-400 text-xs font-semibold uppercase tracking-widest">{featuredArticle.category}</p>
                   </div>
                 </div>
-                <div className="p-8 md:p-10 flex flex-col justify-center bg-white">
-                  <span className="text-xs font-semibold text-teal-600 bg-teal-50 px-3 py-1 rounded-full inline-block mb-4 w-fit">
+                <div className="p-7 md:p-9 flex flex-col justify-center bg-white">
+                  <span className="text-xs font-semibold text-teal-600 bg-teal-50 px-3 py-1 rounded-full inline-block mb-3 w-fit">
                     {featuredArticle.category}
                   </span>
-                  <h2 className="text-xl md:text-2xl font-bold text-slate-900 mb-3 leading-snug group-hover:text-teal-700 transition-colors">
+                  <h2 className="text-xl font-bold text-slate-900 mb-3 leading-snug group-hover:text-teal-700 transition-colors">
                     {featuredArticle.title}
                   </h2>
-                  <p className="text-slate-500 text-sm leading-relaxed mb-6">
+                  <p className="text-slate-500 text-sm leading-relaxed mb-5">
                     {featuredArticle.description}
                   </p>
                   <div className="flex items-center justify-between">
@@ -311,30 +243,27 @@ export default function Blog() {
                   </div>
                 </div>
               </div>
-            </a>
+            </Link>
           </div>
         </section>
       )}
 
       {/* ARTICLES GRID */}
-      <section className="px-6 py-12">
+      <section className="px-6 py-10">
         <div className="max-w-6xl mx-auto">
-
           {gridArticles.length > 0 && (
-            <div className="mb-12">
+            <div className="mb-10">
               {showFeaturedSeparately && (
-                <p className="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-6">
-                  More Articles
-                </p>
+                <p className="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-5">More Articles</p>
               )}
-              <div className="grid md:grid-cols-3 gap-6">
+              <div className="grid md:grid-cols-3 gap-5">
                 {gridArticles.map(article => (
-                  <a
+                  <Link
                     key={article.slug}
                     href={`/blog/${article.slug}`}
                     className="group flex flex-col border border-gray-100 rounded-xl overflow-hidden hover:border-teal-200 hover:shadow-sm transition-all"
                   >
-                    <div className="bg-slate-50 px-6 py-4 flex items-center justify-between">
+                    <div className="bg-slate-50 px-5 py-3.5 flex items-center justify-between">
                       <span className="text-xs font-semibold text-teal-600 bg-teal-50 px-2 py-1 rounded-full">
                         {article.category}
                       </span>
@@ -342,46 +271,42 @@ export default function Blog() {
                         <span className="text-xs text-slate-400">{article.readTime}</span>
                       )}
                     </div>
-                    <div className="p-6 flex flex-col flex-1">
-                      <h3 className="font-bold text-slate-900 mb-3 leading-snug group-hover:text-teal-700 transition-colors">
+                    <div className="p-5 flex flex-col flex-1">
+                      <h3 className="font-bold text-slate-900 mb-2.5 leading-snug group-hover:text-teal-700 transition-colors text-sm">
                         {article.title}
                       </h3>
                       <p className="text-slate-500 text-sm leading-relaxed flex-1">
                         {article.description}
                       </p>
-                      <div className="flex items-center justify-between mt-5 pt-4 border-t border-slate-100">
+                      <div className="flex items-center justify-between mt-4 pt-4 border-t border-slate-100">
                         <span className="text-xs text-slate-400">{article.date}</span>
                         <span className="text-xs font-semibold text-teal-600 group-hover:text-teal-700 transition-colors">
                           Read →
                         </span>
                       </div>
                     </div>
-                  </a>
+                  </Link>
                 ))}
               </div>
             </div>
           )}
 
-          {/* No results state */}
           {gridArticles.length === 0 && comingSoonArticles.length === 0 && (
-            <div className="text-center py-20">
+            <div className="text-center py-16">
               <p className="text-slate-400 text-sm">No articles in this category yet.</p>
             </div>
           )}
 
-          {/* Coming Soon */}
           {comingSoonArticles.length > 0 && (
             <div>
-              <p className="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-6">
-                Coming Soon
-              </p>
-              <div className="grid md:grid-cols-3 gap-6">
+              <p className="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-5">Coming Soon</p>
+              <div className="grid md:grid-cols-3 gap-5">
                 {comingSoonArticles.map(article => (
                   <div
                     key={article.title}
-                    className="flex flex-col border border-dashed border-slate-200 rounded-xl overflow-hidden opacity-70"
+                    className="flex flex-col border border-dashed border-slate-200 rounded-xl overflow-hidden opacity-65"
                   >
-                    <div className="bg-slate-50 px-6 py-4 flex items-center justify-between">
+                    <div className="bg-slate-50 px-5 py-3.5 flex items-center justify-between">
                       <span className="text-xs font-semibold text-slate-400 bg-slate-100 px-2 py-1 rounded-full">
                         {article.category}
                       </span>
@@ -389,13 +314,9 @@ export default function Blog() {
                         Coming Soon
                       </span>
                     </div>
-                    <div className="p-6">
-                      <h3 className="font-bold text-slate-400 mb-3 leading-snug">
-                        {article.title}
-                      </h3>
-                      <p className="text-slate-400 text-sm leading-relaxed">
-                        {article.description}
-                      </p>
+                    <div className="p-5">
+                      <h3 className="font-bold text-slate-400 mb-2.5 leading-snug text-sm">{article.title}</h3>
+                      <p className="text-slate-400 text-sm leading-relaxed">{article.description}</p>
                     </div>
                   </div>
                 ))}
@@ -405,152 +326,147 @@ export default function Blog() {
         </div>
       </section>
 
-      {/* TOPIC REQUEST CTA */}
-      <section className="px-6 pb-20">
+      {/* TOPIC REQUEST */}
+      <section className="px-6 pb-14">
         <div className="max-w-6xl mx-auto">
-          <div className="bg-teal-50 border border-teal-100 rounded-2xl p-8 flex flex-col md:flex-row items-center justify-between gap-6">
+          <div className="bg-teal-50 border border-teal-100 rounded-2xl p-7 flex flex-col md:flex-row items-center justify-between gap-5">
             <div>
               <h3 className="font-bold text-slate-900 mb-1">Have a topic you want us to cover?</h3>
               <p className="text-slate-500 text-sm max-w-lg">
                 We write practical accounting and tax articles focused on Nigerian business practice. Submit a specific topic and we will write it.
               </p>
             </div>
-            <a
+            <Link
               href="/contact"
-              className="bg-teal-600 text-white font-semibold px-6 py-3 rounded-xl hover:bg-teal-700 transition-colors whitespace-nowrap flex-shrink-0"
+              className="bg-teal-600 text-white font-semibold px-6 py-3 rounded-xl hover:bg-teal-700 transition-colors whitespace-nowrap flex-shrink-0 text-sm"
             >
               Request a Topic
-            </a>
+            </Link>
           </div>
         </div>
       </section>
 
-      {/* FREE EXCEL TEMPLATES SECTION */}
-      <section id="templates" className="bg-slate-50 px-6 py-20">
+      {/* FREE EXCEL TEMPLATES — all 11 industries */}
+      <section id="templates" className="bg-slate-50 px-6 py-16 border-t border-slate-100">
         <div className="max-w-6xl mx-auto">
 
-          {/* Section header */}
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-12">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-10">
             <div>
-              <p className="text-teal-600 text-sm font-semibold uppercase tracking-widest mb-3">
-                Free Resources
-              </p>
-              <h2 className="text-3xl font-bold text-slate-900 mb-3">
+              <p className="text-teal-600 text-xs font-bold uppercase tracking-widest mb-2">Free Resources</p>
+              <h2 className="text-2xl md:text-3xl font-bold text-slate-900 mb-2">
                 Free Excel Templates for Nigerian Businesses
               </h2>
-              <p className="text-slate-500 text-lg max-w-2xl">
-                Industry-specific Excel templates built for how Nigerian businesses actually operate. Download free, use immediately. New templates published every week.
+              <p className="text-slate-500 text-base max-w-2xl">
+                Industry-specific Excel templates built for how Nigerian businesses actually operate.
+                Download free, use immediately. New templates published every week.
               </p>
             </div>
-            <span className="bg-teal-600 text-white text-xs font-bold px-3 py-1.5 rounded-full whitespace-nowrap self-start md:self-end">
-              New Every Week
-            </span>
+            <div className="flex items-center gap-3 flex-shrink-0">
+              <span className="bg-green-100 text-green-700 text-xs font-bold px-3 py-1.5 rounded-full">
+                {availableTemplates.length} Available Now
+              </span>
+              <span className="bg-slate-200 text-slate-600 text-xs font-bold px-3 py-1.5 rounded-full">
+                {comingSoonTemplates.length} Coming Soon
+              </span>
+            </div>
           </div>
 
-          {/* Templates grid */}
-          <div className="grid md:grid-cols-3 gap-6 mb-10">
-            {templates.map(template => (
-              <div
-                key={template.slug}
-                className={`border rounded-2xl overflow-hidden ${template.bgColor} ${template.borderColor} ${!template.available ? 'opacity-60' : ''}`}
-              >
-                <div className="p-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className={`w-10 h-10 ${template.iconBgColor} rounded-xl flex items-center justify-center`}>
-                      <svg className="w-5 h-5 text-slate-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+          {/* Available templates */}
+          {availableTemplates.length > 0 && (
+            <div className="mb-8">
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-4">Available Now</p>
+              <div className="grid md:grid-cols-3 gap-5">
+                {availableTemplates.map(template => (
+                  <div
+                    key={template.slug}
+                    className={`border rounded-2xl overflow-hidden ${template.accentBg} ${template.accentBorder}`}
+                  >
+                    <div className="p-5">
+                      <div className="flex items-center justify-between mb-4">
+                        <div className={`w-10 h-10 ${template.accentIcon} rounded-xl flex items-center justify-center`}>
+                          <svg className="w-5 h-5 text-slate-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d={template.iconPath} />
+                          </svg>
+                        </div>
+                        <span className="text-xs font-bold px-2 py-1 rounded-full bg-green-100 text-green-700">Available</span>
+                      </div>
+                      <h3 className="font-bold text-slate-900 mb-1.5">{template.industry}</h3>
+                      <p className="text-slate-500 text-sm mb-4 leading-relaxed">{template.tagline}</p>
+                      <div className="space-y-1.5 mb-4">
+                        {template.files.slice(0, 3).map(f => (
+                          <div key={f.name} className="flex items-center gap-2 text-xs text-slate-600">
+                            <CheckIcon className="w-3.5 h-3.5 text-teal-500 flex-shrink-0" />
+                            {f.name}
+                          </div>
+                        ))}
+                        {template.files.length > 3 && (
+                          <p className="text-xs text-slate-400 pl-5">+{template.files.length - 3} more included</p>
+                        )}
+                      </div>
+                      <Link
+                        href={`/resources/templates/${template.slug}`}
+                        className="block w-full text-center bg-white border border-slate-200 text-slate-700 font-semibold py-2.5 rounded-xl text-sm hover:border-teal-300 hover:text-teal-600 transition-colors"
+                      >
+                        Download Free →
+                      </Link>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Coming soon templates */}
+          {comingSoonTemplates.length > 0 && (
+            <div className="mb-10">
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-4">Publishing Soon</p>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {comingSoonTemplates.map(template => (
+                  <Link
+                    key={template.slug}
+                    href={`/resources/templates/${template.slug}`}
+                    className={`border rounded-xl p-4 flex items-center gap-3 ${template.accentBg} ${template.accentBorder} opacity-70 hover:opacity-90 transition-opacity`}
+                  >
+                    <div className={`w-9 h-9 ${template.accentIcon} rounded-lg flex items-center justify-center flex-shrink-0`}>
+                      <svg className="w-4 h-4 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                         <path strokeLinecap="round" strokeLinejoin="round" d={template.iconPath} />
                       </svg>
                     </div>
-                    {template.available ? (
-                      <span className={`text-xs font-bold px-2 py-1 rounded-full ${template.badgeBg} ${template.badgeText}`}>
-                        Available
-                      </span>
-                    ) : (
-                      <span className="text-xs font-bold px-2 py-1 rounded-full bg-slate-200 text-slate-500">
-                        Coming Soon
-                      </span>
-                    )}
-                  </div>
-
-                  <h3 className="font-bold text-slate-900 mb-2">{template.industry}</h3>
-                  <p className="text-slate-500 text-sm mb-4 leading-relaxed">{template.description}</p>
-
-                  <div className="space-y-1.5 mb-5">
-                    {template.files.slice(0, 3).map(f => (
-                      <div key={f} className="flex items-center gap-2 text-xs text-slate-600">
-                        <CheckIcon className="w-3.5 h-3.5 text-teal-500 flex-shrink-0" />
-                        {f}
-                      </div>
-                    ))}
-                    {template.files.length > 3 && (
-                      <p className="text-xs text-slate-400 pl-5">
-                        +{template.files.length - 3} more included
-                      </p>
-                    )}
-                  </div>
-
-                  {template.available ? (
-                    <a
-                      href={`/resources/templates/${template.slug}`}
-                      className="block w-full text-center bg-white border border-slate-200 text-slate-700 font-semibold py-2.5 rounded-xl text-sm hover:border-teal-300 hover:text-teal-600 transition-colors"
-                    >
-                      Download Free →
-                    </a>
-                  ) : (
-                    <div className="block w-full text-center bg-slate-100 text-slate-400 font-semibold py-2.5 rounded-xl text-sm cursor-default">
-                      Publishing Soon
+                    <div className="min-w-0">
+                      <p className="font-semibold text-slate-700 text-sm truncate">{template.industry}</p>
+                      <p className="text-xs text-slate-400">Coming soon</p>
                     </div>
-                  )}
-                </div>
+                  </Link>
+                ))}
               </div>
-            ))}
-          </div>
+            </div>
+          )}
 
-          {/* Available count note */}
-          <p className="text-center text-slate-400 text-sm mb-12">
-            Templates available for 11 industries including Trading, Manufacturing, Hospital, Law Firms, Transportation, Entertainment, and Agriculture.
-            New templates added weekly.
-          </p>
-
-          {/* Professional services positioning */}
-          <div className="bg-white border border-slate-200 rounded-2xl p-8 md:p-10">
-            <div className="grid md:grid-cols-2 gap-10 items-center">
+          {/* Professional services card */}
+          <div className="bg-white border border-slate-200 rounded-2xl p-7 md:p-9">
+            <div className="grid md:grid-cols-2 gap-8 items-center">
               <div>
-                <p className="text-teal-600 text-xs font-bold uppercase tracking-widest mb-3">
-                  Need More Than a Template?
-                </p>
-                <h3 className="text-2xl font-bold text-slate-900 mb-4">
+                <p className="text-teal-600 text-xs font-bold uppercase tracking-widest mb-3">Need More Than a Template?</p>
+                <h3 className="text-xl font-bold text-slate-900 mb-3">
                   We Build Custom Excel and Automation Solutions
                 </h3>
-                <p className="text-slate-500 text-sm leading-relaxed mb-4">
-                  These free templates are solid starting points. But if your business needs something more tailored — custom formulas built around your specific workflow, automated dashboards, VBA systems that run at the click of a button, or industry-specific reporting designed exactly for how your business operates — our team builds it.
+                <p className="text-slate-500 text-sm leading-relaxed mb-3">
+                  These free templates are solid starting points. But if your business needs something more tailored — custom formulas, automated dashboards, VBA systems that run at the click of a button, or industry-specific reporting built exactly for how you operate — our team builds it.
                 </p>
                 <p className="text-slate-500 text-sm leading-relaxed">
-                  We also offer advanced premium templates with deeper automation, detailed financial analysis, and multi-sheet integration available on request.
+                  Advanced premium templates with deeper automation and multi-sheet integration are also available on request.
                 </p>
               </div>
               <div className="space-y-3">
                 {[
-                  {
-                    title: 'Custom VBA Desktop Systems',
-                    desc: 'Full Excel automation with buttons, macros, forms, and custom workflows for your specific business process',
-                    iconPath: 'M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4',
-                  },
-                  {
-                    title: 'Industry-Specific Dashboards',
-                    desc: 'Management dashboards with dynamic charts, KPIs, automated summaries, and drill-down reports',
-                    iconPath: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z',
-                  },
-                  {
-                    title: 'Advanced Premium Templates',
-                    desc: 'More detailed templates with deeper automation, advanced formulas, and multi-sheet integration on request',
-                    iconPath: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z',
-                  },
+                  { title: 'Custom VBA Desktop Systems', desc: 'Full Excel automation with buttons, macros, forms, and custom workflows', icon: 'M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4' },
+                  { title: 'Industry-Specific Dashboards', desc: 'Management dashboards with dynamic charts, KPIs, and automated summaries', icon: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z' },
+                  { title: 'Advanced Premium Templates', desc: 'More detailed templates with deeper automation and multi-sheet integration', icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' },
                 ].map(item => (
-                  <div key={item.title} className="flex items-start gap-3 p-4 bg-slate-50 rounded-xl">
-                    <div className="w-9 h-9 bg-teal-100 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <div key={item.title} className="flex items-start gap-3 p-3.5 bg-slate-50 rounded-xl">
+                    <div className="w-8 h-8 bg-teal-100 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
                       <svg className="w-4 h-4 text-teal-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d={item.iconPath} />
+                        <path strokeLinecap="round" strokeLinejoin="round" d={item.icon} />
                       </svg>
                     </div>
                     <div>
@@ -559,12 +475,12 @@ export default function Blog() {
                     </div>
                   </div>
                 ))}
-                <a
+                <Link
                   href="/contact"
-                  className="block text-center bg-teal-600 text-white font-semibold py-3.5 rounded-xl text-sm hover:bg-teal-700 transition-colors mt-2"
+                  className="block text-center bg-teal-600 text-white font-semibold py-3 rounded-xl text-sm hover:bg-teal-700 transition-colors mt-1"
                 >
                   Discuss a Custom Solution
-                </a>
+                </Link>
               </div>
             </div>
           </div>
@@ -573,30 +489,22 @@ export default function Blog() {
       </section>
 
       {/* FINAL CTA */}
-      <section className="bg-slate-900 px-6 py-24 text-center">
+      <section className="bg-slate-900 px-6 py-20 text-center">
         <div className="max-w-2xl mx-auto">
-          <p className="text-teal-400 text-sm font-semibold uppercase tracking-widest mb-4">
-            DigitGlance Invoice
-          </p>
+          <p className="text-teal-400 text-xs font-bold uppercase tracking-widest mb-4">DigitGlance Invoice</p>
           <h2 className="text-3xl font-bold text-white mb-4">
             Stop managing your business finances manually
           </h2>
-          <p className="text-slate-400 mb-10 text-lg">
+          <p className="text-slate-400 mb-9 text-base leading-relaxed">
             DigitGlance Invoice handles your invoices, payments, VAT tracking, and financial reports automatically. Free to start, built for Nigeria.
           </p>
           <div className="flex flex-wrap gap-4 justify-center">
-            <a
-              href="/app/register"
-              className="bg-teal-600 text-white font-semibold px-10 py-4 rounded-xl hover:bg-teal-700 transition-colors"
-            >
+            <Link href="/app/register" className="bg-teal-600 text-white font-semibold px-9 py-4 rounded-xl hover:bg-teal-700 transition-colors">
               Create Free Account
-            </a>
-            <a
-              href="/products"
-              className="border border-slate-600 text-white font-semibold px-10 py-4 rounded-xl hover:border-teal-400 hover:text-teal-400 transition-colors"
-            >
+            </Link>
+            <Link href="/products" className="border border-slate-600 text-white font-semibold px-9 py-4 rounded-xl hover:border-teal-400 hover:text-teal-400 transition-colors">
               See the Product
-            </a>
+            </Link>
           </div>
         </div>
       </section>
@@ -605,37 +513,33 @@ export default function Blog() {
       <footer className="bg-slate-900 text-slate-400 px-6 py-12 border-t border-slate-800">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between gap-8">
           <div>
-            <p className="text-white font-bold text-lg mb-2">
-              Digit<span className="text-teal-400">Glance</span>
-            </p>
-            <p className="text-sm max-w-xs">
-              Accounting intelligence and software solutions for Nigerian businesses and beyond.
-            </p>
+            <p className="text-white font-bold text-lg mb-2">Digit<span className="text-teal-400">Glance</span></p>
+            <p className="text-sm max-w-xs">Accounting intelligence and software solutions for Nigerian businesses and beyond.</p>
           </div>
           <div className="flex gap-12 text-sm">
             <div>
               <p className="text-white font-medium mb-3">Services</p>
               <div className="space-y-2">
-                <a href="/services" className="block hover:text-teal-400">Accounting</a>
-                <a href="/services" className="block hover:text-teal-400">Tax Advisory</a>
-                <a href="/solutions" className="block hover:text-teal-400">Excel VBA Tools</a>
+                <Link href="/services" className="block hover:text-teal-400">Accounting</Link>
+                <Link href="/services" className="block hover:text-teal-400">Tax Advisory</Link>
+                <Link href="/solutions" className="block hover:text-teal-400">Excel VBA Tools</Link>
               </div>
             </div>
             <div>
               <p className="text-white font-medium mb-3">Company</p>
               <div className="space-y-2">
-                <a href="/about" className="block hover:text-teal-400">About</a>
-                <a href="/blog" className="block hover:text-teal-400">Blog</a>
-                <a href="/contact" className="block hover:text-teal-400">Contact</a>
+                <Link href="/about" className="block hover:text-teal-400">About</Link>
+                <Link href="/blog" className="block hover:text-teal-400">Blog</Link>
+                <Link href="/contact" className="block hover:text-teal-400">Contact</Link>
               </div>
             </div>
           </div>
         </div>
-        <div className="max-w-6xl mx-auto border-t border-slate-800 mt-8 pt-8 text-xs flex justify-between">
+        <div className="max-w-6xl mx-auto border-t border-slate-800 mt-8 pt-8 text-xs flex flex-col md:flex-row justify-between gap-3">
           <p>© 2026 DigitGlance. A trading name of Digitglance Reliance.</p>
           <div className="flex gap-4">
-            <a href="/privacy" className="hover:text-teal-400">Privacy Policy</a>
-            <a href="/terms" className="hover:text-teal-400">Terms of Service</a>
+            <Link href="/privacy" className="hover:text-teal-400">Privacy Policy</Link>
+            <Link href="/terms" className="hover:text-teal-400">Terms of Service</Link>
           </div>
         </div>
       </footer>
