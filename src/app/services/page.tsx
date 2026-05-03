@@ -1,4 +1,4 @@
-export default function Services() {
+﻿export default function Services() {
   return (
     <main className="min-h-screen bg-white">
 
@@ -12,7 +12,7 @@ export default function Services() {
             <a href="/services" className="text-teal-600">Services</a>
             <a href="/products" className="hover:text-teal-600">Products</a>
             <a href="/solutions" className="hover:text-teal-600">Solutions</a>
-            <a href="/learn" className="hover:text-teal-600">Learn</a>
+            <a href="/ai-tools" className="hover:text-teal-600">AI Tools</a>
             <a href="/blog" className="hover:text-teal-600">Blog</a>
           </div>
           <a href="/contact" className="bg-teal-600 text-white text-sm font-medium px-5 py-2 rounded-lg hover:bg-teal-700">

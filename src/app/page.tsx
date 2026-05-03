@@ -12,7 +12,7 @@ export default function Home() {
             <a href="/services" className="hover:text-teal-600">Services</a>
             <a href="/products" className="hover:text-teal-600">Products</a>
             <a href="/solutions" className="hover:text-teal-600">Solutions</a>
-            <a href="/learn" className="hover:text-teal-600">Learn</a>
+            <a href="/ai-tools" className="hover:text-teal-600">AI Tools</a>
             <a href="/app/login" className="hover:text-teal-600">Sign In</a>
           </div>
           <a href="/contact" className="bg-teal-600 text-white text-sm font-medium px-5 py-2 rounded-lg hover:bg-teal-700">
@@ -81,14 +81,14 @@ export default function Home() {
               <p className="text-slate-500 text-sm">Professional desktop systems built on Excel VBA for reporting, internal controls, and business automation.</p>
             </a>
 
-            <a href="/learn" className="border border-gray-100 rounded-xl p-6 hover:border-teal-200 hover:shadow-sm transition-all">
+            <a href="/ai-tools" className="border border-gray-100 rounded-xl p-6 hover:border-teal-200 hover:shadow-sm transition-all">
               <div className="w-10 h-10 bg-teal-50 rounded-lg flex items-center justify-center mb-4">
                 <svg className="w-5 h-5 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </svg>
               </div>
-              <h3 className="font-semibold text-slate-900 mb-2">DigitGlance Assist</h3>
-              <p className="text-slate-500 text-sm">Ask accounting and tax questions and get practical Nigeria-focused answers powered by AI.</p>
+              <h3 className="font-semibold text-slate-900 mb-2">AI Automation Tools</h3>
+              <p className="text-slate-500 text-sm">10 AI-powered automation systems built for Nigerian businesses — invoice reminders, VAT, payroll, tax compliance, and more.</p>
             </a>
 
           </div>

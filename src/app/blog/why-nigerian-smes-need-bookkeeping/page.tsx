@@ -1,4 +1,4 @@
-export const metadata = {
+﻿export const metadata = {
   title: 'Why Nigerian SMEs Need Proper Bookkeeping and How to Start Today | DigitGlance',
   description: 'Most small businesses in Nigeria do not keep proper financial records until something goes wrong. Here is why bookkeeping matters and how to start without an accountant.',
 }
@@ -12,7 +12,7 @@ function Nav() {
           <a href="/services" className="hover:text-teal-600">Services</a>
           <a href="/products" className="hover:text-teal-600">Products</a>
           <a href="/solutions" className="hover:text-teal-600">Solutions</a>
-          <a href="/learn" className="hover:text-teal-600">Learn</a>
+          <a href="/ai-tools" className="hover:text-teal-600">AI Tools</a>
           <a href="/blog" className="text-teal-600">Blog</a>
           <a href="/app/login" className="hover:text-teal-600">Sign In</a>
         </div>

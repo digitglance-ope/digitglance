@@ -1,4 +1,4 @@
-export default function Products() {
+﻿export default function Products() {
   return (
     <main className="min-h-screen bg-white">
 
@@ -12,7 +12,7 @@ export default function Products() {
             <a href="/services" className="hover:text-teal-600">Services</a>
             <a href="/products" className="text-teal-600">Products</a>
             <a href="/solutions" className="hover:text-teal-600">Solutions</a>
-            <a href="/learn" className="hover:text-teal-600">Learn</a>
+            <a href="/ai-tools" className="hover:text-teal-600">AI Tools</a>
             <a href="/blog" className="hover:text-teal-600">Blog</a>
             <a href="/app/login" className="hover:text-teal-600">Sign In</a>
           </div>

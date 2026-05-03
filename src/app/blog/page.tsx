@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState } from 'react'
 import Link from 'next/link'
@@ -120,7 +120,7 @@ export default function Blog() {
             <Link href="/services" className="hover:text-teal-600">Services</Link>
             <Link href="/products" className="hover:text-teal-600">Products</Link>
             <Link href="/solutions" className="hover:text-teal-600">Solutions</Link>
-            <Link href="/learn" className="hover:text-teal-600">Learn</Link>
+            <Link href="/ai-tools" className="hover:text-teal-600">AI Tools</Link>
             <Link href="/blog" className="text-teal-600">Blog</Link>
             <Link href="/app/login" className="hover:text-teal-600">Sign In</Link>
           </div>

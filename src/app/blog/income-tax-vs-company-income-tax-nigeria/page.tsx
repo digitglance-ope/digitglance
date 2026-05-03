@@ -1,4 +1,4 @@
-export const metadata = {
+﻿export const metadata = {
   title: 'Income Tax vs Company Income Tax in Nigeria: What Every Business Owner Must Know | DigitGlance',
   description: 'Personal income tax and company income tax are two different obligations in Nigeria. Understanding which applies to your business can save you from penalties.',
 }
@@ -12,7 +12,7 @@ function Nav() {
           <a href="/services" className="hover:text-teal-600">Services</a>
           <a href="/products" className="hover:text-teal-600">Products</a>
           <a href="/solutions" className="hover:text-teal-600">Solutions</a>
-          <a href="/learn" className="hover:text-teal-600">Learn</a>
+          <a href="/ai-tools" className="hover:text-teal-600">AI Tools</a>
           <a href="/blog" className="text-teal-600">Blog</a>
           <a href="/app/login" className="hover:text-teal-600">Sign In</a>
         </div>
