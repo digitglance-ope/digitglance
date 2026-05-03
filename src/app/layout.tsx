@@ -5,6 +5,9 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "DigitGlance | Accounting Intelligence. Built for Business.",
   description: "DigitGlance builds web applications, AI tools, and automation systems for accountants and business owners in Nigeria and beyond. Accounting services, tax advisory, Excel VBA tools, and SaaS products.",
+  verification: {
+    google: 'uOC-JGZYuNn9uxE77fF4IYrk7806RaXMpnjccR7URuo',
+  },
 };
 
 export default function RootLayout({
