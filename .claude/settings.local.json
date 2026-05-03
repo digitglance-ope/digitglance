@@ -1,7 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "WebFetch(domain:digitglance-d767k1l04-digitglance-opes-projects.vercel.app)"
-    ]
-  }
-}
