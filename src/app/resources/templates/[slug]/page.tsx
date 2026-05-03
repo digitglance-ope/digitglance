@@ -7,8 +7,13 @@ export async function generateStaticParams() {
   return templates.map(t => ({ slug: t.slug }))
 }
 
-export async function generateMetadata({ params }: { params: { slug: string } }) {
-  const template = getTemplate(params.slug)
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>
+}) {
+  const { slug } = await params
+  const template = getTemplate(slug)
   if (!template) return { title: 'Not Found' }
   return {
     title: template.seoTitle,
@@ -16,8 +21,13 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   }
 }
 
-export default function TemplatePage({ params }: { params: { slug: string } }) {
-  const template = getTemplate(params.slug)
+export default async function TemplatePage({
+  params,
+}: {
+  params: Promise<{ slug: string }>
+}) {
+  const { slug } = await params
+  const template = getTemplate(slug)
   if (!template) notFound()
 
   const availableCount = template.files.filter(f => f.available).length
@@ -108,7 +118,7 @@ export default function TemplatePage({ params }: { params: { slug: string } }) {
         </div>
 
         {/* Custom solution CTA */}
-        <div className="mt-4 bg-white border border-slate-200 rounded-xl p-5 flex flex-col sm:flex-row items-start gap-4">
+        <div className="mt-4 mb-10 bg-white border border-slate-200 rounded-xl p-5 flex flex-col sm:flex-row items-start gap-4">
           <div className="flex-1 min-w-0">
             <p className="font-bold text-slate-900 mb-1 text-sm">Need a custom {template.industry.toLowerCase()} Excel solution?</p>
             <p className="text-slate-500 text-sm leading-relaxed">
