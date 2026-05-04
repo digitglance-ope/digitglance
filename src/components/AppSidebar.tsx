@@ -21,8 +21,9 @@ export default function AppSidebar({ product }: AppSidebarProps) {
   const router    = useRouter()
   const supabase  = createClient()
 
-  const [businessName, setBusinessName] = useState<string | null>(null)
-  const [plan, setPlan]                 = useState<PlanSlug>('free')
+  const [businessName, setBusinessName]         = useState<string | null>(null)
+  const [plan, setPlan]                         = useState<PlanSlug>('free')
+  const [subscribedSlugs, setSubscribedSlugs]   = useState<Set<string>>(new Set())
 
   useEffect(() => {
     async function loadProfile() {
@@ -34,6 +35,10 @@ export default function AppSidebar({ product }: AppSidebarProps) {
         .select('business_name, plan, is_team_member, account_owner_id')
         .eq('id', user.id)
         .single()
+
+      const ownerId = (profile?.is_team_member && profile.account_owner_id)
+        ? profile.account_owner_id
+        : user.id
 
       if (profile?.is_team_member && profile.account_owner_id) {
         const { data: owner } = await supabase
@@ -47,6 +52,14 @@ export default function AppSidebar({ product }: AppSidebarProps) {
         setBusinessName(profile?.business_name ?? null)
         setPlan((profile?.plan ?? 'free') as PlanSlug)
       }
+
+      const { data: subs } = await supabase
+        .from('product_subscriptions')
+        .select('product_slug')
+        .eq('account_owner_id', ownerId)
+        .eq('status', 'active')
+
+      setSubscribedSlugs(new Set(subs?.map(s => s.product_slug) ?? []))
     }
     loadProfile()
   }, [])
@@ -63,9 +76,8 @@ export default function AppSidebar({ product }: AppSidebarProps) {
     return pathname === href || pathname.startsWith(href + '/')
   }
 
-  const currentProduct  = PRODUCTS.find(p => p.slug === product)!
-  const liveProducts    = PRODUCTS.filter(p => p.status === 'live')
-  const soonProducts    = PRODUCTS.filter(p => p.status === 'coming_soon')
+  const currentProduct      = PRODUCTS.find(p => p.slug === product)!
+  const subscribedProducts  = PRODUCTS.filter(p => p.status === 'live' && subscribedSlugs.has(p.slug))
   const initial         = businessName ? businessName.charAt(0).toUpperCase() : '?'
   const planLabel       = plan.charAt(0).toUpperCase() + plan.slice(1)
 
@@ -85,7 +97,7 @@ export default function AppSidebar({ product }: AppSidebarProps) {
         <p className="text-xs font-semibold text-slate-600 uppercase tracking-wider px-2 mb-2">
           Products
         </p>
-        {liveProducts.map(p => (
+        {subscribedProducts.map(p => (
           <Link
             key={p.slug}
             href={p.dashboardPath}
@@ -99,15 +111,13 @@ export default function AppSidebar({ product }: AppSidebarProps) {
             {p.slug === product && <span className="w-1.5 h-1.5 bg-teal-400 rounded-full" />}
           </Link>
         ))}
-        {soonProducts.map(p => (
+        {subscribedProducts.length === 0 && (
           <div
-            key={p.slug}
             className="flex items-center justify-between px-3 py-2 rounded-lg text-sm mb-0.5 text-slate-600 cursor-not-allowed"
           >
-            <span>{p.shortName}</span>
-            <span className="text-xs bg-slate-800 text-slate-500 px-1.5 py-0.5 rounded">Soon</span>
+            <span>Loading…</span>
           </div>
-        ))}
+        )}
       </div>
 
       {/* Product nav */}

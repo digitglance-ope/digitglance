@@ -1,6 +1,8 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
+const PRODUCT_SLUGS = new Set(['invoice', 'pos', 'accounting', 'school'])
+
 export async function middleware(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })
 
@@ -26,11 +28,8 @@ export async function middleware(request: NextRequest) {
   )
 
   const { data: { user } } = await supabase.auth.getUser()
-
   const path = request.nextUrl.pathname
-  const isAppRoute = path.startsWith('/app')
 
-  // These routes are always accessible without authentication
   const isPublicAppRoute =
     path === '/app/login' ||
     path === '/app/register' ||
@@ -38,11 +37,8 @@ export async function middleware(request: NextRequest) {
     path === '/app/reset-password' ||
     path === '/app/accept-invite'
 
-  const isOnboardingRoute = path === '/app/onboarding' || path.startsWith('/app/onboarding')
-
-  // Allow public routes through always
+  // Public auth routes — allow through, redirect already-logged-in users away
   if (isPublicAppRoute) {
-    // Redirect already-logged-in users away from login/register
     if (user && (path === '/app/login' || path === '/app/register')) {
       const url = request.nextUrl.clone()
       url.pathname = '/app/dashboard'
@@ -51,40 +47,57 @@ export async function middleware(request: NextRequest) {
     return supabaseResponse
   }
 
-  // Redirect unauthenticated users to login
-  if (isAppRoute && !user) {
+  // All remaining /app/* routes require authentication
+  if (!user) {
     const url = request.nextUrl.clone()
     url.pathname = '/app/login'
     return NextResponse.redirect(url)
   }
 
-  // For authenticated users check onboarding
-  if (isAppRoute && user && !isOnboardingRoute) {
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('onboarding_complete, is_team_member')
-      .eq('id', user.id)
-      .single()
+  // Fetch profile once for all downstream checks
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('onboarding_complete, is_team_member, account_owner_id')
+    .eq('id', user.id)
+    .single()
 
-    // Team members skip onboarding entirely
-    if (profile && !profile.onboarding_complete && !profile.is_team_member) {
-      const url = request.nextUrl.clone()
-      url.pathname = '/app/onboarding'
-      return NextResponse.redirect(url)
-    }
+  const isOnboarding = path.startsWith('/app/onboarding')
+
+  // Team members skip onboarding entirely
+  if (isOnboarding && profile?.is_team_member) {
+    const url = request.nextUrl.clone()
+    url.pathname = '/app/dashboard'
+    return NextResponse.redirect(url)
   }
 
-  // Redirect team members away from onboarding if they land there
-  if (isOnboardingRoute && user) {
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('is_team_member')
-      .eq('id', user.id)
-      .single()
+  // Account owners who haven't completed onboarding must finish it first
+  if (!isOnboarding && !profile?.onboarding_complete && !profile?.is_team_member) {
+    const url = request.nextUrl.clone()
+    url.pathname = '/app/onboarding'
+    return NextResponse.redirect(url)
+  }
 
-    if (profile?.is_team_member) {
+  // Product access guard — enforces subscription per product
+  // URL pattern: /app/{productSlug}/...
+  const productSlug = path.split('/')[2]
+  if (productSlug && PRODUCT_SLUGS.has(productSlug)) {
+    // Team members inherit their account owner's subscriptions
+    const ownerId = (profile?.is_team_member && profile.account_owner_id)
+      ? profile.account_owner_id
+      : user.id
+
+    const { data: sub } = await supabase
+      .from('product_subscriptions')
+      .select('id')
+      .eq('account_owner_id', ownerId)
+      .eq('product_slug', productSlug)
+      .eq('status', 'active')
+      .maybeSingle()
+
+    if (!sub) {
       const url = request.nextUrl.clone()
       url.pathname = '/app/dashboard'
+      url.searchParams.set('upgrade', productSlug)
       return NextResponse.redirect(url)
     }
   }
