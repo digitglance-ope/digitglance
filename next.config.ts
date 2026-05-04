@@ -20,6 +20,11 @@ const nextConfig: NextConfig = {
       { source: '/app/audit',             destination: '/app/invoice/audit',         permanent: true },
       { source: '/app/users',             destination: '/app/invoice/users',         permanent: true },
       { source: '/app/subscription',      destination: '/app/invoice/subscription',  permanent: true },
+
+      // POS platform pages — share invoice module equivalents until POS-specific versions are built
+      { source: '/app/pos/users',         destination: '/app/invoice/users',         permanent: false },
+      { source: '/app/pos/subscription',  destination: '/app/invoice/subscription',  permanent: false },
+      { source: '/app/pos/audit',         destination: '/app/invoice/audit',         permanent: false },
     ]
   },
 };
