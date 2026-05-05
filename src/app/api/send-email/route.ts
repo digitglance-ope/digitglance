@@ -1,13 +1,32 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getResend, FROM_EMAIL, FROM_NAME } from '@/lib/resend'
+import { createClient } from '@/lib/supabase/server'
 
 export async function POST(req: NextRequest) {
   try {
+    // Auth guard — only authenticated users may trigger email sends
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
     const body = await req.json()
     const { type, to, data, name, businessName } = body
 
     if (!type || !to) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
+    }
+
+    // Validate recipient email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(String(to))) {
+      return NextResponse.json({ error: 'Invalid recipient email address' }, { status: 400 })
+    }
+
+    const ALLOWED_TYPES = ['invoice', 'payment_confirmation', 'invitation', 'account_ready']
+    if (!ALLOWED_TYPES.includes(type)) {
+      return NextResponse.json({ error: 'Invalid email type' }, { status: 400 })
     }
 
     let subject = ''
@@ -223,6 +242,7 @@ export async function POST(req: NextRequest) {
         </html>
       `
     } else {
+      // Should be unreachable — ALLOWED_TYPES check above catches this
       return NextResponse.json({ error: 'Invalid email type' }, { status: 400 })
     }
 

@@ -32,6 +32,7 @@ export default function NewInvoicePage() {
   const [error, setError] = useState('')
   const [limitReached, setLimitReached] = useState(false)
   const [planInfo, setPlanInfo] = useState({ plan: 'free', used: 0, limit: 20 })
+  const [ownerId, setOwnerId] = useState<string | null>(null)
 
   // Quick Add Customer modal
   const [showAddCustomer, setShowAddCustomer] = useState(false)
@@ -107,9 +108,14 @@ export default function NewInvoicePage() {
 
     const { data: profile } = await supabase
       .from('profiles')
-      .select('plan')
+      .select('plan, is_team_member, account_owner_id')
       .eq('id', user.id)
       .single()
+
+    const resolvedOwnerId = (profile?.is_team_member && profile.account_owner_id)
+      ? profile.account_owner_id
+      : user.id
+    setOwnerId(resolvedOwnerId)
 
     const plan = profile?.plan || 'free'
     const limit = PLAN_LIMITS[plan] ?? 20
@@ -134,6 +140,10 @@ export default function NewInvoicePage() {
 
   async function handleAddCustomer() {
     if (!customerForm.name.trim()) { setCustomerError('Customer name is required.'); return }
+    if (customerForm.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerForm.email)) {
+      setCustomerError('Please enter a valid email address.')
+      return
+    }
     setSavingCustomer(true)
     setCustomerError('')
     const { data: { user } } = await supabase.auth.getUser()
@@ -209,7 +219,12 @@ export default function NewInvoicePage() {
     if (limitReached) return
     if (!form.customer_id) { setError('Please select a customer.'); return }
     if (!form.due_date) { setError('Please set a due date.'); return }
+    if (form.due_date < form.issue_date) { setError('Due date cannot be before the issue date.'); return }
     if (items.some(i => !i.description.trim())) { setError('All line items need a description.'); return }
+    if (items.some(i => Number(i.quantity) <= 0)) { setError('All line item quantities must be greater than zero.'); return }
+    if (items.some(i => Number(i.unit_price) < 0)) { setError('Unit prices cannot be negative.'); return }
+    if (form.discount_value < 0) { setError('Discount cannot be negative.'); return }
+    if (form.discount_type === 'percentage' && form.discount_value > 100) { setError('Percentage discount cannot exceed 100%.'); return }
 
     setSaving(true)
     setError('')
@@ -252,6 +267,15 @@ export default function NewInvoicePage() {
         vatable: item.vatable,
       }))
     )
+
+    await supabase.from('audit_logs').insert({
+      user_id: user.id,
+      account_owner_id: ownerId || user.id,
+      user_email: user.email,
+      action: 'Invoice Created',
+      resource: 'Invoices',
+      details: `Invoice ${form.invoice_number} created. Total: ${fmt(total)}. Customer ID: ${form.customer_id}.`,
+    })
 
     router.push(`/app/invoice/invoices/${invoice.id}`)
   }

@@ -52,6 +52,8 @@ type Profile = {
   bank_account_name: string
   vat_rate: number
   logo_url: string
+  is_team_member: boolean
+  account_owner_id: string | null
 }
 
 const STATUS_COLORS: Record<string, string> = {
@@ -152,11 +154,12 @@ export default function InvoiceDetailPage() {
   }
 
   async function handlePayment() {
-    if (!paymentForm.amount || Number(paymentForm.amount) <= 0) {
+    const amount = Number(paymentForm.amount)
+    if (!paymentForm.amount || amount <= 0) {
       setError('Please enter a valid payment amount.')
       return
     }
-    if (Number(paymentForm.amount) > (invoice?.balance || 0)) {
+    if (amount > (invoice?.balance || 0)) {
       setError(`Payment cannot exceed the balance of ${fmt(invoice?.balance || 0)}.`)
       return
     }
@@ -167,17 +170,30 @@ export default function InvoiceDetailPage() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
 
+    // Re-read the live balance before recording to prevent concurrent overpayment
+    const { data: liveInvoice } = await supabase
+      .from('invoices')
+      .select('balance, amount_paid, total')
+      .eq('id', params.id)
+      .single()
+
+    if (!liveInvoice || amount > liveInvoice.balance) {
+      setError(`Payment exceeds the current balance of ${fmt(liveInvoice?.balance || 0)}. Please refresh and try again.`)
+      setSaving(false)
+      return
+    }
+
     await supabase.from('payments').insert({
       invoice_id: params.id,
       user_id: user.id,
-      amount: Number(paymentForm.amount),
+      amount,
       payment_date: paymentForm.payment_date,
       payment_method: paymentForm.payment_method,
       note: paymentForm.note,
     })
 
-    const newAmountPaid = (invoice?.amount_paid || 0) + Number(paymentForm.amount)
-    const newBalance = (invoice?.total || 0) - newAmountPaid
+    const newAmountPaid = liveInvoice.amount_paid + amount
+    const newBalance = liveInvoice.total - newAmountPaid
     const newStatus = newBalance <= 0 ? 'paid' : newAmountPaid > 0 ? 'partial' : 'outstanding'
 
     await supabase.from('invoices').update({
@@ -186,7 +202,20 @@ export default function InvoiceDetailPage() {
       status: newStatus,
     }).eq('id', params.id)
 
-    // Send payment confirmation email if customer has email
+    // Audit log
+    const ownerId = profile?.is_team_member && profile.account_owner_id
+      ? profile.account_owner_id
+      : user.id
+    await supabase.from('audit_logs').insert({
+      user_id: user.id,
+      account_owner_id: ownerId,
+      user_email: user.email,
+      action: 'Payment Recorded',
+      resource: 'Invoices',
+      details: `Payment of ${fmt(amount)} recorded for invoice ${invoice?.invoice_number}. Method: ${paymentForm.payment_method}. Balance: ${fmt(newBalance)}.`,
+    })
+
+    // Send payment confirmation email — only after successful DB writes
     if (invoice?.customers?.email) {
       try {
         await fetch('/api/send-email', {
@@ -199,13 +228,13 @@ export default function InvoiceDetailPage() {
               business_name: profile?.business_name,
               customer_name: invoice.customers.name,
               invoice_number: invoice.invoice_number,
-              amount_paid: Number(paymentForm.amount),
+              amount_paid: amount,
               balance: newBalance,
             },
           }),
         })
       } catch {
-        // Payment was recorded successfully, email failure should not block the user
+        // Payment recorded successfully; email failure does not roll back the payment
       }
     }
 

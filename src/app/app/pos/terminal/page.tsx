@@ -181,6 +181,7 @@ export default function PosTerminalPage() {
   // ─── Shift operations
   async function openShift() {
     if (!ownerId || !branchId || !terminalId) return
+    const { data: { user } } = await supabase.auth.getUser()
     const { data } = await supabase.from('pos_shifts').insert({
       account_owner_id: ownerId, branch_id: branchId, terminal_id: terminalId,
       opening_float: parseFloat(openingFloat) || 0,
@@ -189,15 +190,35 @@ export default function PosTerminalPage() {
     if (data) {
       setShift(data); setShiftPanel(false); setOpeningFloat('')
       setTimeout(() => searchRef.current?.focus(), 100)
+
+      await supabase.from('audit_logs').insert({
+        user_id: user?.id,
+        account_owner_id: ownerId,
+        user_email: user?.email,
+        action: 'POS Shift Opened',
+        resource: 'POS Terminal',
+        details: `Shift opened on terminal ${terminalName} — ${branchName}. Opening float: ₦${parseFloat(openingFloat) || 0}. Cashier: ${cashierName}.`,
+      })
     }
   }
 
   async function closeShift() {
-    if (!shift) return
+    if (!shift || !ownerId) return
+    const { data: { user } } = await supabase.auth.getUser()
     await supabase.from('pos_shifts').update({
       status: 'closed', closed_at: new Date().toISOString(),
       closing_balance: parseFloat(closingBalance) || null,
     }).eq('id', shift.id)
+
+    await supabase.from('audit_logs').insert({
+      user_id: user?.id,
+      account_owner_id: ownerId,
+      user_email: user?.email,
+      action: 'POS Shift Closed',
+      resource: 'POS Terminal',
+      details: `Shift closed on terminal ${terminalName} — ${branchName}. Closing balance: ₦${parseFloat(closingBalance) || 0}. Cashier: ${cashierName}.`,
+    })
+
     setShift(null); setShiftPanel(false); setShiftClosing(false)
     setCart([]); setClosingBalance('')
   }
@@ -223,7 +244,11 @@ export default function PosTerminalPage() {
   }
 
   function setDiscount(pid: string, val: number) {
-    setCart(prev => prev.map(i => i.product.id === pid ? { ...i, discount: Math.max(0, val) } : i))
+    setCart(prev => prev.map(i => {
+      if (i.product.id !== pid) return i
+      const maxDiscount = i.product.selling_price * i.quantity
+      return { ...i, discount: Math.min(Math.max(0, val), maxDiscount) }
+    }))
   }
 
   // ─── Calculations
@@ -296,20 +321,27 @@ export default function PosTerminalPage() {
         payments.map(p => ({ account_owner_id: ownerId, sale_id: sale.id, method: p.method, amount: p.amount }))
       )
 
+      // Atomic stock deduction via DB function — prevents overselling under concurrent sales
       for (const item of cart) {
-        const current = stockMap[item.product.id] ?? 0
-        await supabase.from('pos_stock').upsert({
-          account_owner_id: ownerId, branch_id: branchId,
-          product_id: item.product.id, quantity: Math.max(0, current - item.quantity),
-        }, { onConflict: 'account_owner_id,product_id,branch_id' })
-
-        await supabase.from('pos_stock_movements').insert({
-          account_owner_id: ownerId, product_id: item.product.id,
-          branch_id: branchId, movement_type: 'sale',
-          quantity: -item.quantity, reference_type: 'sale',
-          reference_id: sale.id, notes: `POS sale ${reference}`,
+        await supabase.rpc('deduct_pos_stock', {
+          p_owner_id: ownerId,
+          p_product_id: item.product.id,
+          p_branch_id: branchId,
+          p_quantity: item.quantity,
+          p_sale_id: sale.id,
         })
       }
+
+      // Audit log for the completed sale
+      const { data: { user } } = await supabase.auth.getUser()
+      await supabase.from('audit_logs').insert({
+        user_id: user?.id,
+        account_owner_id: ownerId,
+        user_email: user?.email,
+        action: 'POS Sale Completed',
+        resource: 'POS Terminal',
+        details: `Sale ${reference} completed. Total: ${fmt(orderTotal)}. Items: ${cart.length}. Payment: ${payments.map(p => `${p.method} ₦${p.amount}`).join(', ')}. Branch: ${branchName}.`,
+      })
 
       setReceipt({
         reference, created_at: new Date().toISOString(),
