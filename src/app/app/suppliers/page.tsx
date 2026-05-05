@@ -354,7 +354,7 @@ export default function SuppliersPage() {
         </nav>
       </aside>
 
-      <main className="ml-64 flex-1 p-8">
+      <main className="md:ml-64 flex-1 p-8">
         {plan === 'free' && (
           <div className="flex items-center justify-center min-h-[70vh]">
             <div className="text-center max-w-md">

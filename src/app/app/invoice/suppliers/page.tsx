@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import AppSidebar from '@/components/AppSidebar'
+import { useRole } from '@/hooks/useRole'
 
 type Supplier = {
   id: string
@@ -108,6 +109,7 @@ export default function SuppliersPage() {
   const [loadingStatement, setLoadingStatement] = useState(false)
 
   const supabase = createClient()
+  const { canCreate, canEdit, canDelete } = useRole()
   const fmt = (n: number) => `₦${Number(n).toLocaleString('en-NG', { minimumFractionDigits: 2 })}`
 
   async function load() {
@@ -321,7 +323,7 @@ export default function SuppliersPage() {
     <div className="min-h-screen bg-slate-50 flex">
       <AppSidebar product="invoice" />
 
-      <main className="ml-64 flex-1 p-8">
+      <main className="md:ml-64 flex-1 p-8">
         {plan === 'free' && (
           <div className="flex items-center justify-center min-h-[70vh]">
             <div className="text-center max-w-md">
@@ -345,10 +347,12 @@ export default function SuppliersPage() {
             <h1 className="text-2xl font-bold text-slate-900">Suppliers</h1>
             <p className="text-slate-500 text-sm mt-1">{suppliers.length} total suppliers</p>
           </div>
-          <button onClick={openNew} className="flex items-center gap-2 bg-teal-600 hover:bg-teal-700 text-white font-semibold px-5 py-2.5 rounded-lg text-sm transition-colors">
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
-            Add Supplier
-          </button>
+          {canCreate && (
+            <button onClick={openNew} className="flex items-center gap-2 bg-teal-600 hover:bg-teal-700 text-white font-semibold px-5 py-2.5 rounded-lg text-sm transition-colors">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
+              Add Supplier
+            </button>
+          )}
         </div>
 
         <div className="relative mb-6">
@@ -392,12 +396,12 @@ export default function SuppliersPage() {
                     <td className="px-6 py-4 text-sm font-semibold text-slate-900">{fmt(getTotalPaid(s.id))}</td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-2 justify-end flex-wrap">
-                        <button onClick={() => openPurchase(s)} className="text-xs text-white bg-purple-600 hover:bg-purple-700 font-medium px-2.5 py-1.5 rounded-lg transition-colors">Purchase Invoice</button>
+                        {canCreate && <button onClick={() => openPurchase(s)} className="text-xs text-white bg-purple-600 hover:bg-purple-700 font-medium px-2.5 py-1.5 rounded-lg transition-colors">Purchase Invoice</button>}
                         <button onClick={() => openStatement(s)} className="text-xs text-purple-600 hover:text-purple-700 font-medium transition-colors">Statement</button>
                         <button onClick={() => openHistory(s)} className="text-xs text-slate-500 hover:text-purple-600 font-medium transition-colors">History</button>
-                        <button onClick={() => openPayment(s)} className="text-xs text-white bg-teal-600 hover:bg-teal-700 font-medium px-2.5 py-1.5 rounded-lg transition-colors">Record Payment</button>
-                        <button onClick={() => openEdit(s)} className="text-xs text-slate-500 hover:text-teal-600 font-medium transition-colors">Edit</button>
-                        <button onClick={() => handleDelete(s.id)} className="text-xs text-slate-500 hover:text-red-500 font-medium transition-colors">Delete</button>
+                        {canCreate && <button onClick={() => openPayment(s)} className="text-xs text-white bg-teal-600 hover:bg-teal-700 font-medium px-2.5 py-1.5 rounded-lg transition-colors">Record Payment</button>}
+                        {canEdit && <button onClick={() => openEdit(s)} className="text-xs text-slate-500 hover:text-teal-600 font-medium transition-colors">Edit</button>}
+                        {canDelete && <button onClick={() => handleDelete(s.id)} className="text-xs text-slate-500 hover:text-red-500 font-medium transition-colors">Delete</button>}
                       </div>
                     </td>
                   </tr>

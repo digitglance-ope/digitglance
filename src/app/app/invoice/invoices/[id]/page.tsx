@@ -5,6 +5,8 @@ import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import AppSidebar from '@/components/AppSidebar'
+import { useRole } from '@/hooks/useRole'
+import { normalizeNigerianPhone } from '@/lib/formatters'
 
 type Invoice = {
   id: string
@@ -67,6 +69,7 @@ const PAYMENT_METHODS = ['Bank Transfer', 'Cash', 'POS', 'Cheque', 'Online Payme
 export default function InvoiceDetailPage() {
   const params = useParams()
   const supabase = createClient()
+  const { canCreate, canEdit } = useRole()
 
   const [invoice, setInvoice] = useState<Invoice | null>(null)
   const [items, setItems] = useState<InvoiceItem[]>([])
@@ -246,7 +249,7 @@ export default function InvoiceDetailPage() {
 
   function handleWhatsApp() {
     if (!invoice || !invoice.customers) return
-    const phone = invoice.customers.phone?.replace(/\D/g, '').replace(/^0/, '234')
+    const phone = normalizeNigerianPhone(invoice.customers.phone || '')
     const message = `Hello ${invoice.customers.name}, please find your invoice ${invoice.invoice_number} for ${fmt(invoice.total)} attached. Balance due: ${fmt(invoice.balance)}. Thank you for your business - ${profile?.business_name}`
     window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank')
   }
@@ -262,7 +265,7 @@ export default function InvoiceDetailPage() {
     <div className="min-h-screen bg-slate-50 flex">
       <AppSidebar product="invoice" />
 
-      <main className="ml-64 flex-1 p-8 print:ml-0 print:p-8">
+      <main className="md:ml-64 flex-1 p-8 print:ml-0 print:p-8">
         {/* Header */}
         <div className="flex items-center justify-between mb-6 print:hidden">
           <div>
@@ -277,7 +280,16 @@ export default function InvoiceDetailPage() {
               Print
             </button>
 
-            {invoice.customers?.email && (
+            {canEdit && invoice.status !== 'paid' && (
+              <Link href={`/app/invoice/invoices/${invoice.id}/edit`} className="border border-slate-200 text-slate-600 font-semibold px-4 py-2.5 rounded-lg text-sm hover:bg-slate-50 transition-colors flex items-center gap-2">
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+                Edit Invoice
+              </Link>
+            )}
+
+            {canCreate && invoice.customers?.email && (
               <button
                 onClick={handleSendInvoiceEmail}
                 disabled={sendingEmail}
@@ -290,7 +302,7 @@ export default function InvoiceDetailPage() {
               </button>
             )}
 
-            {invoice.customers?.phone && (
+            {canCreate && invoice.customers?.phone && (
               <button onClick={handleWhatsApp} className="border border-green-200 bg-green-50 text-green-700 font-semibold px-4 py-2.5 rounded-lg text-sm hover:bg-green-100 transition-colors flex items-center gap-2">
                 <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
@@ -299,7 +311,7 @@ export default function InvoiceDetailPage() {
               </button>
             )}
 
-            {invoice.status !== 'paid' && (
+            {canCreate && invoice.status !== 'paid' && (
               <button onClick={() => setShowPaymentForm(true)} className="bg-teal-600 hover:bg-teal-700 text-white font-semibold px-4 py-2.5 rounded-lg text-sm transition-colors flex items-center gap-2">
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />

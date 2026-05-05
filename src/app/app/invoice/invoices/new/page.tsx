@@ -284,7 +284,7 @@ export default function NewInvoicePage() {
     return (
       <div className="min-h-screen bg-slate-50 flex">
         <AppSidebar product="invoice" />
-        <main className="ml-64 flex-1 p-8 flex items-center justify-center">
+        <main className="md:ml-64 flex-1 p-8 flex items-center justify-center">
           <div className="bg-white border border-slate-200 rounded-2xl p-12 text-center max-w-md">
             <div className="w-16 h-16 bg-orange-50 rounded-full flex items-center justify-center mx-auto mb-4">
               <svg className="w-8 h-8 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -308,7 +308,7 @@ export default function NewInvoicePage() {
     <div className="min-h-screen bg-slate-50 flex">
       <AppSidebar product="invoice" />
 
-      <main className="ml-64 flex-1 p-8">
+      <main className="md:ml-64 flex-1 p-8">
         <div className="flex items-center justify-between mb-8">
           <div>
             <Link href="/app/invoice/invoices" className="text-sm text-slate-500 hover:text-teal-600 mb-1 inline-block">← Back to Invoices</Link>

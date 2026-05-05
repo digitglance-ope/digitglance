@@ -80,7 +80,7 @@ export default async function DashboardPage() {
       <AppSidebar product="invoice" />
 
       {/* Main content */}
-      <main className="ml-64 flex-1 p-8">
+      <main className="md:ml-64 flex-1 p-8">
         <div className="mb-8 flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-slate-900">

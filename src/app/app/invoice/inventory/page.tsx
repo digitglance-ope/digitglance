@@ -1,9 +1,9 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import AppSidebar from '@/components/AppSidebar'
+import { useRole } from '@/hooks/useRole'
 
 type Item = {
   id: string
@@ -28,6 +28,7 @@ export default function InventoryPage() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const supabase = createClient()
+  const { canCreate, canEdit, canDelete } = useRole()
 
   async function load() {
     const { data: { user } } = await supabase.auth.getUser()
@@ -83,7 +84,7 @@ export default function InventoryPage() {
     <div className="min-h-screen bg-slate-50 flex">
       <AppSidebar product="invoice" />
 
-      <main className="ml-64 flex-1 p-8">
+      <main className="md:ml-64 flex-1 p-8">
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-2xl font-bold text-slate-900">Inventory</h1>
@@ -94,10 +95,12 @@ export default function InventoryPage() {
               <p className="text-xs text-slate-400 uppercase tracking-wider">Total Stock Value</p>
               <p className="text-sm font-bold text-teal-600">{fmt(totalStockValue)}</p>
             </div>
-            <button onClick={openNew} className="flex items-center gap-2 bg-teal-600 hover:bg-teal-700 text-white font-semibold px-5 py-2.5 rounded-lg text-sm transition-colors">
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
-              Add Item
-            </button>
+            {canCreate && (
+              <button onClick={openNew} className="flex items-center gap-2 bg-teal-600 hover:bg-teal-700 text-white font-semibold px-5 py-2.5 rounded-lg text-sm transition-colors">
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
+                Add Item
+              </button>
+            )}
           </div>
         </div>
 
@@ -138,8 +141,8 @@ export default function InventoryPage() {
                     <td className="px-5 py-4 text-sm text-slate-600">{item.cost_price ? fmt(item.cost_price * item.stock_quantity) : '-'}</td>
                     <td className="px-5 py-4">
                       <div className="flex gap-2 justify-end">
-                        <button onClick={() => openEdit(item)} className="text-xs text-slate-500 hover:text-teal-600 font-medium">Edit</button>
-                        <button onClick={() => handleDelete(item.id)} className="text-xs text-slate-500 hover:text-red-500 font-medium">Delete</button>
+                        {canEdit && <button onClick={() => openEdit(item)} className="text-xs text-slate-500 hover:text-teal-600 font-medium">Edit</button>}
+                        {canDelete && <button onClick={() => handleDelete(item.id)} className="text-xs text-slate-500 hover:text-red-500 font-medium">Delete</button>}
                       </div>
                     </td>
                   </tr>

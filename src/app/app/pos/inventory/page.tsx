@@ -321,7 +321,7 @@ export default function PosInventoryPage() {
     <div className="min-h-screen bg-slate-50 flex">
       <AppSidebar product="pos" />
 
-      <main className="ml-64 flex-1 p-8">
+      <main className="md:ml-64 flex-1 p-8">
 
         {/* Header */}
         <div className="mb-6 flex items-center justify-between">

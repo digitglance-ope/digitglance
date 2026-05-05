@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import AppSidebar from '@/components/AppSidebar'
+import { useRole } from '@/hooks/useRole'
 
 type Invoice = {
   id: string
@@ -28,6 +29,7 @@ export default function InvoicesPage() {
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState('all')
   const supabase = createClient()
+  const { canCreate } = useRole()
 
   async function loadInvoices() {
     const { data: { user } } = await supabase.auth.getUser()
@@ -51,18 +53,20 @@ export default function InvoicesPage() {
     <div className="min-h-screen bg-slate-50 flex">
       <AppSidebar product="invoice" />
 
-      <main className="ml-64 flex-1 p-8">
+      <main className="md:ml-64 flex-1 p-8">
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-2xl font-bold text-slate-900">Invoices</h1>
             <p className="text-slate-500 text-sm mt-1">{invoices.length} total invoices</p>
           </div>
-          <Link href="/app/invoice/invoices/new" className="flex items-center gap-2 bg-teal-600 hover:bg-teal-700 text-white font-semibold px-5 py-2.5 rounded-lg text-sm transition-colors">
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-            </svg>
-            New Invoice
-          </Link>
+          {canCreate && (
+            <Link href="/app/invoice/invoices/new" className="flex items-center gap-2 bg-teal-600 hover:bg-teal-700 text-white font-semibold px-5 py-2.5 rounded-lg text-sm transition-colors">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+              </svg>
+              New Invoice
+            </Link>
+          )}
         </div>
 
         {/* Filters */}
@@ -90,7 +94,9 @@ export default function InvoicesPage() {
                 </svg>
               </div>
               <p className="text-slate-500 text-sm">No invoices found.</p>
-              <Link href="/app/invoice/invoices/new" className="inline-block mt-3 text-teal-600 text-sm font-medium hover:text-teal-700">Create your first invoice</Link>
+              {canCreate && (
+                <Link href="/app/invoice/invoices/new" className="inline-block mt-3 text-teal-600 text-sm font-medium hover:text-teal-700">Create your first invoice</Link>
+              )}
             </div>
           ) : (
             <table className="w-full">

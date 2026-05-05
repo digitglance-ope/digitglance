@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import AppSidebar from '@/components/AppSidebar'
+import { useRole } from '@/hooks/useRole'
 
 type Customer = {
   id: string
@@ -43,6 +44,7 @@ export default function CustomersPage() {
   const [form, setForm] = useState({ name: '', email: '', phone: '', address: '' })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const { canCreate, canEdit, canDelete } = useRole()
 
   // Statement
   const [showStatement, setShowStatement] = useState(false)
@@ -155,18 +157,20 @@ export default function CustomersPage() {
     <div className="min-h-screen bg-slate-50 flex">
       <AppSidebar product="invoice" />
 
-      <main className="ml-64 flex-1 p-8">
+      <main className="md:ml-64 flex-1 p-8">
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-2xl font-bold text-slate-900">Customers</h1>
             <p className="text-slate-500 text-sm mt-1">{customers.length} total customers</p>
           </div>
-          <button onClick={openNew} className="flex items-center gap-2 bg-teal-600 hover:bg-teal-700 text-white font-semibold px-5 py-2.5 rounded-lg text-sm transition-colors">
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-            </svg>
-            Add Customer
-          </button>
+          {canCreate && (
+            <button onClick={openNew} className="flex items-center gap-2 bg-teal-600 hover:bg-teal-700 text-white font-semibold px-5 py-2.5 rounded-lg text-sm transition-colors">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+              </svg>
+              Add Customer
+            </button>
+          )}
         </div>
 
         <div className="relative mb-6">
@@ -220,8 +224,8 @@ export default function CustomersPage() {
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3 justify-end">
                         <button onClick={() => openStatement(c)} className="text-xs text-teal-600 hover:text-teal-700 font-medium transition-colors">Statement</button>
-                        <button onClick={() => openEdit(c)} className="text-xs text-slate-500 hover:text-teal-600 font-medium transition-colors">Edit</button>
-                        <button onClick={() => handleDelete(c.id)} className="text-xs text-slate-500 hover:text-red-500 font-medium transition-colors">Delete</button>
+                        {canEdit && <button onClick={() => openEdit(c)} className="text-xs text-slate-500 hover:text-teal-600 font-medium transition-colors">Edit</button>}
+                        {canDelete && <button onClick={() => handleDelete(c.id)} className="text-xs text-slate-500 hover:text-red-500 font-medium transition-colors">Delete</button>}
                       </div>
                     </td>
                   </tr>

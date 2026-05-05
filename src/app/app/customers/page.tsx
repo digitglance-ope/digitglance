@@ -192,7 +192,7 @@ export default function CustomersPage() {
         </nav>
       </aside>
 
-      <main className="ml-64 flex-1 p-8">
+      <main className="md:ml-64 flex-1 p-8">
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-2xl font-bold text-slate-900">Customers</h1>

@@ -236,7 +236,7 @@ export default function PosReportsPage() {
   return (
     <div className="min-h-screen bg-slate-50 flex">
       <AppSidebar product="pos" />
-      <main className="ml-64 flex-1 p-8">
+      <main className="md:ml-64 flex-1 p-8">
 
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-slate-900">Reports</h1>

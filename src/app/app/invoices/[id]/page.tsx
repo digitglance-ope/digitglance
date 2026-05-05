@@ -256,7 +256,7 @@ export default function InvoiceDetailPage() {
         </nav>
       </aside>
 
-      <main className="ml-64 flex-1 p-8 print:ml-0 print:p-8">
+      <main className="md:ml-64 flex-1 p-8 print:ml-0 print:p-8">
         {/* Header */}
         <div className="flex items-center justify-between mb-6 print:hidden">
           <div>
