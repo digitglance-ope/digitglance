@@ -1,8 +1,10 @@
 import { createClient } from '@/lib/supabase/server'
+import { createClient as createAdminClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
 
 export async function POST(req: NextRequest) {
   try {
+    // Auth check via cookie-based client (anon key)
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
@@ -20,8 +22,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid mode.' }, { status: 400 })
     }
 
+    // Service role client for all DB writes — bypasses RLS safely (auth already validated above)
+    const db = createAdminClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      { auth: { autoRefreshToken: false, persistSession: false } }
+    )
+
     // Resolve owner — team members share account owner's subscriptions
-    const { data: profile } = await supabase
+    const { data: profile } = await db
       .from('profiles')
       .select('is_team_member, account_owner_id')
       .eq('id', user.id)
@@ -32,7 +41,7 @@ export async function POST(req: NextRequest) {
       : user.id
 
     // Check for existing subscription
-    const { data: existing } = await supabase
+    const { data: existing } = await db
       .from('product_subscriptions')
       .select('id, status, plan_slug')
       .eq('account_owner_id', ownerId)
@@ -46,7 +55,7 @@ export async function POST(req: NextRequest) {
 
       // Trial user upgrading to paid — update in place
       if (existing.status === 'trial' && mode === 'subscribe') {
-        const { error: updateError } = await supabase
+        const { error: updateError } = await db
           .from('product_subscriptions')
           .update({ status: 'active', plan_slug: plan })
           .eq('id', existing.id)
@@ -56,7 +65,7 @@ export async function POST(req: NextRequest) {
           return NextResponse.json({ error: 'Failed to upgrade subscription.' }, { status: 500 })
         }
 
-        await supabase.from('audit_logs').insert({
+        await db.from('audit_logs').insert({
           account_owner_id: ownerId,
           user_id: user.id,
           user_email: user.email,
@@ -75,7 +84,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Create new subscription
-    const { error: insertError } = await supabase
+    const { error: insertError } = await db
       .from('product_subscriptions')
       .insert({
         account_owner_id: ownerId,
@@ -89,7 +98,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Failed to activate subscription.' }, { status: 500 })
     }
 
-    await supabase.from('audit_logs').insert({
+    await db.from('audit_logs').insert({
       account_owner_id: ownerId,
       user_id: user.id,
       user_email: user.email,
