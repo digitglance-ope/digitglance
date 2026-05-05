@@ -616,9 +616,10 @@ export default function Products() {
               A point of sale system built for Nigerian retail. Fast checkout, multi-branch inventory, FIRS VAT compliance, and real-time sales reporting — all in one system.
             </p>
             <p className="text-slate-500 text-sm mt-3">Best for: Supermarkets, pharmacies, retail shops, restaurants, beauty salons, hardware stores</p>
-            <a href="/contact" className="inline-block mt-8 bg-blue-600 text-white font-semibold px-8 py-4 rounded-xl hover:bg-blue-700 transition-colors">
-              Add POS to Your Account
+            <a href="/app/register" className="inline-block mt-8 bg-blue-600 text-white font-semibold px-8 py-4 rounded-xl hover:bg-blue-700 transition-colors">
+              Start Free Trial
             </a>
+            <p className="text-slate-500 text-sm mt-3">14-day free trial. No card required. Starter from ₦8,000/month.</p>
           </div>
         </section>
 
@@ -1010,63 +1011,86 @@ export default function Products() {
           </div>
         </section>
 
-        {/* POS Pricing / CTA */}
+        {/* POS Pricing */}
         <section className="px-6 py-16 bg-slate-50">
-          <div className="max-w-4xl mx-auto">
+          <div className="max-w-5xl mx-auto">
             <div className="text-center mb-12">
-              <p className="text-blue-600 text-sm font-semibold uppercase tracking-widest mb-3">POS Subscription</p>
-              <h3 className="text-3xl font-bold text-slate-900 mb-3">Add POS to your account</h3>
-              <p className="text-slate-500 max-w-xl mx-auto">DigitGlance POS is available as a standalone subscription or bundled with Invoice for a combined rate. Contact us to set up your account — we configure your branches, terminals, and products as part of onboarding.</p>
+              <p className="text-blue-600 text-sm font-semibold uppercase tracking-widest mb-3">POS Pricing</p>
+              <h3 className="text-3xl font-bold text-slate-900 mb-3">Simple, transparent pricing</h3>
+              <p className="text-slate-500 max-w-xl mx-auto">Start free for 14 days. No credit card required. Upgrade any time from inside your account.</p>
             </div>
-            <div className="grid md:grid-cols-2 gap-6">
-              <div className="bg-white border-2 border-blue-200 rounded-2xl p-8">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-9 h-9 bg-blue-100 rounded-xl flex items-center justify-center">
-                    <svg className="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
-                    </svg>
+            <div className="grid md:grid-cols-3 gap-6">
+              {/* Starter */}
+              <div className="bg-white border-2 border-slate-200 rounded-2xl p-8 flex flex-col">
+                <h4 className="text-lg font-bold text-slate-900 mb-1">POS Starter</h4>
+                <p className="text-xs text-slate-500 mb-5">For single-location retail</p>
+                <div className="mb-6">
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-3xl font-bold text-slate-900">₦8,000</span>
+                    <span className="text-slate-400 text-sm">/month</span>
                   </div>
-                  <div>
-                    <h4 className="font-bold text-slate-900">POS Only</h4>
-                    <p className="text-xs text-slate-500">Standalone POS subscription</p>
-                  </div>
+                  <p className="text-xs text-blue-600 font-semibold mt-1">14-day free trial included</p>
                 </div>
-                <ul className="space-y-2 mb-6">
-                  {['Full POS terminal access', 'Multi-branch inventory', 'FIRS VAT compliance', 'Sales and inventory reports', 'Team access control', 'Onboarding and setup included'].map(f => (
+                <ul className="space-y-2 mb-8 flex-1">
+                  {['1 branch, 1 terminal', 'Up to 500 products', 'Fast checkout terminal', 'FIRS VAT compliance', 'Sales and inventory reports', 'CSV export'].map(f => (
                     <li key={f} className="flex items-center gap-2 text-sm text-slate-700">
                       <svg className="w-4 h-4 text-blue-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
                       {f}
                     </li>
                   ))}
                 </ul>
-                <a href="/contact" className="block text-center font-semibold py-3 rounded-xl text-sm transition-colors bg-blue-600 text-white hover:bg-blue-700">
-                  Contact Us for POS Pricing
+                <a href="/app/register" className="block text-center font-semibold py-3 rounded-xl text-sm border border-blue-300 text-blue-700 hover:bg-blue-50 transition-colors">
+                  Start Free Trial
                 </a>
               </div>
-              <div className="bg-slate-900 border-2 border-slate-700 rounded-2xl p-8 relative">
+
+              {/* Pro */}
+              <div className="bg-white border-2 border-blue-500 rounded-2xl p-8 flex flex-col relative">
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                  <span className="text-xs font-bold px-3 py-1 rounded-full bg-blue-600 text-white">Most Popular</span>
+                </div>
+                <h4 className="text-lg font-bold text-slate-900 mb-1">POS Pro</h4>
+                <p className="text-xs text-slate-500 mb-5">For multi-branch operations</p>
+                <div className="mb-6">
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-3xl font-bold text-slate-900">₦18,000</span>
+                    <span className="text-slate-400 text-sm">/month</span>
+                  </div>
+                  <p className="text-xs text-blue-600 font-semibold mt-1">14-day free trial included</p>
+                </div>
+                <ul className="space-y-2 mb-8 flex-1">
+                  {['3 branches, 3 terminals', 'Unlimited products', 'Fast checkout terminal', 'FIRS VAT compliance', 'Full reports + CSV export', 'Vendor management', 'Customer accounts and A/R', 'Priority support'].map(f => (
+                    <li key={f} className="flex items-center gap-2 text-sm text-slate-700">
+                      <svg className="w-4 h-4 text-blue-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+                <a href="/app/register" className="block text-center font-semibold py-3 rounded-xl text-sm bg-blue-600 text-white hover:bg-blue-700 transition-colors">
+                  Start Free Trial
+                </a>
+              </div>
+
+              {/* Bundle */}
+              <div className="bg-slate-900 border-2 border-slate-700 rounded-2xl p-8 flex flex-col relative">
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2">
                   <span className="text-xs font-bold px-3 py-1 rounded-full bg-teal-500 text-white">Best Value</span>
                 </div>
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-9 h-9 bg-teal-600/20 border border-teal-700 rounded-xl flex items-center justify-center">
-                    <svg className="w-5 h-5 text-teal-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-white">Invoice + POS Bundle</h4>
-                    <p className="text-xs text-slate-400">Both products, one account</p>
-                  </div>
+                <h4 className="text-lg font-bold text-white mb-1">Invoice + POS Bundle</h4>
+                <p className="text-xs text-slate-400 mb-5">Both products, one account</p>
+                <div className="mb-6">
+                  <p className="text-slate-300 text-sm font-semibold">Custom pricing</p>
+                  <p className="text-xs text-teal-400 font-semibold mt-1">Contact us for bundle rate</p>
                 </div>
-                <ul className="space-y-2 mb-6">
-                  {['Everything in Invoice Pro', 'Everything in POS', 'Shared inventory across both modules', 'Single customer and supplier database', 'Combined VAT reporting', 'Priority support'].map(f => (
+                <ul className="space-y-2 mb-8 flex-1">
+                  {['Everything in Invoice Pro', 'Everything in POS Pro', 'Shared inventory across modules', 'Single customer and supplier database', 'Combined VAT reporting', 'Priority support'].map(f => (
                     <li key={f} className="flex items-center gap-2 text-sm text-slate-300">
                       <svg className="w-4 h-4 text-teal-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
                       {f}
                     </li>
                   ))}
                 </ul>
-                <a href="/contact" className="block text-center font-semibold py-3 rounded-xl text-sm transition-colors bg-teal-600 text-white hover:bg-teal-700">
+                <a href="/contact" className="block text-center font-semibold py-3 rounded-xl text-sm bg-teal-600 text-white hover:bg-teal-700 transition-colors">
                   Get Bundle Pricing
                 </a>
               </div>
@@ -1166,11 +1190,11 @@ export default function Products() {
             <a href="/app/register" className="bg-teal-600 text-white font-semibold px-10 py-4 rounded-xl hover:bg-teal-700 transition-colors">
               Start Free with Invoice
             </a>
-            <a href="/contact" className="border border-slate-600 text-white font-semibold px-10 py-4 rounded-xl hover:border-blue-400 hover:text-blue-400 transition-colors">
-              Talk to Us About POS
+            <a href="/app/register" className="border border-slate-600 text-white font-semibold px-10 py-4 rounded-xl hover:border-blue-400 hover:text-blue-400 transition-colors">
+              Start POS Free Trial
             </a>
           </div>
-          <p className="text-slate-600 text-sm mt-6">No credit card required for Invoice. POS setup by our team.</p>
+          <p className="text-slate-600 text-sm mt-6">No credit card required. Invoice free plan available forever. POS 14-day trial included.</p>
         </div>
       </section>
 

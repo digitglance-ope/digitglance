@@ -81,6 +81,11 @@ export async function middleware(request: NextRequest) {
   // URL pattern: /app/{productSlug}/...
   const productSlug = path.split('/')[2]
   if (productSlug && PRODUCT_SLUGS.has(productSlug)) {
+    // Activation page is always accessible — user needs it to subscribe
+    if (path === `/app/${productSlug}/activate`) {
+      return supabaseResponse
+    }
+
     // Team members inherit their account owner's subscriptions
     const ownerId = (profile?.is_team_member && profile.account_owner_id)
       ? profile.account_owner_id
@@ -88,10 +93,10 @@ export async function middleware(request: NextRequest) {
 
     const { data: sub } = await supabase
       .from('product_subscriptions')
-      .select('id')
+      .select('id, status, created_at')
       .eq('account_owner_id', ownerId)
       .eq('product_slug', productSlug)
-      .eq('status', 'active')
+      .in('status', ['active', 'trial'])
       .maybeSingle()
 
     if (!sub) {
@@ -99,6 +104,17 @@ export async function middleware(request: NextRequest) {
       url.pathname = '/app/dashboard'
       url.searchParams.set('upgrade', productSlug)
       return NextResponse.redirect(url)
+    }
+
+    // Trial expiry check — 14 days from created_at
+    if (sub.status === 'trial') {
+      const trialEnd = new Date(new Date(sub.created_at).getTime() + 14 * 24 * 60 * 60 * 1000)
+      if (new Date() > trialEnd) {
+        const url = request.nextUrl.clone()
+        url.pathname = `/app/${productSlug}/activate`
+        url.searchParams.set('expired', 'true')
+        return NextResponse.redirect(url)
+      }
     }
   }
 

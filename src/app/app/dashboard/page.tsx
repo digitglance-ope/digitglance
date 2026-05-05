@@ -9,6 +9,7 @@ const HUB_PRODUCTS = [
     name: 'Invoice',
     description: 'Create invoices, track payments, manage customers and suppliers, and generate VAT reports.',
     href: '/app/invoice/dashboard',
+    activateHref: '/app/subscription',
     status: 'live' as const,
     icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z',
     color: 'teal',
@@ -18,6 +19,7 @@ const HUB_PRODUCTS = [
     name: 'Point of Sale',
     description: 'Fast checkout, cash and card sales, FIRS VAT compliance, and multi-branch inventory management.',
     href: '/app/pos/dashboard',
+    activateHref: '/app/pos/activate',
     status: 'live' as const,
     icon: 'M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z',
     color: 'blue',
@@ -27,6 +29,7 @@ const HUB_PRODUCTS = [
     name: 'Accounting',
     description: 'Full double-entry bookkeeping, P&L statements, balance sheet, and tax preparation.',
     href: '#',
+    activateHref: '/contact',
     status: 'soon' as const,
     icon: 'M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z',
     color: 'purple',
@@ -36,6 +39,7 @@ const HUB_PRODUCTS = [
     name: 'School Manager',
     description: 'Student enrollment, fee collection, class scheduling, and results management.',
     href: '#',
+    activateHref: '/contact',
     status: 'soon' as const,
     icon: 'M12 14l9-5-9-5-9 5 9 5z M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z',
     color: 'orange',
@@ -86,11 +90,12 @@ export default async function DashboardPage({
 
   const { data: subscriptions } = await supabase
     .from('product_subscriptions')
-    .select('product_slug, plan_slug')
+    .select('product_slug, plan_slug, status')
     .eq('account_owner_id', ownerId)
-    .eq('status', 'active')
+    .in('status', ['active', 'trial'])
 
   const subscribedSlugs = new Set(subscriptions?.map(s => s.product_slug) ?? [])
+  const trialSlugs = new Set(subscriptions?.filter(s => s.status === 'trial').map(s => s.product_slug) ?? [])
 
   const upgradeSlug = searchParams?.upgrade
   const upgradeProduct = upgradeSlug
@@ -147,10 +152,10 @@ export default async function DashboardPage({
               </p>
             </div>
             <a
-              href="/contact"
+              href={upgradeProduct?.slug === 'pos' ? '/app/pos/activate' : '/contact'}
               className="text-xs font-semibold text-amber-700 hover:text-amber-900 whitespace-nowrap border border-amber-300 px-3 py-1.5 rounded-lg hover:bg-amber-100 transition-colors"
             >
-              Contact Us
+              {upgradeProduct?.slug === 'pos' ? 'Add POS →' : 'Contact Us'}
             </a>
           </div>
         </div>
@@ -175,6 +180,7 @@ export default async function DashboardPage({
             const c = COLOR_MAP[product.color]
             const isLive = product.status === 'live'
             const isSubscribed = subscribedSlugs.has(product.slug)
+            const isTrialing = trialSlugs.has(product.slug)
 
             return (
               <div
@@ -195,13 +201,15 @@ export default async function DashboardPage({
                     </svg>
                   </div>
                   <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
-                    isSubscribed
+                    isTrialing
+                      ? 'bg-amber-100 text-amber-700'
+                      : isSubscribed
                       ? c.badge
                       : isLive
                       ? 'bg-slate-100 text-slate-500'
                       : 'bg-slate-100 text-slate-400'
                   }`}>
-                    {isSubscribed ? 'Active' : isLive ? 'Available' : 'Coming Soon'}
+                    {isTrialing ? 'Free Trial' : isSubscribed ? 'Active' : isLive ? 'Available' : 'Coming Soon'}
                   </span>
                 </div>
 
@@ -217,10 +225,10 @@ export default async function DashboardPage({
                   </Link>
                 ) : isLive ? (
                   <a
-                    href="/contact"
+                    href={product.activateHref}
                     className={`w-full text-center font-semibold py-2.5 rounded-xl text-sm transition-colors ${c.outline}`}
                   >
-                    Add to Account
+                    {product.slug === 'pos' ? 'Start Free Trial' : 'Add to Account'}
                   </a>
                 ) : (
                   <button

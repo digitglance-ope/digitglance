@@ -1,4 +1,42 @@
-﻿export default function Contact() {
+'use client'
+
+import { useState } from 'react'
+
+export default function Contact() {
+  const [form, setForm] = useState({ name: '', email: '', phone: '', service: '', message: '' })
+  const [status, setStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle')
+  const [errorMsg, setErrorMsg] = useState('')
+
+  function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) {
+    setForm(prev => ({ ...prev, [e.target.name]: e.target.value }))
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    setStatus('sending')
+    setErrorMsg('')
+
+    try {
+      const res = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
+      })
+
+      if (res.ok) {
+        setStatus('success')
+        setForm({ name: '', email: '', phone: '', service: '', message: '' })
+      } else {
+        const data = await res.json()
+        setErrorMsg(data.error || 'Failed to send your message. Please try again.')
+        setStatus('error')
+      }
+    } catch {
+      setErrorMsg('Network error. Please check your connection and try again.')
+      setStatus('error')
+    }
+  }
+
   return (
     <main className="min-h-screen bg-white">
 
@@ -37,54 +75,122 @@
           {/* CONTACT FORM */}
           <div>
             <h2 className="text-xl font-bold text-slate-900 mb-8">Send Us a Message</h2>
-            <form action="https://formspree.io/f/xbdqyelq" method="POST" className="space-y-6">
-              
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Full Name</label>
-                <input type="text" name="name" required placeholder="Your full name" className="w-full border border-gray-200 rounded-lg px-4 py-3 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500" />
+
+            {/* Success state */}
+            {status === 'success' ? (
+              <div className="bg-teal-50 border border-teal-200 rounded-xl p-8 text-center">
+                <div className="w-14 h-14 bg-teal-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <svg className="w-7 h-7 text-teal-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+                <h3 className="text-lg font-bold text-slate-900 mb-2">Message sent</h3>
+                <p className="text-slate-600 text-sm mb-6">Thank you for reaching out. We will respond within one business day.</p>
+                <button
+                  onClick={() => setStatus('idle')}
+                  className="text-teal-600 text-sm font-semibold hover:text-teal-700"
+                >
+                  Send another message
+                </button>
               </div>
+            ) : (
+              <form onSubmit={handleSubmit} className="space-y-6">
 
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Email Address</label>
-                <input type="email" name="email" required placeholder="your@email.com" className="w-full border border-gray-200 rounded-lg px-4 py-3 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500" />
-              </div>
+                {/* Error banner */}
+                {status === 'error' && (
+                  <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-sm text-red-700 font-medium">
+                    {errorMsg}
+                  </div>
+                )}
 
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Phone Number</label>
-                <input type="tel" name="phone" placeholder="Your phone number" className="w-full border border-gray-200 rounded-lg px-4 py-3 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500" />
-              </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Full Name</label>
+                  <input
+                    type="text"
+                    name="name"
+                    value={form.name}
+                    onChange={handleChange}
+                    required
+                    placeholder="Your full name"
+                    className="w-full border border-gray-200 rounded-lg px-4 py-3 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500"
+                  />
+                </div>
 
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Service of Interest</label>
-                <select name="service" className="w-full border border-gray-200 rounded-lg px-4 py-3 text-sm text-slate-900 focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500">
-                  <option value="">Select a service</option>
-                  <option value="accounting">Accounting and Bookkeeping</option>
-                  <option value="tax">Tax Advisory and Compliance</option>
-                  <option value="payroll">Payroll Management</option>
-                  <option value="web-app">Web Application Development</option>
-                  <option value="excel-vba">Excel VBA Desktop Tools</option>
-                  <option value="invoice-app">Invoice Management App</option>
-                  <option value="training">Training and Installation</option>
-                  <option value="other">Other</option>
-                </select>
-              </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Email Address</label>
+                  <input
+                    type="email"
+                    name="email"
+                    value={form.email}
+                    onChange={handleChange}
+                    required
+                    placeholder="your@email.com"
+                    className="w-full border border-gray-200 rounded-lg px-4 py-3 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500"
+                  />
+                </div>
 
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Message</label>
-                <textarea name="message" required rows={5} placeholder="Tell us about your business and what you need help with" className="w-full border border-gray-200 rounded-lg px-4 py-3 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500 resize-none"></textarea>
-              </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Phone Number</label>
+                  <input
+                    type="tel"
+                    name="phone"
+                    value={form.phone}
+                    onChange={handleChange}
+                    placeholder="Your phone number"
+                    className="w-full border border-gray-200 rounded-lg px-4 py-3 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500"
+                  />
+                </div>
 
-              <button type="submit" className="w-full bg-teal-600 text-white font-medium py-3 rounded-lg hover:bg-teal-700 transition-colors">
-                Send Message
-              </button>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Service of Interest</label>
+                  <select
+                    name="service"
+                    value={form.service}
+                    onChange={handleChange}
+                    className="w-full border border-gray-200 rounded-lg px-4 py-3 text-sm text-slate-900 focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500"
+                  >
+                    <option value="">Select a service</option>
+                    <option value="accounting">Accounting and Bookkeeping</option>
+                    <option value="tax">Tax Advisory and Compliance</option>
+                    <option value="payroll">Payroll Management</option>
+                    <option value="web-app">Web Application Development</option>
+                    <option value="excel-vba">Excel VBA Desktop Tools</option>
+                    <option value="invoice-app">Invoice Management App</option>
+                    <option value="pos-app">Point of Sale System</option>
+                    <option value="training">Training and Installation</option>
+                    <option value="other">Other</option>
+                  </select>
+                </div>
 
-            </form>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Message</label>
+                  <textarea
+                    name="message"
+                    value={form.message}
+                    onChange={handleChange}
+                    required
+                    rows={5}
+                    placeholder="Tell us about your business and what you need help with"
+                    className="w-full border border-gray-200 rounded-lg px-4 py-3 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500 resize-none"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={status === 'sending'}
+                  className="w-full bg-teal-600 text-white font-medium py-3 rounded-lg hover:bg-teal-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  {status === 'sending' ? 'Sending...' : 'Send Message'}
+                </button>
+
+              </form>
+            )}
           </div>
 
           {/* CONTACT INFO */}
           <div>
             <h2 className="text-xl font-bold text-slate-900 mb-8">Contact Information</h2>
-            
+
             <div className="space-y-6 mb-12">
               <div className="flex items-start gap-4">
                 <div className="w-10 h-10 bg-teal-50 rounded-lg flex items-center justify-center flex-shrink-0">
@@ -129,11 +235,11 @@
               <h3 className="font-bold text-slate-900 mb-4">What happens after you contact us</h3>
               <div className="space-y-4">
                 {[
-                  { step: "1", text: "We review your message and identify the right service for your needs" },
-                  { step: "2", text: "We send you a response within one business day with next steps" },
-                  { step: "3", text: "We schedule a free consultation call to discuss your requirements in detail" },
-                  { step: "4", text: "We provide a clear proposal with pricing and timeline" }
-                ].map((item) => (
+                  { step: '1', text: 'We review your message and identify the right service for your needs' },
+                  { step: '2', text: 'We send you a response within one business day with next steps' },
+                  { step: '3', text: 'We schedule a free consultation call to discuss your requirements in detail' },
+                  { step: '4', text: 'We provide a clear proposal with pricing and timeline' },
+                ].map(item => (
                   <div key={item.step} className="flex items-start gap-3">
                     <div className="w-6 h-6 bg-teal-600 rounded-full flex items-center justify-center flex-shrink-0 text-white text-xs font-bold">
                       {item.step}
@@ -143,7 +249,6 @@
                 ))}
               </div>
             </div>
-
           </div>
         </div>
       </section>
@@ -182,17 +287,20 @@
           </div>
         </div>
       </footer>
-       <a href="https://wa.me/2348162357628?text=Hello%20DigitGlance%2C%20I%20would%20like%20to%20know%20more%20about%20your%20services."
-          target="_blank"
-          rel="noopener noreferrer"
-          className="fixed bottom-6 right-6 bg-green-500 hover:bg-green-600 text-white px-4 py-3 rounded-full shadow-lg flex items-center gap-2 z-50 transition-colors"
-        >
-          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
-            <path d="M12 0C5.373 0 0 5.373 0 12c0 2.124.558 4.121 1.535 5.856L.057 23.215a.75.75 0 00.916.916l5.355-1.479A11.952 11.952 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.75a9.725 9.725 0 01-4.964-1.361l-.355-.213-3.681 1.016 1.017-3.681-.213-.355A9.725 9.725 0 012.25 12C2.25 6.615 6.615 2.25 12 2.25S21.75 6.615 21.75 12 17.385 21.75 12 21.75z"/>
-          </svg>
-          Chat on WhatsApp
-        </a>
+
+      {/* WhatsApp button */}
+      <a
+        href="https://wa.me/2348162357628?text=Hello%20DigitGlance%2C%20I%20would%20like%20to%20know%20more%20about%20your%20services."
+        target="_blank"
+        rel="noopener noreferrer"
+        className="fixed bottom-6 right-6 bg-green-500 hover:bg-green-600 text-white px-4 py-3 rounded-full shadow-lg flex items-center gap-2 z-50 transition-colors"
+      >
+        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z" />
+          <path d="M12 0C5.373 0 0 5.373 0 12c0 2.124.558 4.121 1.535 5.856L.057 23.215a.75.75 0 00.916.916l5.355-1.479A11.952 11.952 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.75a9.725 9.725 0 01-4.964-1.361l-.355-.213-3.681 1.016 1.017-3.681-.213-.355A9.725 9.725 0 012.25 12C2.25 6.615 6.615 2.25 12 2.25S21.75 6.615 21.75 12 17.385 21.75 12 21.75z" />
+        </svg>
+        Chat on WhatsApp
+      </a>
     </main>
-  );
+  )
 }
