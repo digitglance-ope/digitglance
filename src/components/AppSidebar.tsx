@@ -129,7 +129,7 @@ export default function AppSidebar({ product }: AppSidebarProps) {
         />
       )}
 
-      <aside className={`w-64 bg-slate-900 min-h-screen flex flex-col fixed top-0 left-0 z-50 transition-transform duration-200 ${mobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
+      <aside className={`w-64 bg-slate-900 h-screen flex flex-col fixed top-0 left-0 z-50 transition-transform duration-200 ${mobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
 
         {/* Logo + mobile close */}
         <div className="p-6 border-b border-slate-800 flex items-center justify-between">
