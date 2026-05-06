@@ -82,6 +82,7 @@ const PLANS = [
 ]
 
 const EXTRA_USER_PRICE = 2000
+const PLAN_RANK: Record<string, number> = { free: 0, starter: 1, pro: 2 }
 
 export default function SubscriptionPage() {
   const supabase = createClient()
@@ -90,6 +91,8 @@ export default function SubscriptionPage() {
   const [processingPlan, setProcessingPlan] = useState('')
   const [userEmail, setUserEmail] = useState('')
   const [extraUsers, setExtraUsers] = useState<Record<string, number>>({ starter: 0, pro: 0 })
+  const [downgradeTarget, setDowngradeTarget] = useState<typeof PLANS[0] | null>(null)
+  const [downgrading, setDowngrading] = useState(false)
 
   useEffect(() => { load() }, [])
 
@@ -164,6 +167,24 @@ export default function SubscriptionPage() {
     })
 
     setProcessingPlan('')
+    load()
+  }
+
+  async function handleDowngrade(plan: typeof PLANS[0]) {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+    setDowngrading(true)
+    await supabase.from('profiles').update({ plan: plan.value }).eq('id', user.id)
+    await supabase.from('audit_logs').insert({
+      account_owner_id: user.id,
+      user_id: user.id,
+      user_email: userEmail,
+      action: 'Plan Downgraded',
+      resource: 'Subscription',
+      details: `Downgraded to ${plan.value} plan.`,
+    })
+    setDowngrading(false)
+    setDowngradeTarget(null)
     load()
   }
 
@@ -301,6 +322,13 @@ export default function SubscriptionPage() {
                   <button disabled className="w-full bg-slate-100 text-slate-400 font-semibold py-3 rounded-xl text-sm cursor-not-allowed">
                     Current Plan
                   </button>
+                ) : PLAN_RANK[plan.value] < PLAN_RANK[currentPlan] ? (
+                  <button
+                    onClick={() => setDowngradeTarget(plan)}
+                    className="w-full border border-slate-300 text-slate-600 font-semibold py-3 rounded-xl text-sm hover:bg-slate-50 transition-colors"
+                  >
+                    Downgrade to {plan.name}
+                  </button>
                 ) : plan.value === 'free' ? (
                   <button disabled className="w-full border border-slate-200 text-slate-400 font-semibold py-3 rounded-xl text-sm cursor-not-allowed">
                     Free Plan
@@ -347,6 +375,45 @@ export default function SubscriptionPage() {
           </div>
         </div>
       </main>
+
+      {/* Downgrade confirmation modal */}
+      {downgradeTarget && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+          onClick={e => { if (e.target === e.currentTarget) setDowngradeTarget(null) }}>
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 bg-amber-50 rounded-xl flex items-center justify-center shrink-0">
+                <svg className="w-5 h-5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                </svg>
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-slate-900">Downgrade to {downgradeTarget.name}?</h3>
+                <p className="text-xs text-slate-500">This takes effect immediately.</p>
+              </div>
+            </div>
+            <div className="bg-amber-50 border border-amber-100 rounded-xl p-4 mb-5 text-sm text-amber-800 space-y-1">
+              <p className="font-semibold">You will lose access to:</p>
+              {PLANS.filter(p => PLAN_RANK[p.value] > PLAN_RANK[downgradeTarget.value])
+                .flatMap(p => p.features.filter(f => !downgradeTarget.features.includes(f)))
+                .filter((f, i, arr) => arr.indexOf(f) === i)
+                .slice(0, 5)
+                .map(f => <p key={f} className="text-xs text-amber-700">• {f}</p>)
+              }
+            </div>
+            <p className="text-xs text-slate-500 mb-5">Your existing data will not be deleted. You can upgrade again at any time.</p>
+            <div className="flex gap-3">
+              <button onClick={() => setDowngradeTarget(null)} className="flex-1 border border-slate-200 text-slate-600 font-semibold py-2.5 rounded-xl text-sm hover:bg-slate-50 transition-colors">
+                Keep Current Plan
+              </button>
+              <button onClick={() => handleDowngrade(downgradeTarget)} disabled={downgrading}
+                className="flex-1 bg-slate-800 hover:bg-slate-900 disabled:opacity-50 text-white font-semibold py-2.5 rounded-xl text-sm transition-colors">
+                {downgrading ? 'Downgrading...' : `Confirm Downgrade`}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
