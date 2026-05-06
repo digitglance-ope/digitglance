@@ -52,7 +52,7 @@ export default function ReceiptsPage() {
       .eq('status', 'completed')
       .order('created_at', { ascending: false })
       .limit(500)
-    setSales((data as Sale[]) || [])
+    setSales((data as unknown as Sale[]) || [])
     setLoading(false)
   }
 
@@ -69,7 +69,7 @@ export default function ReceiptsPage() {
     ])
     setSelectedSale({
       sale,
-      items: (items || []).map((i: { quantity: number; unit_price: number; line_total: number; vat_amount: number; discount_amount: number; pos_products: { name: string } | null }) => ({
+      items: (items || []).map((i: any) => ({
         product_name: i.pos_products?.name || 'Unknown',
         quantity: i.quantity,
         unit_price: i.unit_price,
