@@ -61,6 +61,7 @@ export default function InvoiceAIPage() {
   const [loading, setLoading] = useState(true)
   const [plan, setPlan] = useState<string>('free')
   const [businessName, setBusinessName] = useState('')
+  const [userEmail, setUserEmail] = useState('')
   const [ownerIdRef, setOwnerIdRef] = useState<string>('')
   const [invoices, setInvoices] = useState<OverdueInvoice[]>([])
   const [modal, setModal] = useState<DraftModal | null>(null)
@@ -123,6 +124,8 @@ export default function InvoiceAIPage() {
     async function init() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { router.push('/app/login'); return }
+
+      setUserEmail(user.email || '')
 
       const { data: profile } = await supabase
         .from('profiles')
@@ -204,6 +207,7 @@ export default function InvoiceAIPage() {
         body: JSON.stringify({
           type: 'invoice_reminder',
           to: modal.invoice.customer_email,
+          reply_to: userEmail,
           data: {
             business_name: businessName,
             customer_name: modal.invoice.customer_name,

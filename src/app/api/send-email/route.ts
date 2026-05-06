@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json()
-    const { type, to, data, name, businessName } = body
+    const { type, to, data, name, businessName, reply_to } = body
 
     if (!type || !to) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
@@ -309,6 +309,7 @@ export async function POST(req: NextRequest) {
       to,
       subject,
       html,
+      ...(reply_to ? { replyTo: reply_to } : {}),
     })
 
     if (error) {
