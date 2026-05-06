@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid recipient email address' }, { status: 400 })
     }
 
-    const ALLOWED_TYPES = ['invoice', 'payment_confirmation', 'invitation', 'account_ready']
+    const ALLOWED_TYPES = ['invoice', 'payment_confirmation', 'invitation', 'account_ready', 'invoice_reminder']
     if (!ALLOWED_TYPES.includes(type)) {
       return NextResponse.json({ error: 'Invalid email type' }, { status: 400 })
     }
@@ -236,6 +236,63 @@ export async function POST(req: NextRequest) {
               <p style="color:#94a3b8;font-size:11px;margin:0;">
                 © 2026 DigitGlance. A trading name of Digitglance Reliance. &bull; digitglance.com
               </p>
+            </div>
+          </div>
+        </body>
+        </html>
+      `
+    } else if (type === 'invoice_reminder') {
+      const { business_name, customer_name, invoice_number, amount_due, due_date, days_overdue, message_body } = data
+      const formattedAmount = '₦' + Number(amount_due).toLocaleString('en-NG', { minimumFractionDigits: 2 })
+      const formattedDue = new Date(due_date).toLocaleDateString('en-NG', { day: 'numeric', month: 'long', year: 'numeric' })
+      subject = `Payment Reminder: Invoice ${invoice_number} — ${business_name}`
+      html = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        </head>
+        <body style="margin:0;padding:0;background:#f8fafc;font-family:Arial,sans-serif;">
+          <div style="max-width:600px;margin:0 auto;padding:40px 20px;">
+            <div style="background:#0f172a;padding:24px 32px;border-radius:12px 12px 0 0;">
+              <h1 style="margin:0;color:#ffffff;font-size:22px;font-weight:bold;">
+                Digit<span style="color:#2dd4bf;">Glance</span>
+              </h1>
+              <p style="margin:4px 0 0;color:#64748b;font-size:12px;">Invoice Reminder</p>
+            </div>
+            <div style="background:#ffffff;padding:32px;border:1px solid #e2e8f0;border-top:none;">
+              <p style="color:#475569;font-size:15px;margin:0 0 16px;">Dear ${customer_name},</p>
+              <p style="color:#475569;font-size:15px;margin:0 0 24px;line-height:1.6;">${message_body}</p>
+              <div style="background:#fef9f0;border:1px solid #fed7aa;border-radius:8px;padding:20px;margin-bottom:24px;">
+                <p style="color:#92400e;font-size:12px;font-weight:bold;margin:0 0 10px;text-transform:uppercase;letter-spacing:0.05em;">Invoice Details</p>
+                <table style="width:100%;border-collapse:collapse;">
+                  <tr>
+                    <td style="padding:5px 0;color:#64748b;font-size:13px;">Invoice Number</td>
+                    <td style="padding:5px 0;color:#0f172a;font-size:13px;font-weight:bold;text-align:right;">${invoice_number}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding:5px 0;color:#64748b;font-size:13px;">Amount Outstanding</td>
+                    <td style="padding:5px 0;color:#dc2626;font-size:16px;font-weight:bold;text-align:right;">${formattedAmount}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding:5px 0;color:#64748b;font-size:13px;">Original Due Date</td>
+                    <td style="padding:5px 0;color:#dc2626;font-size:13px;font-weight:bold;text-align:right;">${formattedDue}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding:5px 0;color:#64748b;font-size:13px;">Days Overdue</td>
+                    <td style="padding:5px 0;color:#dc2626;font-size:13px;font-weight:bold;text-align:right;">${days_overdue} days</td>
+                  </tr>
+                </table>
+              </div>
+              <p style="color:#475569;font-size:14px;margin:0 0 24px;">Kind regards,<br/><strong>${business_name}</strong></p>
+              <p style="color:#94a3b8;font-size:12px;margin:24px 0 0;border-top:1px solid #e2e8f0;padding-top:16px;">
+                This payment reminder was sent by ${business_name} using DigitGlance Invoice.
+                For payment queries, please contact ${business_name} directly.
+              </p>
+            </div>
+            <div style="padding:16px 32px;text-align:center;">
+              <p style="color:#94a3b8;font-size:11px;margin:0;">Powered by DigitGlance &bull; digitglance.com</p>
             </div>
           </div>
         </body>
