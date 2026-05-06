@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import AppSidebar from '@/components/AppSidebar'
+import { useRole } from '@/hooks/useRole'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -35,6 +36,14 @@ interface SaleReceipt {
 }
 
 interface PosSettings { vat_rate: number; receipt_footer: string | null }
+
+interface ShiftSummary {
+  cashSales: number
+  cardSales: number
+  transferSales: number
+  totalSales: number
+  expectedCash: number
+}
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -85,7 +94,12 @@ export default function PosTerminalPage() {
   const [loading, setLoading] = useState(true)
   const [saving,  setSaving]  = useState(false)
 
+  const [showCart,         setShowCart]        = useState(false)
+  const [shiftSummary,     setShiftSummary]    = useState<ShiftSummary | null>(null)
+  const [discountApproval, setDiscountApproval] = useState<{ pid: string; val: number } | null>(null)
+
   const searchRef = useRef<HTMLInputElement>(null)
+  const { canCreate, role } = useRole()
 
   // ─── Load master data
   const load = useCallback(async () => {
@@ -202,6 +216,30 @@ export default function PosTerminalPage() {
     }
   }
 
+  async function openCloseShiftModal() {
+    setShiftClosing(true)
+    setShiftPanel(true)
+    setShiftSummary(null)
+    if (!shift || !ownerId) return
+    const { data: shiftSales } = await supabase
+      .from('pos_sales').select('id').eq('shift_id', shift.id).eq('status', 'completed')
+    const saleIds = (shiftSales ?? []).map((s: { id: string }) => s.id)
+    if (saleIds.length === 0) {
+      setShiftSummary({ cashSales: 0, cardSales: 0, transferSales: 0, totalSales: 0, expectedCash: shift.opening_float ?? 0 })
+      return
+    }
+    const { data: pData } = await supabase
+      .from('pos_payments').select('method, amount').in('sale_id', saleIds)
+    const cashSales     = (pData ?? []).filter(p => p.method === 'cash').reduce((s: number, p: { amount: number }) => s + p.amount, 0)
+    const cardSales     = (pData ?? []).filter(p => p.method === 'card').reduce((s: number, p: { amount: number }) => s + p.amount, 0)
+    const transferSales = (pData ?? []).filter(p => p.method === 'transfer').reduce((s: number, p: { amount: number }) => s + p.amount, 0)
+    setShiftSummary({
+      cashSales, cardSales, transferSales,
+      totalSales: cashSales + cardSales + transferSales,
+      expectedCash: (shift.opening_float ?? 0) + cashSales,
+    })
+  }
+
   async function closeShift() {
     if (!shift || !ownerId) return
     const { data: { user } } = await supabase.auth.getUser()
@@ -243,12 +281,25 @@ export default function PosTerminalPage() {
     setCart(prev => prev.map(i => i.product.id === pid ? { ...i, quantity: Math.min(qty, stock) } : i))
   }
 
-  function setDiscount(pid: string, val: number) {
+  const DISCOUNT_THRESHOLD = 0.20
+
+  function applyDiscount(pid: string, val: number) {
     setCart(prev => prev.map(i => {
       if (i.product.id !== pid) return i
       const maxDiscount = i.product.selling_price * i.quantity
       return { ...i, discount: Math.min(Math.max(0, val), maxDiscount) }
     }))
+  }
+
+  function setDiscount(pid: string, val: number) {
+    const item = cart.find(i => i.product.id === pid)
+    if (!item) return
+    const lineTotal = item.product.selling_price * item.quantity
+    if (role === 'staff' && val / lineTotal > DISCOUNT_THRESHOLD) {
+      setDiscountApproval({ pid, val })
+      return
+    }
+    applyDiscount(pid, val)
   }
 
   // ─── Calculations
@@ -447,7 +498,7 @@ export default function PosTerminalPage() {
                   <span className="font-medium text-slate-700">{cashierName}</span>
                   {' · '}Shift {new Date(shift.opened_at).toLocaleTimeString('en-NG', { hour: '2-digit', minute: '2-digit' })}
                 </span>
-                <button onClick={() => { setShiftClosing(true); setShiftPanel(true) }}
+                <button onClick={openCloseShiftModal}
                   className="text-xs font-medium text-red-500 hover:text-red-700 px-2.5 py-1 rounded-md hover:bg-red-50 transition-colors">
                   Close Shift
                 </button>
@@ -486,10 +537,10 @@ export default function PosTerminalPage() {
 
         {/* Two-pane terminal */}
         {terminalId && shift && (
-          <div className="flex flex-1 overflow-hidden">
+          <div className="flex flex-1 overflow-hidden relative">
 
             {/* Left: catalogue */}
-            <div className="flex-1 flex flex-col overflow-hidden">
+            <div className={`flex-1 flex flex-col overflow-hidden ${showCart ? 'hidden md:flex' : ''}`}>
               {/* Search + category filter */}
               <div className="bg-white border-b border-slate-200 p-3 shrink-0">
                 <input ref={searchRef} type="text"
@@ -548,9 +599,14 @@ export default function PosTerminalPage() {
             </div>
 
             {/* Right: cart */}
-            <div className="w-80 bg-white border-l border-slate-200 flex flex-col shrink-0">
+            <div className={`${showCart ? 'absolute inset-0 z-10 flex md:relative md:inset-auto' : 'hidden md:flex'} w-full md:w-80 bg-white border-l border-slate-200 flex-col shrink-0`}>
               <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between shrink-0">
-                <h2 className="text-sm font-bold text-slate-900">Cart {cart.length > 0 && <span className="font-normal text-slate-400">({cart.length})</span>}</h2>
+                <div className="flex items-center gap-2">
+                  <button onClick={() => setShowCart(false)} className="md:hidden text-slate-400 hover:text-slate-600 -ml-1">
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
+                  </button>
+                  <h2 className="text-sm font-bold text-slate-900">Cart {cart.length > 0 && <span className="font-normal text-slate-400">({cart.length})</span>}</h2>
+                </div>
                 {cart.length > 0 && (
                   <button onClick={() => setCart([])} className="text-xs text-red-400 hover:text-red-600 transition-colors">Clear</button>
                 )}
@@ -613,12 +669,24 @@ export default function PosTerminalPage() {
                     <span>Total</span><span>{fmt(orderTotal)}</span>
                   </div>
                 </div>
-                <button onClick={openPayModal} disabled={cart.length === 0}
+                <button onClick={openPayModal} disabled={cart.length === 0 || !canCreate}
                   className="w-full bg-blue-600 text-white text-sm font-bold py-3 rounded-xl hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
-                  {cart.length > 0 ? `Charge ${fmt(orderTotal)}` : 'Cart is empty'}
+                  {!canCreate ? 'View only' : cart.length > 0 ? `Charge ${fmt(orderTotal)}` : 'Cart is empty'}
                 </button>
               </div>
             </div>
+            {/* Floating cart button — mobile only */}
+            {!showCart && (
+              <button onClick={() => setShowCart(true)}
+                className="fixed bottom-6 right-4 md:hidden bg-blue-600 text-white rounded-full shadow-xl flex items-center gap-2 z-20 px-4 py-3">
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+                <span className="text-sm font-semibold">
+                  {cart.length > 0 ? `${cart.length} · ${fmt(orderTotal)}` : 'Cart'}
+                </span>
+              </button>
+            )}
           </div>
         )}
       </div>
@@ -630,16 +698,39 @@ export default function PosTerminalPage() {
             {shiftClosing ? (
               <>
                 <h2 className="text-lg font-bold text-slate-900 mb-1">Close Shift</h2>
-                <p className="text-sm text-slate-500 mb-5">{branchName} · {terminalName}</p>
-                <div className="bg-slate-50 rounded-xl p-3 mb-4 text-xs text-slate-600 space-y-1">
-                  <div className="flex justify-between"><span>Opening float</span><span className="font-medium">{fmt(shift?.opening_float ?? 0)}</span></div>
+                <p className="text-sm text-slate-500 mb-4">{branchName} · {terminalName}</p>
+                <div className="bg-slate-50 rounded-xl p-3 mb-4 text-xs text-slate-600 space-y-1.5">
                   <div className="flex justify-between"><span>Opened at</span><span>{shift ? new Date(shift.opened_at).toLocaleString('en-NG') : '—'}</span></div>
+                  <div className="flex justify-between"><span>Opening float</span><span className="font-medium">{fmt(shift?.opening_float ?? 0)}</span></div>
+                  {shiftSummary ? (
+                    <>
+                      <div className="border-t border-slate-200 my-1" />
+                      <div className="flex justify-between"><span>Cash sales</span><span className="font-medium text-slate-800">{fmt(shiftSummary.cashSales)}</span></div>
+                      {shiftSummary.cardSales > 0 && <div className="flex justify-between"><span>Card sales</span><span className="font-medium text-slate-800">{fmt(shiftSummary.cardSales)}</span></div>}
+                      {shiftSummary.transferSales > 0 && <div className="flex justify-between"><span>Transfer sales</span><span className="font-medium text-slate-800">{fmt(shiftSummary.transferSales)}</span></div>}
+                      <div className="flex justify-between font-semibold text-slate-800 border-t border-slate-200 pt-1"><span>Total sales</span><span>{fmt(shiftSummary.totalSales)}</span></div>
+                      <div className="flex justify-between text-blue-700 font-semibold"><span>Expected cash in drawer</span><span>{fmt(shiftSummary.expectedCash)}</span></div>
+                    </>
+                  ) : (
+                    <div className="text-slate-400 text-center py-1">Loading sales summary…</div>
+                  )}
                 </div>
                 <div className="mb-5">
-                  <label className="block text-xs font-medium text-slate-700 mb-1.5">Closing Cash Balance (₦)</label>
+                  <label className="block text-xs font-medium text-slate-700 mb-1.5">Actual Cash in Drawer (₦)</label>
                   <input type="number" min="0" value={closingBalance} onChange={e => setClosingBalance(e.target.value)}
                     placeholder="0.00" autoFocus
                     className="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400" />
+                  {shiftSummary && closingBalance && (
+                    <p className={`text-xs mt-1.5 font-medium ${
+                      parseFloat(closingBalance) === shiftSummary.expectedCash ? 'text-green-600'
+                      : parseFloat(closingBalance) > shiftSummary.expectedCash ? 'text-blue-600'
+                      : 'text-red-500'
+                    }`}>
+                      Variance: {parseFloat(closingBalance) >= shiftSummary.expectedCash ? '+' : ''}{fmt(parseFloat(closingBalance) - shiftSummary.expectedCash)}
+                      {parseFloat(closingBalance) === shiftSummary.expectedCash ? ' — Balanced' :
+                       parseFloat(closingBalance) > shiftSummary.expectedCash ? ' — Over' : ' — Short'}
+                    </p>
+                  )}
                 </div>
                 <div className="flex gap-2">
                   <button onClick={() => setShiftPanel(false)} className="flex-1 border border-slate-200 text-slate-600 text-sm font-medium py-2.5 rounded-xl hover:bg-slate-50 transition-colors">Cancel</button>
@@ -728,6 +819,33 @@ export default function PosTerminalPage() {
                   {saving ? 'Processing…' : 'Complete Sale'}
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Discount approval modal */}
+      {discountApproval && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6">
+            <div className="w-10 h-10 bg-amber-50 rounded-full flex items-center justify-center mx-auto mb-3">
+              <svg className="w-5 h-5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <h2 className="text-base font-bold text-slate-900 text-center mb-1">Manager Approval Required</h2>
+            <p className="text-sm text-slate-500 text-center mb-5">
+              This discount exceeds {Math.round(DISCOUNT_THRESHOLD * 100)}% of the line total and requires manager approval.
+            </p>
+            <div className="flex gap-2">
+              <button onClick={() => setDiscountApproval(null)}
+                className="flex-1 border border-slate-200 text-slate-600 text-sm font-medium py-2.5 rounded-xl hover:bg-slate-50 transition-colors">
+                Cancel
+              </button>
+              <button onClick={() => { applyDiscount(discountApproval.pid, discountApproval.val); setDiscountApproval(null) }}
+                className="flex-1 bg-amber-500 text-white text-sm font-semibold py-2.5 rounded-xl hover:bg-amber-600 transition-colors">
+                Approve Override
+              </button>
             </div>
           </div>
         </div>
