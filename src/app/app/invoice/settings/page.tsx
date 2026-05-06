@@ -27,8 +27,12 @@ export default function SettingsPage() {
   const [saving, setSaving] = useState(false)
   const [uploadingLogo, setUploadingLogo] = useState(false)
   const [success, setSuccess] = useState(false)
-  const [activeTab, setActiveTab] = useState<'business' | 'banking' | 'preferences'>('business')
+  const [activeTab, setActiveTab] = useState<'business' | 'banking' | 'preferences' | 'security'>('business')
   const [userId, setUserId] = useState('')
+  const [passwordForm, setPasswordForm] = useState({ newPassword: '', confirmPassword: '' })
+  const [passwordSaving, setPasswordSaving] = useState(false)
+  const [passwordError, setPasswordError] = useState('')
+  const [passwordSuccess, setPasswordSuccess] = useState(false)
 
   useEffect(() => { load() }, [])
 
@@ -108,6 +112,24 @@ export default function SettingsPage() {
     setForm(prev => ({ ...prev, [field]: value }))
   }
 
+  async function handlePasswordChange() {
+    setPasswordError('')
+    setPasswordSuccess(false)
+    if (!passwordForm.newPassword) { setPasswordError('Please enter a new password.'); return }
+    if (passwordForm.newPassword.length < 8) { setPasswordError('Password must be at least 8 characters.'); return }
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) { setPasswordError('Passwords do not match.'); return }
+    setPasswordSaving(true)
+    const { error } = await supabase.auth.updateUser({ password: passwordForm.newPassword })
+    if (error) {
+      setPasswordError(error.message || 'Failed to update password. Please try again.')
+    } else {
+      setPasswordSuccess(true)
+      setPasswordForm({ newPassword: '', confirmPassword: '' })
+      setTimeout(() => setPasswordSuccess(false), 4000)
+    }
+    setPasswordSaving(false)
+  }
+
   if (loading) return <div className="min-h-screen bg-slate-50 flex items-center justify-center"><p className="text-slate-400">Loading...</p></div>
 
   return (
@@ -120,15 +142,17 @@ export default function SettingsPage() {
             <h1 className="text-2xl font-bold text-slate-900">Settings</h1>
             <p className="text-slate-500 text-sm mt-1">Manage your business profile and preferences</p>
           </div>
-          <button onClick={handleSave} disabled={saving} className="bg-teal-600 hover:bg-teal-700 disabled:opacity-50 text-white font-semibold px-5 py-2.5 rounded-lg text-sm transition-colors">
-            {saving ? 'Saving...' : success ? '✓ Saved' : 'Save Changes'}
-          </button>
+          {activeTab !== 'security' && (
+            <button onClick={handleSave} disabled={saving} className="bg-teal-600 hover:bg-teal-700 disabled:opacity-50 text-white font-semibold px-5 py-2.5 rounded-lg text-sm transition-colors">
+              {saving ? 'Saving...' : success ? '✓ Saved' : 'Save Changes'}
+            </button>
+          )}
         </div>
 
         {success && <div className="bg-green-50 border border-green-200 text-green-700 text-sm px-4 py-3 rounded-lg mb-6">Your settings have been saved successfully.</div>}
 
         <div className="flex gap-2 mb-6">
-          {(['business', 'banking', 'preferences'] as const).map(tab => (
+          {(['business', 'banking', 'preferences', 'security'] as const).map(tab => (
             <button key={tab} onClick={() => setActiveTab(tab)} className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors capitalize ${activeTab === tab ? 'bg-teal-600 text-white' : 'bg-white border border-slate-200 text-slate-600 hover:border-teal-300'}`}>
               {tab}
             </button>
@@ -219,6 +243,44 @@ export default function SettingsPage() {
               <div>
                 <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Account Name</label>
                 <input type="text" value={form.bank_account_name} onChange={e => update('bank_account_name', e.target.value)} className="w-full border border-slate-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-teal-500" />
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'security' && (
+            <div className="max-w-md">
+              <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-2">Change Password</h2>
+              <p className="text-sm text-slate-500 mb-6">Set a new password for your account.</p>
+              {passwordError && <div className="bg-red-50 border border-red-200 text-red-600 text-sm px-4 py-3 rounded-lg mb-4">{passwordError}</div>}
+              {passwordSuccess && <div className="bg-green-50 border border-green-200 text-green-700 text-sm px-4 py-3 rounded-lg mb-4">Password updated successfully.</div>}
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">New Password</label>
+                  <input
+                    type="password"
+                    value={passwordForm.newPassword}
+                    onChange={e => setPasswordForm(p => ({ ...p, newPassword: e.target.value }))}
+                    placeholder="At least 8 characters"
+                    className="w-full border border-slate-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-teal-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Confirm New Password</label>
+                  <input
+                    type="password"
+                    value={passwordForm.confirmPassword}
+                    onChange={e => setPasswordForm(p => ({ ...p, confirmPassword: e.target.value }))}
+                    placeholder="Repeat new password"
+                    className="w-full border border-slate-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-teal-500"
+                  />
+                </div>
+                <button
+                  onClick={handlePasswordChange}
+                  disabled={passwordSaving}
+                  className="bg-teal-600 hover:bg-teal-700 disabled:opacity-50 text-white font-semibold px-5 py-2.5 rounded-lg text-sm transition-colors"
+                >
+                  {passwordSaving ? 'Updating...' : 'Update Password'}
+                </button>
               </div>
             </div>
           )}
