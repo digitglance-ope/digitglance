@@ -297,7 +297,7 @@ export default function BlogPage() {
 
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {allTemplates.map(pack => (
-              <div key={pack.id} className={`bg-white border-2 rounded-2xl p-6 transition-all ${pack.available ? 'border-slate-200 hover:border-teal-300 hover:shadow-md' : 'border-slate-100 opacity-60'}`}>
+              <div key={pack.slug} className={`bg-white border-2 rounded-2xl p-6 transition-all ${pack.available ? 'border-slate-200 hover:border-teal-300 hover:shadow-md' : 'border-slate-100 opacity-60'}`}>
                 <div className="flex items-center justify-between mb-4">
                   <div className="w-10 h-10 bg-teal-50 rounded-xl flex items-center justify-center">
                     <svg className="w-5 h-5 text-teal-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -308,10 +308,10 @@ export default function BlogPage() {
                     {pack.available ? 'Free Download' : 'Coming Soon'}
                   </span>
                 </div>
-                <h3 className="font-bold text-slate-900 mb-2">{pack.name}</h3>
-                <p className="text-sm text-slate-500 leading-relaxed mb-4">{pack.description}</p>
+                <h3 className="font-bold text-slate-900 mb-2">{pack.industry} Template Pack</h3>
+                <p className="text-sm text-slate-500 leading-relaxed mb-4">{pack.tagline}</p>
                 {pack.available ? (
-                  <Link href={`/blog/templates/${pack.id}`} className="w-full block text-center text-sm font-semibold bg-teal-600 text-white py-2.5 rounded-xl hover:bg-teal-700 transition-colors">
+                  <Link href={`/blog/templates/${pack.slug}`} className="w-full block text-center text-sm font-semibold bg-teal-600 text-white py-2.5 rounded-xl hover:bg-teal-700 transition-colors">
                     Download Free
                   </Link>
                 ) : (
