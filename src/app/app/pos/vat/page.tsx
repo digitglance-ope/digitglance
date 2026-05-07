@@ -234,8 +234,8 @@ export default function PosVatPage() {
         {/* Header */}
         <div className="mb-6 flex items-start justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-slate-900">VAT & FIRS</h1>
-            <p className="text-slate-500 text-sm mt-1">Monthly VAT liability, FIRS classification, and filing history</p>
+            <h1 className="text-2xl font-bold text-slate-900">VAT & NRS</h1>
+            <p className="text-slate-500 text-sm mt-1">Monthly VAT liability, NRS classification, and filing history</p>
           </div>
           <select value={selected} onChange={e => setSelected(e.target.value)}
             className="border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white">
@@ -270,7 +270,7 @@ export default function PosVatPage() {
               {fmt(Math.abs(liability))}
             </p>
             <p className="text-xs text-slate-400 mt-0.5">
-              {liability > 0 ? 'Payable to FIRS' : liability < 0 ? 'Refund due' : 'Nil liability'}
+              {liability > 0 ? 'Payable to NRS' : liability < 0 ? 'Refund due' : 'Nil liability'}
             </p>
           </div>
         </div>
@@ -397,7 +397,7 @@ export default function PosVatPage() {
                     <svg className="w-4 h-4 text-green-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                    <span className="text-sm font-semibold text-green-700">Filed with FIRS</span>
+                    <span className="text-sm font-semibold text-green-700">Filed with NRS</span>
                   </div>
                   {savedPeriod.firs_ref && (
                     <p className="text-xs text-slate-700">Ref: <span className="font-mono font-semibold">{savedPeriod.firs_ref}</span></p>
@@ -417,7 +417,7 @@ export default function PosVatPage() {
                     <span className="text-sm font-semibold text-amber-700">Pending — not yet filed</span>
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-slate-600 mb-1">FIRS Reference No. (optional)</label>
+                    <label className="block text-xs font-medium text-slate-600 mb-1">NRS Reference No. (optional)</label>
                     <input type="text" value={firsRef} onChange={e => setFirsRef(e.target.value)}
                       className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white"
                       placeholder="e.g. VAT/2026/05/001" />
@@ -426,14 +426,14 @@ export default function PosVatPage() {
                     className="w-full bg-green-600 text-white text-sm font-semibold py-2.5 rounded-lg hover:bg-green-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
                     {filing ? 'Filing…' : 'Mark as Filed'}
                   </button>
-                  <p className="text-xs text-slate-400">FIRS VAT returns are due by the 21st of the following month.</p>
+                  <p className="text-xs text-slate-400">NRS VAT returns are due by the 21st of the following month.</p>
                 </div>
               )}
             </div>
 
             {/* FIRS class guide */}
             <div className="bg-white border border-slate-200 rounded-xl p-6">
-              <h2 className="text-sm font-bold text-slate-900 mb-4">FIRS Classification Guide</h2>
+              <h2 className="text-sm font-bold text-slate-900 mb-4">NRS Classification Guide</h2>
               <div className="space-y-3">
                 {[
                   { code: 'V', badge: 'bg-blue-100 text-blue-700',   title: 'Vatable',     desc: 'Standard rate — 7.5%' },

@@ -447,7 +447,7 @@ export default function PosReportsPage() {
                   <div className="bg-white border border-blue-200 rounded-xl p-4">
                     <p className="text-xs text-slate-500 mb-1">Total Output VAT</p>
                     <p className="text-xl font-bold text-blue-700">{fmt(totalOutputVat)}</p>
-                    <p className="text-xs text-slate-400 mt-1">Payable to FIRS</p>
+                    <p className="text-xs text-slate-400 mt-1">Payable to NRS</p>
                   </div>
                   <div className="bg-white border border-slate-200 rounded-xl p-4">
                     <p className="text-xs text-slate-500 mb-1">Standard-Rated Base</p>
@@ -462,7 +462,7 @@ export default function PosReportsPage() {
                 </div>
                 <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
                   <div className="px-5 py-3 border-b border-slate-100 flex items-center justify-between">
-                    <h2 className="text-sm font-bold text-slate-900">VAT Output — FIRS Format</h2>
+                    <h2 className="text-sm font-bold text-slate-900">VAT Output — NRS Format</h2>
                     <CsvBtn onClick={() => downloadCSV(vatRows.map(r => ({ Date: r.date, 'Standard Base (ex-VAT)': r.standard_base, 'Output VAT (7.5%)': r.output_vat, 'Zero-Rated': r.zero_sales, 'Exempt': r.exempt_sales })), `pos-vat-${dateFrom}-${dateTo}.csv`)} />
                   </div>
                   {vatRows.length === 0

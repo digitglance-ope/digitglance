@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import Script from "next/script";
+import { Inter } from "next/font/google";
 import "./globals.css";
+
+const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
 export const metadata: Metadata = {
   title: "DigitGlance | Accounting Intelligence. Built for Business.",
@@ -17,7 +20,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className="antialiased">
+      <body className={`${inter.className} antialiased`}>
         {children}
         <Script
           src="https://www.googletagmanager.com/gtag/js?id=G-0FYSGTYP6G"

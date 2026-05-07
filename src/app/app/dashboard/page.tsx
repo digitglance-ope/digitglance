@@ -17,7 +17,7 @@ const HUB_PRODUCTS = [
   {
     slug: 'pos',
     name: 'Point of Sale',
-    description: 'Fast checkout, cash and card sales, FIRS VAT compliance, and multi-branch inventory management.',
+    description: 'Fast checkout, cash and card sales, NRS VAT compliance, and multi-branch inventory management.',
     href: '/app/pos/dashboard',
     activateHref: '/app/pos/activate',
     status: 'live' as const,

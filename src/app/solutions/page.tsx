@@ -1,361 +1,300 @@
-﻿export default function Solutions() {
+import Link from 'next/link'
+import SiteNav from '@/components/SiteNav'
+import SiteFooter from '@/components/SiteFooter'
+
+export default function SolutionsPage() {
   return (
     <main className="min-h-screen bg-white">
+      <SiteNav />
 
-      {/* NAVIGATION */}
-      <nav className="sticky top-0 z-50 bg-white border-b border-gray-100 px-6 py-4">
-        <div className="max-w-6xl mx-auto flex items-center justify-between">
-          <a href="/" className="text-xl font-bold text-slate-900">
-            Digit<span className="text-teal-600">Glance</span>
-          </a>
-          <div className="hidden md:flex items-center gap-8 text-sm font-medium text-slate-600">
-            <a href="/services" className="hover:text-teal-600">Services</a>
-            <a href="/products" className="hover:text-teal-600">Products</a>
-            <a href="/solutions" className="text-teal-600">Solutions</a>
-            <a href="/ai-tools" className="hover:text-teal-600">AI Tools</a>
-            <a href="/blog" className="hover:text-teal-600">Blog</a>
-          </div>
-          <a href="/contact" className="bg-teal-600 text-white text-sm font-medium px-5 py-2 rounded-lg hover:bg-teal-700">
-            Book a Consultation
-          </a>
-        </div>
-      </nav>
-
-      {/* PAGE HEADER */}
-      <section className="bg-slate-900 text-white px-6 py-20">
-        <div className="max-w-6xl mx-auto">
-          <p className="text-teal-400 text-sm font-medium mb-3 uppercase tracking-wide">Desktop Solutions</p>
-          <h1 className="text-4xl font-bold mb-4">Professional Desktop Tools Built on Excel</h1>
-          <p className="text-slate-300 text-lg max-w-2xl">We build custom Excel VBA systems that automate your business processes, improve reporting accuracy, and eliminate repetitive manual work. No expensive software licenses. No complicated setup.</p>
-        </div>
-      </section>
-
-      {/* PRODUCT PORTFOLIO */}
-      <section className="px-6 py-20">
-        <div className="max-w-6xl mx-auto">
-          <h2 className="text-2xl font-bold text-slate-900 mb-3">Our Desktop Applications</h2>
-          <p className="text-slate-500 mb-12">Download and use our ready-made Excel VBA applications, or commission a custom tool built around your specific workflow.</p>
-
-          {/* RELIANCECOOP MANAGER */}
-          <div className="border border-teal-200 rounded-2xl overflow-hidden mb-12">
-            <div className="bg-teal-600 px-8 py-4 flex items-center justify-between">
-              <span className="text-white font-semibold">RelianceCoop Manager</span>
-              <span className="bg-white text-teal-600 text-xs font-bold px-3 py-1 rounded-full">Available Now</span>
-            </div>
-            <div className="p-8 md:p-12">
-              <div className="grid md:grid-cols-2 gap-12">
-                <div>
-                  <p className="text-teal-600 text-sm font-medium mb-3 uppercase tracking-wide">Cooperative Management System</p>
-                  <h3 className="text-xl font-bold text-slate-900 mb-4">Cooperative Management. Built Right.</h3>
-                  <p className="text-slate-500 mb-6 leading-relaxed">RelianceCoop Manager is a purpose-built desktop management system for cooperative societies that need accuracy, structure, and full control of their financial records. It replaces disconnected paper ledgers, manual calculations, and scattered files with one integrated platform that manages every member, every naira, and every transaction in one place.</p>
-
-                  <div className="grid grid-cols-3 gap-4 mb-8">
-                    {[
-                      { stat: "14", label: "Report Types" },
-                      { stat: "1,000+", label: "Members Supported" },
-                      { stat: "100%", label: "Configurable" }
-                    ].map((item) => (
-                      <div key={item.label} className="bg-teal-50 rounded-xl p-4 text-center">
-                        <p className="text-xl font-bold text-teal-600">{item.stat}</p>
-                        <p className="text-xs text-slate-500 mt-1">{item.label}</p>
-                      </div>
-                    ))}
-                  </div>
-
-                 <div className="flex flex-wrap gap-3">
-  <a href="https://apkbhpywfyoyfqebnnvj.supabase.co/storage/v1/object/public/downloads/Coop-Reliance-Manager-T1.xlsb" className="bg-teal-600 text-white font-medium px-5 py-2.5 rounded-lg hover:bg-teal-700 transition-colors flex items-center gap-2">
-    Download Demo
-  </a>
-  <a href="https://apkbhpywfyoyfqebnnvj.supabase.co/storage/v1/object/public/downloads/RelianceCoop-User-Manual-v2.pdf" className="border border-slate-200 text-slate-700 font-medium px-5 py-2.5 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2">
-    Download User Manual
-  </a>
-  <a href="mailto:hello@digitglance.com?subject=Full Version Request - RelianceCoop Manager&amp;body=Name:%0AOrganisation:%0APhone:%0A%0AI would like to purchase the full version of RelianceCoop Manager." className="border border-teal-600 text-teal-600 font-medium px-5 py-2.5 rounded-lg hover:bg-teal-50 transition-colors flex items-center gap-2">
-    Get Full Version
-  </a>
-</div>
-                </div>
-                <div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6 mb-6">
-  <img
-    src="/images/reliancecoop-dashboard1.png"
-    alt="RelianceCoop Manager Dashboard"
-    className="rounded-lg border border-slate-200 shadow-sm w-full object-cover"
-  />
-  <img
-    src="/images/reliancecoop-dashboard2.png"
-    alt="RelianceCoop Manager Reports"
-    className="rounded-lg border border-slate-200 shadow-sm w-full object-cover"
-  />
-</div>
-                  <h4 className="font-bold text-slate-900 mb-4">Key Features</h4>
-                  <div className="space-y-3">
-                    {[
-                      { title: "Member Management", desc: "Register and manage every member with photographs, ID cards, contact details, and financial profiles in one controlled environment." },
-                      { title: "Contribution Tracking", desc: "Record weekly savings, shares, and building fund payments with automatic percentage-based splitting and full history access." },
-                      { title: "Loan Administration", desc: "Create and manage loans with structured repayment tracking, overdue interest calculation, and a visual payment calendar." },
-                      { title: "Development Levy Automation", desc: "One action calculates and posts the weekly development levy for every active member simultaneously." },
-                      { title: "14 Financial Report Types", desc: "Generate cash flow, trial balance, member statements, income and expenditure, and loan movement reports exportable to PDF." },
-                      { title: "WhatsApp Communication", desc: "Send personalised contribution statements to every member through WhatsApp directly from the software." },
-                      { title: "Role-Based Access Control", desc: "Assign Admin or Audit roles with defined permissions. Every transaction is timestamped and linked to a user account." }
-                    ].map((feature) => (
-                      <div key={feature.title} className="flex items-start gap-3">
-                        <div className="w-5 h-5 bg-teal-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                          <svg className="w-3 h-3 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                          </svg>
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-slate-900">{feature.title}</p>
-                          <p className="text-xs text-slate-500 mt-0.5">{feature.desc}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              <div className="border-t border-gray-100 mt-10 pt-8">
-                <p className="text-sm font-medium text-slate-700 mb-3">Who it is built for</p>
-                <div className="flex flex-wrap gap-2">
-                  {["Cooperative Societies", "Staff Cooperatives", "Market Cooperatives", "Community Savings Groups", "Thrift and Credit Unions"].map((tag) => (
-                    <span key={tag} className="bg-slate-100 text-slate-600 text-xs px-3 py-1 rounded-full">{tag}</span>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* SCHOOL FEE TRACK PRO */}
-          <div className="border border-teal-200 rounded-2xl overflow-hidden mb-12">
-            <div className="bg-slate-800 px-8 py-4 flex items-center justify-between">
-              <span className="text-white font-semibold">School Fee Track Pro</span>
-              <span className="bg-teal-400 text-slate-900 text-xs font-bold px-3 py-1 rounded-full">Available Now</span>
-            </div>
-            <div className="p-8 md:p-12">
-              <div className="grid md:grid-cols-2 gap-12">
-                <div>
-                  <p className="text-teal-600 text-sm font-medium mb-3 uppercase tracking-wide">School Fees and Admissions System</p>
-                  <h3 className="text-xl font-bold text-slate-900 mb-4">Stop Chasing Payments. Stop Losing Records.</h3>
-                  <p className="text-slate-500 mb-6 leading-relaxed">School Fee Track Pro is a complete fees and admissions management system built specifically for Nigerian private schools. It puts every student, invoice, payment, and parent message in one place and keeps your school running with confidence. It runs inside Microsoft Excel, requires no subscription, and works fully offline.</p>
-
-                  <div className="grid grid-cols-2 gap-4 mb-8">
-                    {[
-                      { stat: "One-Day", label: "Setup and Training" },
-                      { stat: "No Fee", label: "Monthly Subscription" },
-                      { stat: "100%", label: "Offline Capable" },
-                      { stat: "90 Days", label: "Post-Purchase Support" }
-                    ].map((item) => (
-                      <div key={item.label} className="bg-slate-50 rounded-xl p-4 text-center">
-                        <p className="text-lg font-bold text-slate-800">{item.stat}</p>
-                        <p className="text-xs text-slate-500 mt-1">{item.label}</p>
-                      </div>
-                    ))}
-                  </div>
-
-                 <div className="flex flex-wrap gap-3">
-                <a href="https://apkbhpywfyoyfqebnnvj.supabase.co/storage/v1/object/public/downloads/SCHOOL-FEE-TRACK-PRO-T1.xlsm" className="bg-teal-600 text-white font-medium px-5 py-2.5 rounded-lg hover:bg-teal-700 transition-colors flex items-center gap-2">
-                Download Demo
-               </a>
-              <a href="https://apkbhpywfyoyfqebnnvj.supabase.co/storage/v1/object/public/downloads/School-Fee-Track-Pro-User-Manual.pdf" className="border border-slate-200 text-slate-700 font-medium px-5 py-2.5 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2">
-               Download User Manual
+      {/* ─── HERO ─── */}
+      <section className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white px-6 py-20">
+        <div className="max-w-7xl mx-auto">
+          <p className="text-teal-400 text-sm font-semibold uppercase tracking-widest mb-4">Desktop Solutions</p>
+          <h1 className="text-4xl sm:text-5xl font-bold mb-5 max-w-3xl leading-tight">
+            Professional Excel tools and custom software for Nigerian businesses
+          </h1>
+          <p className="text-slate-300 text-lg max-w-2xl leading-relaxed">
+            Purpose-built desktop applications and custom development — no expensive software licenses, no complicated setup, built exactly for how Nigerian businesses operate.
+          </p>
+          <div className="flex flex-wrap gap-4 mt-8">
+            <a href="#products" className="bg-teal-600 hover:bg-teal-500 text-white font-semibold px-7 py-3.5 rounded-xl text-sm transition-colors">
+              See Our Tools
             </a>
-            <a href="mailto:hello@digitglance.com?subject=Full Version Request - School Fee Track Pro&amp;body=Name:%0ASchool Name:%0APhone:%0ANumber of Students:%0A%0AI would like to purchase the full version of School Fee Track Pro." className="border border-teal-600 text-teal-600 font-medium px-5 py-2.5 rounded-lg hover:bg-teal-50 transition-colors flex items-center gap-2">
-              Get Full Version
-             </a>
-             </div>
+            <Link href="/contact" className="border border-slate-600 hover:border-teal-400 text-slate-300 hover:text-teal-400 font-semibold px-7 py-3.5 rounded-xl text-sm transition-all">
+              Commission Custom Tool
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* ─── PRODUCT: RELIANCECOOP ─── */}
+      <section id="products" className="px-6 py-20">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex items-center gap-3 mb-12">
+            <span className="bg-teal-600 text-white text-xs font-bold px-3 py-1 rounded-full">Available Now</span>
+            <span className="text-slate-400 text-sm">Desktop Applications</span>
+          </div>
+
+          {/* RelianceCoop Manager */}
+          <div className="border-2 border-teal-200 rounded-3xl overflow-hidden mb-16">
+            <div className="bg-teal-600 px-8 py-5 flex items-center justify-between">
+              <div>
+                <p className="text-white font-bold text-lg">RelianceCoop Manager</p>
+                <p className="text-teal-100 text-sm mt-0.5">Cooperative Society Management System</p>
+              </div>
+              <span className="bg-white text-teal-700 text-xs font-bold px-3 py-1.5 rounded-full">Available Now</span>
+            </div>
+            <div className="p-8 lg:p-12">
+              <div className="grid lg:grid-cols-2 gap-12">
+                {/* Left: description */}
+                <div>
+                  <h3 className="text-2xl font-bold text-slate-900 mb-4 leading-tight">
+                    Cooperative management. Built right.
+                  </h3>
+                  <p className="text-slate-500 mb-6 leading-relaxed">
+                    RelianceCoop Manager is a purpose-built desktop management system for cooperative societies. It replaces disconnected paper ledgers, manual calculations, and scattered files with one integrated platform that manages every member, every naira, and every transaction.
+                  </p>
+
+                  <div className="grid grid-cols-3 gap-3 mb-8">
+                    {[
+                      { stat: '14', label: 'Report Types' },
+                      { stat: '1,000+', label: 'Members' },
+                      { stat: '100%', label: 'Configurable' },
+                    ].map(item => (
+                      <div key={item.label} className="bg-teal-50 border border-teal-100 rounded-xl p-4 text-center">
+                        <p className="text-xl font-bold text-teal-700">{item.stat}</p>
+                        <p className="text-xs text-slate-500 mt-1">{item.label}</p>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="flex flex-wrap gap-3">
+                    <a
+                      href="https://apkbhpywfyoyfqebnnvj.supabase.co/storage/v1/object/public/downloads/Coop-Reliance-Manager-T1.xlsb"
+                      className="flex items-center gap-2 bg-teal-600 text-white font-semibold px-5 py-2.5 rounded-xl hover:bg-teal-700 transition-colors text-sm"
+                    >
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                      </svg>
+                      Download Demo
+                    </a>
+                    <a
+                      href="https://apkbhpywfyoyfqebnnvj.supabase.co/storage/v1/object/public/downloads/RelianceCoop-User-Manual-v2.pdf"
+                      className="flex items-center gap-2 border border-slate-300 text-slate-700 font-semibold px-5 py-2.5 rounded-xl hover:bg-slate-50 transition-colors text-sm"
+                    >
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                      User Manual
+                    </a>
+                    <a
+                      href="mailto:hello@digitglance.com?subject=Full Version Request - RelianceCoop Manager&body=Name:%0AOrganisation:%0APhone:%0A%0AI would like to purchase the full version of RelianceCoop Manager."
+                      className="flex items-center gap-2 border-2 border-teal-600 text-teal-700 font-semibold px-5 py-2.5 rounded-xl hover:bg-teal-50 transition-colors text-sm"
+                    >
+                      Get Full Version
+                    </a>
+                  </div>
                 </div>
 
+                {/* Right: feature list */}
                 <div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6 mb-6">
-  <img
-    src="/images/SchoolFeeTrackPro-Dashboard1.png"
-    alt="School Fee Track Pro Dashboard"
-    className="rounded-lg border border-slate-200 shadow-sm w-full object-cover"
-  />
-  <img
-    src="/images/SchoolFeeTrackPro-Dashboard2.png"
-    alt="School Fee Track Pro Reports"
-    className="rounded-lg border border-slate-200 shadow-sm w-full object-cover"
-  />
-</div>
-                  <h4 className="font-bold text-slate-900 mb-4">Key Features</h4>
+                  <div className="grid grid-cols-2 gap-3 mb-6">
+                    <img
+                      src="/images/reliancecoop-dashboard1.png"
+                      alt="RelianceCoop Manager Dashboard"
+                      className="rounded-xl border border-slate-200 shadow-sm w-full object-cover"
+                    />
+                    <img
+                      src="/images/reliancecoop-dashboard2.png"
+                      alt="RelianceCoop Manager Reports"
+                      className="rounded-xl border border-slate-200 shadow-sm w-full object-cover"
+                    />
+                  </div>
+                  <h4 className="font-bold text-slate-900 mb-4">Key features</h4>
                   <div className="space-y-3">
                     {[
-                      { title: "Full Student Database", desc: "Every student's admission details, parent contacts, class, and status in one searchable record. Find any student in under 3 seconds." },
-                      { title: "Instant ID Card Generation", desc: "Print a professional student ID card with photo, school branding, and student details in seconds. No external printing service needed." },
-                      { title: "Professional Fee Invoices", desc: "Create itemised invoices for school fees, books, transport, feeding, and more. Set due dates and the system tracks payment automatically." },
-                      { title: "Payment Tracking and Receipts", desc: "Record every payment, generate a receipt, and watch the invoice balance update in real time. Part payments are tracked correctly." },
-                      { title: "Direct WhatsApp Messaging", desc: "Send invoices, receipts, and statements directly to parents via WhatsApp with one click. No typing, no copying, no delay." },
-                      { title: "Automated Payment Reminders", desc: "Set a day and time. The system automatically sends payment reminders to every parent with an outstanding balance." },
-                      { title: "Management Reports", desc: "See total invoiced, collected, and outstanding by class and by date range. Clear financial picture for management in seconds." }
-                    ].map((feature) => (
-                      <div key={feature.title} className="flex items-start gap-3">
-                        <div className="w-5 h-5 bg-slate-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                          <svg className="w-3 h-3 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      { title: 'Member Management', desc: 'Register and manage every member with photographs, ID cards, and financial profiles.' },
+                      { title: 'Contribution Tracking', desc: 'Record weekly savings, shares, and building fund payments with automatic percentage-based splitting.' },
+                      { title: 'Loan Administration', desc: 'Structured repayment tracking, overdue interest calculation, and a visual payment calendar.' },
+                      { title: '14 Report Types', desc: 'Cash flow, trial balance, member statements, income and expenditure — all exportable to PDF.' },
+                      { title: 'WhatsApp Communication', desc: 'Send personalised contribution statements to every member directly from the software.' },
+                      { title: 'Role-Based Access Control', desc: 'Admin and Audit roles with defined permissions. Every transaction is timestamped.' },
+                    ].map(f => (
+                      <div key={f.title} className="flex items-start gap-3">
+                        <div className="w-5 h-5 bg-teal-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                          <svg className="w-3 h-3 text-teal-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                           </svg>
                         </div>
                         <div>
-                          <p className="text-sm font-medium text-slate-900">{feature.title}</p>
-                          <p className="text-xs text-slate-500 mt-0.5">{feature.desc}</p>
+                          <span className="text-sm font-semibold text-slate-900">{f.title} — </span>
+                          <span className="text-sm text-slate-500">{f.desc}</span>
                         </div>
                       </div>
                     ))}
                   </div>
                 </div>
               </div>
+            </div>
+          </div>
 
-              <div className="border-t border-gray-100 mt-10 pt-8">
-                <p className="text-sm font-medium text-slate-700 mb-3">Who it is built for</p>
-                <div className="flex flex-wrap gap-2">
-                  {["Private Nursery Schools", "Private Primary Schools", "Private Secondary Schools", "New Schools Setting Up Systems", "Schools Upgrading from Paper Records"].map((tag) => (
-                    <span key={tag} className="bg-slate-100 text-slate-600 text-xs px-3 py-1 rounded-full">{tag}</span>
-                  ))}
+          {/* School Fee Track Pro */}
+          <div className="border-2 border-blue-200 rounded-3xl overflow-hidden">
+            <div className="bg-blue-600 px-8 py-5 flex items-center justify-between">
+              <div>
+                <p className="text-white font-bold text-lg">School Fee Track Pro</p>
+                <p className="text-blue-100 text-sm mt-0.5">School Fee Management System</p>
+              </div>
+              <span className="bg-white text-blue-700 text-xs font-bold px-3 py-1.5 rounded-full">Available Now</span>
+            </div>
+            <div className="p-8 lg:p-12">
+              <div className="grid lg:grid-cols-2 gap-12">
+                <div>
+                  <h3 className="text-2xl font-bold text-slate-900 mb-4 leading-tight">
+                    School fee management that actually works
+                  </h3>
+                  <p className="text-slate-500 mb-6 leading-relaxed">
+                    School Fee Track Pro is a complete Excel-based fee management system for private schools, nurseries, and educational institutions in Nigeria. Track every student, every term, and every payment with zero confusion.
+                  </p>
+
+                  <div className="flex flex-wrap gap-3">
+                    <a
+                      href="mailto:hello@digitglance.com?subject=Demo Request - School Fee Track Pro&body=School Name:%0AContact Name:%0APhone:%0A%0AI would like to request a demo of School Fee Track Pro."
+                      className="flex items-center gap-2 bg-blue-600 text-white font-semibold px-5 py-2.5 rounded-xl hover:bg-blue-700 transition-colors text-sm"
+                    >
+                      Request Demo
+                    </a>
+                    <a
+                      href="mailto:hello@digitglance.com?subject=Purchase - School Fee Track Pro&body=School Name:%0AContact Name:%0APhone:%0A%0AI would like to purchase School Fee Track Pro."
+                      className="flex items-center gap-2 border-2 border-blue-600 text-blue-700 font-semibold px-5 py-2.5 rounded-xl hover:bg-blue-50 transition-colors text-sm"
+                    >
+                      Get Full Version
+                    </a>
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className="font-bold text-slate-900 mb-4">Key features</h4>
+                  <div className="space-y-3">
+                    {[
+                      { title: 'Student Records', desc: 'Enrol and manage every student with class, term, and payment status in one view.' },
+                      { title: 'Fee Tracking per Term', desc: 'Set fee schedules per class and track what each student has paid or owes this term.' },
+                      { title: 'Automatic Receipts', desc: 'Generate printable payment receipts instantly on recording a payment.' },
+                      { title: 'Outstanding Balance Reports', desc: 'See at a glance which students have outstanding fees and by how much.' },
+                      { title: 'Multi-Term History', desc: 'Full history across all terms. See any student\'s payment record for any term.' },
+                    ].map(f => (
+                      <div key={f.title} className="flex items-start gap-3">
+                        <div className="w-5 h-5 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                          <svg className="w-3 h-3 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                          </svg>
+                        </div>
+                        <div>
+                          <span className="text-sm font-semibold text-slate-900">{f.title} — </span>
+                          <span className="text-sm text-slate-500">{f.desc}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-
-          {/* DOWNLOAD GUIDE */}
-          <div className="bg-amber-50 border border-amber-100 rounded-2xl p-8">
-            <h3 className="font-bold text-slate-900 text-lg mb-2">How to Open Your Downloaded Application</h3>
-            <p className="text-slate-500 text-sm mb-6">Excel VBA applications require macros to be enabled. Follow these steps after downloading.</p>
-            <div className="grid md:grid-cols-2 gap-8">
-              <div className="space-y-4">
-                {[
-                  { step: "1", title: "Unblock the file first", desc: "Right click the downloaded file, select Properties, tick the Unblock checkbox at the bottom, and click OK. Do this before opening." },
-                  { step: "2", title: "Open the file in Excel", desc: "Double click the file to open it. You need Microsoft Excel on Windows. The file will not work on Mac or Google Sheets." },
-                  { step: "3", title: "Click Enable Editing", desc: "If a yellow bar appears saying Protected View, click Enable Editing to allow the file to run normally." }
-                ].map((item) => (
-                  <div key={item.step} className="flex items-start gap-4">
-                    <div className="w-7 h-7 bg-teal-600 rounded-full flex items-center justify-center flex-shrink-0 text-white text-xs font-bold">{item.step}</div>
-                    <div>
-                      <p className="font-medium text-slate-900 text-sm">{item.title}</p>
-                      <p className="text-slate-500 text-xs mt-1">{item.desc}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <div className="space-y-4">
-                {[
-                  { step: "4", title: "Click Enable Content", desc: "A yellow bar will say Macros have been disabled. Click Enable Content. The application will now load fully." },
-                  { step: "5", title: "If macros are still blocked", desc: "Open Excel, go to File, then Options, then Trust Center, then Trust Center Settings, then Macro Settings, and select Enable all macros." },
-                  { step: "6", title: "Read the user manual", desc: "Download and read the user manual before your first use. It covers every feature step by step and takes about 20 minutes to read." }
-                ].map((item) => (
-                  <div key={item.step} className="flex items-start gap-4">
-                    <div className="w-7 h-7 bg-teal-600 rounded-full flex items-center justify-center flex-shrink-0 text-white text-xs font-bold">{item.step}</div>
-                    <div>
-                      <p className="font-medium text-slate-900 text-sm">{item.title}</p>
-                      <p className="text-slate-500 text-xs mt-1">{item.desc}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
         </div>
       </section>
 
-      {/* CUSTOM SOLUTIONS */}
-      <section className="bg-slate-50 px-6 py-20">
-        <div className="max-w-6xl mx-auto">
-          <h2 className="text-2xl font-bold text-slate-900 mb-3">Need a Custom Solution?</h2>
-          <p className="text-slate-500 mb-12">If our current applications do not fit your specific workflow, we build custom Excel VBA systems from scratch for any business type.</p>
-          <div className="grid md:grid-cols-3 gap-6">
+      {/* ─── CUSTOM SOLUTIONS ─── */}
+      <section className="px-6 py-20 bg-slate-50">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-12">
+            <p className="text-teal-600 text-sm font-semibold uppercase tracking-wider mb-3">Custom Development</p>
+            <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-4">Need something built specifically for your business?</h2>
+            <p className="text-slate-500 text-lg max-w-xl mx-auto">
+              We design and build custom Excel VBA systems and web tools tailored exactly to your workflow and reporting needs.
+            </p>
+          </div>
+
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-10">
             {[
-              { title: "Payroll Management System", description: "Automated payroll computation with PAYE deductions, pension calculations, and payslip generation." },
-              { title: "Inventory and Stock Control", description: "Real time stock tracking with purchase orders, goods received notes, and automatic reorder alerts." },
-              { title: "Fixed Asset Register", description: "Complete asset management with depreciation computation, disposal tracking, and year end schedules." },
-              { title: "Budget and Expense Monitor", description: "Project budget tracking with departmental expense recording, variance analysis, and donor reporting." },
-              { title: "Accounts Receivable Tracker", description: "Invoice aging analysis, overdue tracking, and automatic collection letter generation." },
-              { title: "Sales and Revenue Tracker", description: "Daily sales recording with customer ledgers, revenue dashboards, and invoice generation." }
-            ].map((solution) => (
-              <div key={solution.title} className="bg-white border border-gray-100 rounded-xl p-6 hover:border-teal-200 hover:shadow-sm transition-all">
-                <h3 className="font-semibold text-slate-900 mb-3">{solution.title}</h3>
-                <p className="text-slate-500 text-sm leading-relaxed">{solution.description}</p>
+              { icon: 'M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H4a2 2 0 00-2 2v8a2 2 0 002 2z', title: 'Payroll and PAYE Systems', desc: 'Automated monthly payroll computation, PAYE calculations, pension deductions, and payslip generation.' },
+              { icon: 'M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z', title: 'Financial Reporting Systems', desc: 'Monthly management accounts, board reports, and variance analysis dashboards built on your data.' },
+              { icon: 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4', title: 'Inventory and Stock Control', desc: 'Stock movement tracking, reorder alerts, cost of goods sold, and inventory valuation reports.' },
+              { icon: 'M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z', title: 'Audit and Compliance Tools', desc: 'Internal control checklists, reconciliation templates, and audit preparation schedules.' },
+              { icon: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z', title: 'Member and Customer Management', desc: 'Custom member databases, subscription tracking, and automated statement generation.' },
+              { icon: 'M13 10V3L4 14h7v7l9-11h-7z', title: 'Process Automation', desc: 'Eliminate repetitive manual tasks. Batch processing, auto-calculations, and automated report distribution.' },
+            ].map(item => (
+              <div key={item.title} className="bg-white border border-slate-200 rounded-2xl p-6 hover:border-teal-200 hover:shadow-sm transition-all">
+                <div className="w-10 h-10 bg-teal-50 rounded-xl flex items-center justify-center mb-4">
+                  <svg className="w-5 h-5 text-teal-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d={item.icon} />
+                  </svg>
+                </div>
+                <h3 className="font-bold text-slate-900 mb-2 text-sm">{item.title}</h3>
+                <p className="text-sm text-slate-500 leading-relaxed">{item.desc}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* PROCESS */}
+      {/* ─── PROCESS ─── */}
       <section className="px-6 py-20">
-        <div className="max-w-6xl mx-auto">
-          <h2 className="text-2xl font-bold text-slate-900 mb-12 text-center">How We Build Your Custom Solution</h2>
-          <div className="grid md:grid-cols-4 gap-8">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-12">
+            <p className="text-teal-600 text-sm font-semibold uppercase tracking-wider mb-3">How We Work</p>
+            <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">From brief to delivered in weeks, not months</h2>
+          </div>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
-              { step: "01", title: "Discovery", description: "We start by understanding your current process, pain points, and reporting needs in detail." },
-              { step: "02", title: "Design", description: "We design the system structure, data flow, and output reports before writing a single line of code." },
-              { step: "03", title: "Build and Test", description: "We build the system and test it thoroughly with sample data to ensure accuracy and reliability." },
-              { step: "04", title: "Training and Handover", description: "We train your team on the system and provide documentation so they can use it confidently." }
-            ].map((item) => (
-              <div key={item.step} className="text-center">
-                <div className="w-12 h-12 bg-teal-600 rounded-xl flex items-center justify-center text-white font-bold text-sm mx-auto mb-4">{item.step}</div>
-                <h3 className="font-bold text-slate-900 mb-2">{item.title}</h3>
-                <p className="text-slate-500 text-sm leading-relaxed">{item.description}</p>
+              { step: '01', title: 'Discovery Call', body: 'Tell us about your current process, what you need to automate, and what success looks like.' },
+              { step: '02', title: 'Scoping and Proposal', body: 'We map out the exact system to build and send a fixed-price proposal with a clear timeline.' },
+              { step: '03', title: 'Build and Test', body: 'We build it, test it thoroughly, and send you a working version for review before delivery.' },
+              { step: '04', title: 'Handover and Training', body: 'Full handover with training for your team so everyone can use it confidently from day one.' },
+            ].map((item, i) => (
+              <div key={item.step} className="bg-white border border-slate-200 rounded-2xl p-6 hover:shadow-sm transition-shadow relative">
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-sm font-bold mb-4 ${i === 0 ? 'bg-teal-600 text-white' : 'bg-slate-100 text-slate-400'}`}>
+                  {item.step}
+                </div>
+                <h3 className="font-bold text-slate-900 mb-2 text-sm">{item.title}</h3>
+                <p className="text-sm text-slate-500 leading-relaxed">{item.body}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* CTA */}
-      <section className="bg-slate-900 text-white px-6 py-20 text-center">
-        <div className="max-w-2xl mx-auto">
-          <h2 className="text-2xl font-bold mb-4">Ready to automate your business processes?</h2>
-          <p className="text-slate-300 mb-8">Download one of our ready-made applications or commission a custom tool built around your exact workflow and budget.</p>
-          <a href="/contact" className="bg-teal-600 text-white font-medium px-8 py-4 rounded-lg hover:bg-teal-700 inline-block">
-            Commission a Custom Tool
-          </a>
+      {/* ─── CTA ─── */}
+      <section className="px-6 py-20 bg-teal-600">
+        <div className="max-w-3xl mx-auto text-center text-white">
+          <h2 className="text-3xl font-bold mb-4">Ready to automate your business processes?</h2>
+          <p className="text-teal-100 text-lg mb-8">Whether you want a ready-made tool or a custom build, get in touch and we will help you find the right fit.</p>
+          <div className="flex flex-wrap gap-4 justify-center">
+            <Link href="/contact" className="bg-white text-teal-700 font-semibold px-8 py-4 rounded-xl hover:bg-teal-50 transition-colors shadow-lg">
+              Commission a Custom Tool
+            </Link>
+            <a href="#products" className="border-2 border-white/40 text-white font-semibold px-8 py-4 rounded-xl hover:border-white hover:bg-white/10 transition-all">
+              Browse Ready Tools
+            </a>
+          </div>
         </div>
       </section>
 
-      {/* FOOTER */}
-      <footer className="bg-slate-900 text-slate-400 px-6 py-12">
-        <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between gap-8">
-          <div>
-            <p className="text-white font-bold text-lg mb-2">Digit<span className="text-teal-400">Glance</span></p>
-            <p className="text-sm max-w-xs">Accounting intelligence and software solutions for Nigerian businesses and beyond.</p>
-          </div>
-          <div className="flex gap-12 text-sm">
-            <div>
-              <p className="text-white font-medium mb-3">Services</p>
-              <div className="space-y-2">
-                <a href="/services" className="block hover:text-teal-400">Accounting</a>
-                <a href="/services" className="block hover:text-teal-400">Tax Advisory</a>
-                <a href="/solutions" className="block hover:text-teal-400">Excel VBA Tools</a>
-              </div>
-            </div>
-            <div>
-              <p className="text-white font-medium mb-3">Company</p>
-              <div className="space-y-2">
-                <a href="/about" className="block hover:text-teal-400">About</a>
-                <a href="/blog" className="block hover:text-teal-400">Blog</a>
-                <a href="/contact" className="block hover:text-teal-400">Contact</a>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div className="max-w-6xl mx-auto border-t border-slate-800 mt-8 pt-8 text-xs flex justify-between">
-          <p>© 2026 DigitGlance. A trading name of Digitglance Reliance.</p>
-          <div className="flex gap-4">
-            <a href="/privacy" className="hover:text-teal-400">Privacy Policy</a>
-            <a href="/terms" className="hover:text-teal-400">Terms of Service</a>
-          </div>
-        </div>
-      </footer>
-       <a href="https://wa.me/2348162357628?text=Hello%20DigitGlance%2C%20I%20would%20like%20to%20know%20more%20about%20your%20services."
-          target="_blank"
-          rel="noopener noreferrer"
-          className="fixed bottom-6 right-6 bg-green-500 hover:bg-green-600 text-white px-4 py-3 rounded-full shadow-lg flex items-center gap-2 z-50 transition-colors"
-        >
-          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
-            <path d="M12 0C5.373 0 0 5.373 0 12c0 2.124.558 4.121 1.535 5.856L.057 23.215a.75.75 0 00.916.916l5.355-1.479A11.952 11.952 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.75a9.725 9.725 0 01-4.964-1.361l-.355-.213-3.681 1.016 1.017-3.681-.213-.355A9.725 9.725 0 012.25 12C2.25 6.615 6.615 2.25 12 2.25S21.75 6.615 21.75 12 17.385 21.75 12 21.75z"/>
-          </svg>
-          Chat on WhatsApp
-        </a>
+      <SiteFooter />
+
+      {/* WhatsApp button */}
+      <a
+        href="https://wa.me/2348000000000"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="fixed bottom-6 right-6 z-50 w-14 h-14 bg-green-500 hover:bg-green-600 text-white rounded-full flex items-center justify-center shadow-lg hover:shadow-xl transition-all"
+        aria-label="Chat on WhatsApp"
+      >
+        <svg className="w-7 h-7" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z" />
+          <path d="M12 0C5.373 0 0 5.373 0 12c0 2.127.558 4.126 1.533 5.856L.057 23.929a.5.5 0 00.614.614l6.073-1.476A11.943 11.943 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.806 9.806 0 01-5.032-1.383l-.36-.214-3.732.908.924-3.638-.235-.373A9.79 9.79 0 012.182 12C2.182 6.57 6.57 2.182 12 2.182 17.43 2.182 21.818 6.57 21.818 12c0 5.43-4.388 9.818-9.818 9.818z" />
+        </svg>
+      </a>
     </main>
-  );
+  )
 }
