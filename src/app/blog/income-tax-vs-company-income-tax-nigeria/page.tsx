@@ -1,75 +1,88 @@
-﻿export const metadata = {
+import SiteNav from '@/components/SiteNav'
+import SiteFooter from '@/components/SiteFooter'
+
+export const metadata = {
   title: 'Income Tax vs Company Income Tax in Nigeria: What Every Business Owner Must Know | DigitGlance',
   description: 'Personal income tax and company income tax are two different obligations in Nigeria. Understanding which applies to your business can save you from penalties.',
-}
-
-function Nav() {
-  return (
-    <nav className="sticky top-0 z-50 bg-white border-b border-gray-100 px-6 py-4">
-      <div className="max-w-6xl mx-auto flex items-center justify-between">
-        <a href="/" className="text-xl font-bold text-slate-900">Digit<span className="text-teal-600">Glance</span></a>
-        <div className="hidden md:flex items-center gap-8 text-sm font-medium text-slate-600">
-          <a href="/services" className="hover:text-teal-600">Services</a>
-          <a href="/products" className="hover:text-teal-600">Products</a>
-          <a href="/solutions" className="hover:text-teal-600">Solutions</a>
-          <a href="/ai-tools" className="hover:text-teal-600">AI Tools</a>
-          <a href="/blog" className="text-teal-600">Blog</a>
-          <a href="/app/login" className="hover:text-teal-600">Sign In</a>
-        </div>
-        <a href="/contact" className="bg-teal-600 text-white text-sm font-medium px-5 py-2 rounded-lg hover:bg-teal-700">Book a Consultation</a>
-      </div>
-    </nav>
-  )
-}
-
-function Footer() {
-  return (
-    <footer className="bg-slate-900 text-slate-400 px-6 py-12">
-      <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between gap-8">
-        <div>
-          <p className="text-white font-bold text-lg mb-2">Digit<span className="text-teal-400">Glance</span></p>
-          <p className="text-sm max-w-xs">Accounting intelligence and software solutions for Nigerian businesses and beyond.</p>
-        </div>
-        <div className="flex gap-12 text-sm">
-          <div>
-            <p className="text-white font-medium mb-3">Company</p>
-            <div className="space-y-2">
-              <a href="/about" className="block hover:text-teal-400">About</a>
-              <a href="/blog" className="block hover:text-teal-400">Blog</a>
-              <a href="/contact" className="block hover:text-teal-400">Contact</a>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div className="max-w-6xl mx-auto border-t border-slate-800 mt-8 pt-8 text-xs flex justify-between">
-        <p>© 2026 DigitGlance. A trading name of Digitglance Reliance.</p>
-        <div className="flex gap-4">
-          <a href="/privacy" className="hover:text-teal-400">Privacy Policy</a>
-          <a href="/terms" className="hover:text-teal-400">Terms of Service</a>
-        </div>
-      </div>
-    </footer>
-  )
 }
 
 export default function Article4() {
   return (
     <main className="min-h-screen bg-white">
-      <Nav />
+      <SiteNav />
 
-      <section className="bg-slate-900 text-white px-6 py-16">
-        <div className="max-w-3xl mx-auto">
-          <a href="/blog" className="text-teal-400 text-sm font-medium hover:text-teal-300 mb-4 inline-block">← Back to Blog</a>
-          <span className="text-xs font-medium text-teal-400 bg-teal-400/10 px-3 py-1 rounded-full mb-4 inline-block">Tax Practice</span>
-          <h1 className="text-3xl md:text-4xl font-bold mt-4 mb-4 leading-tight">
-            Income Tax vs Company Income Tax in Nigeria: What Every Business Owner Must Know
-          </h1>
-          <div className="flex items-center gap-4 text-slate-400 text-sm">
-            <span>April 28, 2026</span>
-            <span>•</span>
-            <span>7 min read</span>
-            <span>•</span>
-            <span>DigitGlance Editorial</span>
+      <section className="bg-slate-900 text-white px-6 py-16 overflow-hidden">
+        <div className="max-w-6xl mx-auto">
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            <div>
+              <a href="/blog" className="text-teal-400 text-sm font-medium hover:text-teal-300 mb-4 inline-flex items-center gap-1.5">
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+                Back to Blog
+              </a>
+              <div className="mt-3 mb-4">
+                <span className="text-xs font-medium text-teal-400 bg-teal-400/10 px-3 py-1 rounded-full">Tax Practice</span>
+              </div>
+              <h1 className="text-3xl md:text-4xl font-bold mb-5 leading-tight">
+                Income Tax vs Company Income Tax in Nigeria: What Every Business Owner Must Know
+              </h1>
+              <div className="flex flex-wrap items-center gap-3 text-slate-400 text-sm">
+                <span>April 28, 2026</span>
+                <span className="w-1 h-1 rounded-full bg-slate-600"></span>
+                <span>7 min read</span>
+                <span className="w-1 h-1 rounded-full bg-slate-600"></span>
+                <span>DigitGlance Editorial</span>
+              </div>
+            </div>
+
+            <div className="hidden lg:block">
+              <div className="space-y-3">
+                <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-5">
+                  <p className="text-xs font-bold text-blue-400 uppercase tracking-wider mb-1">Sole Trader / Business Name</p>
+                  <p className="text-white font-semibold mb-3">Personal Income Tax (PITA)</p>
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div className="bg-white/5 rounded-lg px-3 py-2.5">
+                      <p className="text-slate-400 mb-0.5">Tax Rates</p>
+                      <p className="text-white font-bold">7% – 24%</p>
+                    </div>
+                    <div className="bg-white/5 rounded-lg px-3 py-2.5">
+                      <p className="text-slate-400 mb-0.5">Filed with</p>
+                      <p className="text-white font-bold">State Revenue</p>
+                    </div>
+                    <div className="bg-white/5 rounded-lg px-3 py-2.5">
+                      <p className="text-slate-400 mb-0.5">Deadline</p>
+                      <p className="text-white font-bold">March 31</p>
+                    </div>
+                    <div className="bg-white/5 rounded-lg px-3 py-2.5">
+                      <p className="text-slate-400 mb-0.5">Law</p>
+                      <p className="text-white font-bold">PITA</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-teal-500/10 border border-teal-500/30 rounded-xl p-5">
+                  <p className="text-xs font-bold text-teal-400 uppercase tracking-wider mb-1">Limited Liability Company</p>
+                  <p className="text-white font-semibold mb-3">Company Income Tax (CITA)</p>
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div className="bg-white/5 rounded-lg px-3 py-2.5">
+                      <p className="text-slate-400 mb-0.5">Tax Rates</p>
+                      <p className="text-white font-bold">0% / 20% / 30%</p>
+                    </div>
+                    <div className="bg-white/5 rounded-lg px-3 py-2.5">
+                      <p className="text-slate-400 mb-0.5">Filed with</p>
+                      <p className="text-white font-bold">NRS (Federal)</p>
+                    </div>
+                    <div className="bg-white/5 rounded-lg px-3 py-2.5">
+                      <p className="text-slate-400 mb-0.5">Deadline</p>
+                      <p className="text-white font-bold">6 months after YE</p>
+                    </div>
+                    <div className="bg-white/5 rounded-lg px-3 py-2.5">
+                      <p className="text-slate-400 mb-0.5">Law</p>
+                      <p className="text-white font-bold">CITA</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -93,8 +106,8 @@ export default function Article4() {
                   <li>Graduated rates: <span className="font-medium">7% to 24%</span></li>
                 </ul>
               </div>
-              <div className="bg-purple-50 border border-purple-100 rounded-xl p-5">
-                <p className="text-xs font-bold text-purple-600 uppercase tracking-wider mb-2">Limited Liability Company</p>
+              <div className="bg-teal-50 border border-teal-100 rounded-xl p-5">
+                <p className="text-xs font-bold text-teal-700 uppercase tracking-wider mb-2">Limited Liability Company</p>
                 <p className="text-xl font-bold text-slate-900 mb-2">Company Income Tax</p>
                 <ul className="space-y-1.5 text-sm text-slate-600">
                   <li>Governed by <span className="font-medium">CITA</span></li>
@@ -142,7 +155,7 @@ export default function Article4() {
               Company Income Tax, governed by the Companies Income Tax Act (CITA), applies to limited liability companies incorporated under the Companies and Allied Matters Act (CAMA). When you register a limited company at CAC, that company becomes a separate legal entity from you as an individual, and it pays tax on its own profits.
             </p>
             <p className="text-slate-600 leading-relaxed mb-4">
-              Company income tax in Nigeria is administered by the Federal Inland Revenue Service (FIRS), which is now rebranded as NRS. You file an annual CIT return within six months of your company's financial year end.
+              Company income tax in Nigeria is administered by NRS (formerly the Federal Inland Revenue Service). You file an annual CIT return within six months of your company's financial year end.
             </p>
 
             <div className="overflow-x-auto my-8">
@@ -225,7 +238,7 @@ export default function Article4() {
         </div>
       </section>
 
-      <Footer />
+      <SiteFooter />
     </main>
   )
 }

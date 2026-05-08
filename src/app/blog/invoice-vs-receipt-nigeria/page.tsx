@@ -1,75 +1,91 @@
-﻿export const metadata = {
+import SiteNav from '@/components/SiteNav'
+import SiteFooter from '@/components/SiteFooter'
+
+export const metadata = {
   title: 'The Difference Between an Invoice and a Receipt in Nigerian Business | DigitGlance',
   description: 'Many Nigerian business owners use invoices and receipts interchangeably. Here is what each document means and why the difference matters legally and for tax purposes.',
-}
-
-function Nav() {
-  return (
-    <nav className="sticky top-0 z-50 bg-white border-b border-gray-100 px-6 py-4">
-      <div className="max-w-6xl mx-auto flex items-center justify-between">
-        <a href="/" className="text-xl font-bold text-slate-900">Digit<span className="text-teal-600">Glance</span></a>
-        <div className="hidden md:flex items-center gap-8 text-sm font-medium text-slate-600">
-          <a href="/services" className="hover:text-teal-600">Services</a>
-          <a href="/products" className="hover:text-teal-600">Products</a>
-          <a href="/solutions" className="hover:text-teal-600">Solutions</a>
-          <a href="/ai-tools" className="hover:text-teal-600">AI Tools</a>
-          <a href="/blog" className="text-teal-600">Blog</a>
-          <a href="/app/login" className="hover:text-teal-600">Sign In</a>
-        </div>
-        <a href="/contact" className="bg-teal-600 text-white text-sm font-medium px-5 py-2 rounded-lg hover:bg-teal-700">Book a Consultation</a>
-      </div>
-    </nav>
-  )
-}
-
-function Footer() {
-  return (
-    <footer className="bg-slate-900 text-slate-400 px-6 py-12">
-      <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between gap-8">
-        <div>
-          <p className="text-white font-bold text-lg mb-2">Digit<span className="text-teal-400">Glance</span></p>
-          <p className="text-sm max-w-xs">Accounting intelligence and software solutions for Nigerian businesses and beyond.</p>
-        </div>
-        <div className="flex gap-12 text-sm">
-          <div>
-            <p className="text-white font-medium mb-3">Company</p>
-            <div className="space-y-2">
-              <a href="/about" className="block hover:text-teal-400">About</a>
-              <a href="/blog" className="block hover:text-teal-400">Blog</a>
-              <a href="/contact" className="block hover:text-teal-400">Contact</a>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div className="max-w-6xl mx-auto border-t border-slate-800 mt-8 pt-8 text-xs flex justify-between">
-        <p>© 2026 DigitGlance. A trading name of Digitglance Reliance.</p>
-        <div className="flex gap-4">
-          <a href="/privacy" className="hover:text-teal-400">Privacy Policy</a>
-          <a href="/terms" className="hover:text-teal-400">Terms of Service</a>
-        </div>
-      </div>
-    </footer>
-  )
 }
 
 export default function Article2() {
   return (
     <main className="min-h-screen bg-white">
-      <Nav />
+      <SiteNav />
 
-      <section className="bg-slate-900 text-white px-6 py-16">
-        <div className="max-w-3xl mx-auto">
-          <a href="/blog" className="text-teal-400 text-sm font-medium hover:text-teal-300 mb-4 inline-block">← Back to Blog</a>
-          <span className="text-xs font-medium text-teal-400 bg-teal-400/10 px-3 py-1 rounded-full mb-4 inline-block">Accounting for SMEs</span>
-          <h1 className="text-3xl md:text-4xl font-bold mt-4 mb-4 leading-tight">
-            The Difference Between an Invoice and a Receipt in Nigerian Business
-          </h1>
-          <div className="flex items-center gap-4 text-slate-400 text-sm">
-            <span>April 28, 2026</span>
-            <span>•</span>
-            <span>6 min read</span>
-            <span>•</span>
-            <span>DigitGlance Editorial</span>
+      <section className="bg-slate-900 text-white px-6 py-16 overflow-hidden">
+        <div className="max-w-6xl mx-auto">
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            <div>
+              <a href="/blog" className="text-teal-400 text-sm font-medium hover:text-teal-300 mb-4 inline-flex items-center gap-1.5">
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+                Back to Blog
+              </a>
+              <div className="mt-3 mb-4">
+                <span className="text-xs font-medium text-teal-400 bg-teal-400/10 px-3 py-1 rounded-full">Accounting for SMEs</span>
+              </div>
+              <h1 className="text-3xl md:text-4xl font-bold mb-5 leading-tight">
+                The Difference Between an Invoice and a Receipt in Nigerian Business
+              </h1>
+              <div className="flex flex-wrap items-center gap-3 text-slate-400 text-sm">
+                <span>April 28, 2026</span>
+                <span className="w-1 h-1 rounded-full bg-slate-600"></span>
+                <span>6 min read</span>
+                <span className="w-1 h-1 rounded-full bg-slate-600"></span>
+                <span>DigitGlance Editorial</span>
+              </div>
+            </div>
+
+            <div className="hidden lg:block">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-white/5 border border-slate-600 rounded-xl p-5">
+                  <div className="flex items-center justify-between mb-4">
+                    <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Invoice</span>
+                    <span className="text-xs bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded-full font-semibold">Unpaid</span>
+                  </div>
+                  <div className="space-y-2 mb-4">
+                    <div className="flex justify-between text-xs">
+                      <span className="text-slate-400">INV-0047</span>
+                      <span className="text-slate-400">May 1, 2026</span>
+                    </div>
+                    <div className="border-t border-slate-700 pt-3 space-y-2">
+                      <div className="flex justify-between text-xs">
+                        <span className="text-slate-300">Consulting (5 hrs)</span>
+                        <span className="text-slate-300">₦75,000</span>
+                      </div>
+                      <div className="flex justify-between text-xs">
+                        <span className="text-slate-300">VAT 7.5%</span>
+                        <span className="text-slate-300">₦5,625</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="border-t border-slate-700 pt-3 flex justify-between">
+                    <span className="text-xs text-slate-400">Due May 15</span>
+                    <span className="text-white font-bold text-sm">₦80,625</span>
+                  </div>
+                </div>
+
+                <div className="bg-white/5 border border-slate-600 rounded-xl p-5">
+                  <div className="flex items-center justify-between mb-4">
+                    <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Receipt</span>
+                    <span className="text-xs bg-green-500/20 text-green-400 px-2 py-0.5 rounded-full font-semibold">Paid</span>
+                  </div>
+                  <div className="flex items-center justify-center py-3 mb-3">
+                    <div className="w-12 h-12 rounded-full bg-green-500/20 border-2 border-green-500/40 flex items-center justify-center">
+                      <svg className="w-6 h-6 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                    </div>
+                  </div>
+                  <div className="space-y-1.5 text-xs text-center mb-4">
+                    <p className="text-slate-300">Payment received</p>
+                    <p className="text-slate-400">Ref: INV-0047</p>
+                    <p className="text-slate-400">Bank transfer</p>
+                  </div>
+                  <div className="border-t border-slate-700 pt-3 flex justify-between">
+                    <span className="text-xs text-slate-400">May 13, 2026</span>
+                    <span className="text-green-400 font-bold text-sm">₦80,625</span>
+                  </div>
+                </div>
+              </div>
+              <p className="text-center text-xs text-slate-500 mt-3">Invoice comes first — receipt confirms payment</p>
+            </div>
           </div>
         </div>
       </section>
@@ -203,7 +219,7 @@ export default function Article2() {
         </div>
       </section>
 
-      <Footer />
+      <SiteFooter />
     </main>
   )
 }

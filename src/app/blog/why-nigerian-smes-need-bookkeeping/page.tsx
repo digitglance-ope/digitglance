@@ -1,75 +1,87 @@
-﻿export const metadata = {
+import SiteNav from '@/components/SiteNav'
+import SiteFooter from '@/components/SiteFooter'
+
+export const metadata = {
   title: 'Why Nigerian SMEs Need Proper Bookkeeping and How to Start Today | DigitGlance',
   description: 'Most small businesses in Nigeria do not keep proper financial records until something goes wrong. Here is why bookkeeping matters and how to start without an accountant.',
-}
-
-function Nav() {
-  return (
-    <nav className="sticky top-0 z-50 bg-white border-b border-gray-100 px-6 py-4">
-      <div className="max-w-6xl mx-auto flex items-center justify-between">
-        <a href="/" className="text-xl font-bold text-slate-900">Digit<span className="text-teal-600">Glance</span></a>
-        <div className="hidden md:flex items-center gap-8 text-sm font-medium text-slate-600">
-          <a href="/services" className="hover:text-teal-600">Services</a>
-          <a href="/products" className="hover:text-teal-600">Products</a>
-          <a href="/solutions" className="hover:text-teal-600">Solutions</a>
-          <a href="/ai-tools" className="hover:text-teal-600">AI Tools</a>
-          <a href="/blog" className="text-teal-600">Blog</a>
-          <a href="/app/login" className="hover:text-teal-600">Sign In</a>
-        </div>
-        <a href="/contact" className="bg-teal-600 text-white text-sm font-medium px-5 py-2 rounded-lg hover:bg-teal-700">Book a Consultation</a>
-      </div>
-    </nav>
-  )
-}
-
-function Footer() {
-  return (
-    <footer className="bg-slate-900 text-slate-400 px-6 py-12">
-      <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between gap-8">
-        <div>
-          <p className="text-white font-bold text-lg mb-2">Digit<span className="text-teal-400">Glance</span></p>
-          <p className="text-sm max-w-xs">Accounting intelligence and software solutions for Nigerian businesses and beyond.</p>
-        </div>
-        <div className="flex gap-12 text-sm">
-          <div>
-            <p className="text-white font-medium mb-3">Company</p>
-            <div className="space-y-2">
-              <a href="/about" className="block hover:text-teal-400">About</a>
-              <a href="/blog" className="block hover:text-teal-400">Blog</a>
-              <a href="/contact" className="block hover:text-teal-400">Contact</a>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div className="max-w-6xl mx-auto border-t border-slate-800 mt-8 pt-8 text-xs flex justify-between">
-        <p>© 2026 DigitGlance. A trading name of Digitglance Reliance.</p>
-        <div className="flex gap-4">
-          <a href="/privacy" className="hover:text-teal-400">Privacy Policy</a>
-          <a href="/terms" className="hover:text-teal-400">Terms of Service</a>
-        </div>
-      </div>
-    </footer>
-  )
 }
 
 export default function Article5() {
   return (
     <main className="min-h-screen bg-white">
-      <Nav />
+      <SiteNav />
 
-      <section className="bg-slate-900 text-white px-6 py-16">
-        <div className="max-w-3xl mx-auto">
-          <a href="/blog" className="text-teal-400 text-sm font-medium hover:text-teal-300 mb-4 inline-block">← Back to Blog</a>
-          <span className="text-xs font-medium text-teal-400 bg-teal-400/10 px-3 py-1 rounded-full mb-4 inline-block">Accounting for SMEs</span>
-          <h1 className="text-3xl md:text-4xl font-bold mt-4 mb-4 leading-tight">
-            Why Nigerian SMEs Need Proper Bookkeeping and How to Start Today
-          </h1>
-          <div className="flex items-center gap-4 text-slate-400 text-sm">
-            <span>April 28, 2026</span>
-            <span>•</span>
-            <span>6 min read</span>
-            <span>•</span>
-            <span>DigitGlance Editorial</span>
+      <section className="bg-slate-900 text-white px-6 py-16 overflow-hidden">
+        <div className="max-w-6xl mx-auto">
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            <div>
+              <a href="/blog" className="text-teal-400 text-sm font-medium hover:text-teal-300 mb-4 inline-flex items-center gap-1.5">
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+                Back to Blog
+              </a>
+              <div className="mt-3 mb-4">
+                <span className="text-xs font-medium text-teal-400 bg-teal-400/10 px-3 py-1 rounded-full">Accounting for SMEs</span>
+              </div>
+              <h1 className="text-3xl md:text-4xl font-bold mb-5 leading-tight">
+                Why Nigerian SMEs Need Proper Bookkeeping and How to Start Today
+              </h1>
+              <div className="flex flex-wrap items-center gap-3 text-slate-400 text-sm">
+                <span>April 28, 2026</span>
+                <span className="w-1 h-1 rounded-full bg-slate-600"></span>
+                <span>6 min read</span>
+                <span className="w-1 h-1 rounded-full bg-slate-600"></span>
+                <span>DigitGlance Editorial</span>
+              </div>
+            </div>
+
+            <div className="hidden lg:block">
+              <div className="bg-slate-800/60 rounded-2xl border border-slate-700 overflow-hidden">
+                <div className="px-4 py-3 border-b border-slate-700 flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full bg-red-500/60"></div>
+                  <div className="w-3 h-3 rounded-full bg-amber-500/60"></div>
+                  <div className="w-3 h-3 rounded-full bg-green-500/60"></div>
+                  <span className="text-slate-400 text-xs ml-2">Business Records — May 2026</span>
+                </div>
+                <div className="p-4">
+                  <div className="grid grid-cols-4 gap-2 text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2 px-2">
+                    <span>Date</span>
+                    <span className="col-span-2">Description</span>
+                    <span className="text-right">Amount</span>
+                  </div>
+                  {[
+                    { date: 'May 1', desc: 'Invoice #INV-041', type: 'sale', amount: '+₦85,000' },
+                    { date: 'May 2', desc: 'Supplier purchase', type: 'cost', amount: '−₦32,000' },
+                    { date: 'May 3', desc: 'Invoice #INV-042', type: 'sale', amount: '+₦124,000' },
+                    { date: 'May 5', desc: 'Office expense', type: 'cost', amount: '−₦8,500' },
+                    { date: 'May 6', desc: 'Invoice #INV-043', type: 'sale', amount: '+₦67,500' },
+                  ].map((row, i) => (
+                    <div key={i} className={`grid grid-cols-4 gap-2 text-xs px-2 py-2 rounded ${i % 2 === 0 ? 'bg-white/5' : ''}`}>
+                      <span className="text-slate-400">{row.date}</span>
+                      <span className="col-span-2 text-slate-300">{row.desc}</span>
+                      <span className={`text-right font-medium ${row.type === 'sale' ? 'text-teal-400' : 'text-red-400'}`}>{row.amount}</span>
+                    </div>
+                  ))}
+                  <div className="border-t border-slate-600 mt-3 pt-3 px-2 flex justify-between items-center">
+                    <span className="text-xs text-slate-400">Net this week</span>
+                    <span className="text-teal-400 font-bold">+₦236,000</span>
+                  </div>
+                </div>
+                <div className="px-4 py-3 border-t border-slate-700 grid grid-cols-3 gap-2 text-center">
+                  <div>
+                    <p className="text-teal-400 font-bold text-sm">₦276,500</p>
+                    <p className="text-xs text-slate-500">Sales</p>
+                  </div>
+                  <div>
+                    <p className="text-red-400 font-bold text-sm">₦40,500</p>
+                    <p className="text-xs text-slate-500">Costs</p>
+                  </div>
+                  <div>
+                    <p className="text-white font-bold text-sm">₦236,000</p>
+                    <p className="text-xs text-slate-500">Net</p>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -197,7 +209,7 @@ export default function Article5() {
         </div>
       </section>
 
-      <Footer />
+      <SiteFooter />
     </main>
   )
 }

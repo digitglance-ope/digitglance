@@ -1,75 +1,75 @@
-﻿export const metadata = {
+import SiteNav from '@/components/SiteNav'
+import SiteFooter from '@/components/SiteFooter'
+
+export const metadata = {
   title: 'How to Manage Accounts Receivable and Reduce Late Payments in Nigeria | DigitGlance',
   description: 'Late payments are one of the biggest cash flow problems for Nigerian SMEs. This guide shows you how to track what customers owe and collect it faster.',
-}
-
-function Nav() {
-  return (
-    <nav className="sticky top-0 z-50 bg-white border-b border-gray-100 px-6 py-4">
-      <div className="max-w-6xl mx-auto flex items-center justify-between">
-        <a href="/" className="text-xl font-bold text-slate-900">Digit<span className="text-teal-600">Glance</span></a>
-        <div className="hidden md:flex items-center gap-8 text-sm font-medium text-slate-600">
-          <a href="/services" className="hover:text-teal-600">Services</a>
-          <a href="/products" className="hover:text-teal-600">Products</a>
-          <a href="/solutions" className="hover:text-teal-600">Solutions</a>
-          <a href="/ai-tools" className="hover:text-teal-600">AI Tools</a>
-          <a href="/blog" className="text-teal-600">Blog</a>
-          <a href="/app/login" className="hover:text-teal-600">Sign In</a>
-        </div>
-        <a href="/contact" className="bg-teal-600 text-white text-sm font-medium px-5 py-2 rounded-lg hover:bg-teal-700">Book a Consultation</a>
-      </div>
-    </nav>
-  )
-}
-
-function Footer() {
-  return (
-    <footer className="bg-slate-900 text-slate-400 px-6 py-12">
-      <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between gap-8">
-        <div>
-          <p className="text-white font-bold text-lg mb-2">Digit<span className="text-teal-400">Glance</span></p>
-          <p className="text-sm max-w-xs">Accounting intelligence and software solutions for Nigerian businesses and beyond.</p>
-        </div>
-        <div className="flex gap-12 text-sm">
-          <div>
-            <p className="text-white font-medium mb-3">Company</p>
-            <div className="space-y-2">
-              <a href="/about" className="block hover:text-teal-400">About</a>
-              <a href="/blog" className="block hover:text-teal-400">Blog</a>
-              <a href="/contact" className="block hover:text-teal-400">Contact</a>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div className="max-w-6xl mx-auto border-t border-slate-800 mt-8 pt-8 text-xs flex justify-between">
-        <p>© 2026 DigitGlance. A trading name of Digitglance Reliance.</p>
-        <div className="flex gap-4">
-          <a href="/privacy" className="hover:text-teal-400">Privacy Policy</a>
-          <a href="/terms" className="hover:text-teal-400">Terms of Service</a>
-        </div>
-      </div>
-    </footer>
-  )
 }
 
 export default function Article3() {
   return (
     <main className="min-h-screen bg-white">
-      <Nav />
+      <SiteNav />
 
-      <section className="bg-slate-900 text-white px-6 py-16">
-        <div className="max-w-3xl mx-auto">
-          <a href="/blog" className="text-teal-400 text-sm font-medium hover:text-teal-300 mb-4 inline-block">← Back to Blog</a>
-          <span className="text-xs font-medium text-teal-400 bg-teal-400/10 px-3 py-1 rounded-full mb-4 inline-block">Accounting for SMEs</span>
-          <h1 className="text-3xl md:text-4xl font-bold mt-4 mb-4 leading-tight">
-            How to Manage Accounts Receivable and Reduce Late Payments in Nigeria
-          </h1>
-          <div className="flex items-center gap-4 text-slate-400 text-sm">
-            <span>April 28, 2026</span>
-            <span>•</span>
-            <span>7 min read</span>
-            <span>•</span>
-            <span>DigitGlance Editorial</span>
+      <section className="bg-slate-900 text-white px-6 py-16 overflow-hidden">
+        <div className="max-w-6xl mx-auto">
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            <div>
+              <a href="/blog" className="text-teal-400 text-sm font-medium hover:text-teal-300 mb-4 inline-flex items-center gap-1.5">
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+                Back to Blog
+              </a>
+              <div className="mt-3 mb-4">
+                <span className="text-xs font-medium text-teal-400 bg-teal-400/10 px-3 py-1 rounded-full">Accounting for SMEs</span>
+              </div>
+              <h1 className="text-3xl md:text-4xl font-bold mb-5 leading-tight">
+                How to Manage Accounts Receivable and Reduce Late Payments in Nigeria
+              </h1>
+              <div className="flex flex-wrap items-center gap-3 text-slate-400 text-sm">
+                <span>April 28, 2026</span>
+                <span className="w-1 h-1 rounded-full bg-slate-600"></span>
+                <span>7 min read</span>
+                <span className="w-1 h-1 rounded-full bg-slate-600"></span>
+                <span>DigitGlance Editorial</span>
+              </div>
+            </div>
+
+            <div className="hidden lg:block">
+              <div className="bg-slate-800/60 rounded-2xl p-6 border border-slate-700">
+                <div className="flex items-center justify-between mb-4">
+                  <p className="text-teal-400 text-xs font-semibold uppercase tracking-wider">Receivables Aging</p>
+                  <span className="text-xs text-slate-400">Total: ₦2,100,000</span>
+                </div>
+                <div className="space-y-4">
+                  {[
+                    { label: 'Current (0–30 days)', amount: '₦1,200,000', pct: 57, color: 'bg-teal-500' },
+                    { label: '31–60 days overdue', amount: '₦580,000', pct: 28, color: 'bg-amber-500' },
+                    { label: '61–90 days overdue', amount: '₦240,000', pct: 11, color: 'bg-orange-500' },
+                    { label: '90+ days overdue', amount: '₦80,000', pct: 4, color: 'bg-red-500' },
+                  ].map(row => (
+                    <div key={row.label}>
+                      <div className="flex justify-between text-xs mb-1.5">
+                        <span className="text-slate-400">{row.label}</span>
+                        <span className="text-white font-medium">{row.amount}</span>
+                      </div>
+                      <div className="h-2 bg-slate-700 rounded-full overflow-hidden">
+                        <div className={`h-2 rounded-full ${row.color}`} style={{ width: `${row.pct}%` }}></div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-4 pt-4 border-t border-slate-700 grid grid-cols-2 gap-3">
+                  <div className="bg-teal-500/10 border border-teal-500/20 rounded-lg px-3 py-2 text-center">
+                    <p className="text-teal-400 font-bold">60 days</p>
+                    <p className="text-xs text-slate-400 mt-0.5">Avg collection lag</p>
+                  </div>
+                  <div className="bg-orange-500/10 border border-orange-500/20 rounded-lg px-3 py-2 text-center">
+                    <p className="text-orange-400 font-bold">₦320,000</p>
+                    <p className="text-xs text-slate-400 mt-0.5">Overdue 30+ days</p>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -201,7 +201,7 @@ export default function Article3() {
         </div>
       </section>
 
-      <Footer />
+      <SiteFooter />
     </main>
   )
 }
