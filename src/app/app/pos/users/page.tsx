@@ -18,26 +18,26 @@ type OwnerProfile = {
 }
 
 const ROLES = [
-  { value: 'admin', label: 'Admin', desc: 'Full access except billing' },
-  { value: 'manager', label: 'Manager', desc: 'Create and manage invoices and customers' },
-  { value: 'staff', label: 'Staff', desc: 'Create invoices only' },
-  { value: 'viewer', label: 'Viewer', desc: 'View only, no edits' },
+  { value: 'admin',   label: 'Admin',   desc: 'Full access except billing' },
+  { value: 'manager', label: 'Manager', desc: 'Manage sales, inventory, and customers' },
+  { value: 'staff',   label: 'Staff',   desc: 'Process sales only' },
+  { value: 'viewer',  label: 'Viewer',  desc: 'View only, no edits' },
 ]
 
 const ROLE_COLORS: Record<string, string> = {
-  admin: 'bg-teal-100 text-teal-700',
+  admin:   'bg-teal-100 text-teal-700',
   manager: 'bg-blue-100 text-blue-700',
-  staff: 'bg-teal-100 text-teal-700',
-  viewer: 'bg-slate-100 text-slate-600',
+  staff:   'bg-slate-100 text-slate-700',
+  viewer:  'bg-slate-100 text-slate-500',
 }
 
 const STATUS_COLORS: Record<string, string> = {
-  active: 'bg-green-100 text-green-700',
-  pending: 'bg-yellow-100 text-yellow-700',
+  active:    'bg-green-100 text-green-700',
+  pending:   'bg-yellow-100 text-yellow-700',
   suspended: 'bg-red-100 text-red-700',
 }
 
-export default function UsersPage() {
+export default function PosUsersPage() {
   const supabase = createClient()
   const [users, setUsers] = useState<AccountUser[]>([])
   const [ownerProfile, setOwnerProfile] = useState<OwnerProfile | null>(null)
@@ -53,24 +53,12 @@ export default function UsersPage() {
   async function load() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
-
     setCurrentUserId(user.id)
     setCurrentUserEmail(user.email || '')
-
-    const { data: profileData } = await supabase
-      .from('profiles')
-      .select('business_name')
-      .eq('id', user.id)
-      .single()
+    const { data: profileData } = await supabase.from('profiles').select('business_name').eq('id', user.id).single()
     setOwnerProfile(profileData)
-
-    const { data } = await supabase
-      .from('account_users')
-      .select('*')
-      .eq('account_owner_id', user.id)
-      .order('created_at', { ascending: false })
+    const { data } = await supabase.from('account_users').select('*').eq('account_owner_id', user.id).order('created_at', { ascending: false })
     setUsers(data || [])
-
     setLoading(false)
   }
 
@@ -80,7 +68,6 @@ export default function UsersPage() {
     if (!inviteForm.email.trim()) { setError('Email is required.'); return }
     setSaving(true)
     setError('')
-
     const res = await fetch('/api/invite-user', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -93,87 +80,40 @@ export default function UsersPage() {
         businessName: ownerProfile?.business_name || 'DigitGlance',
       }),
     })
-
     const result = await res.json()
-
-    if (!res.ok || result.error) {
-      setError(result.error || 'Failed to send invitation. Please try again.')
-      setSaving(false)
-      return
-    }
-
-    const { error: insertError } = await supabase.from('account_users').insert({
-      account_owner_id: currentUserId,
-      email: inviteForm.email,
-      full_name: inviteForm.full_name,
-      role: inviteForm.role,
-      status: 'pending',
-    })
-
-    if (insertError && insertError.code !== '23505') {
-      console.error('account_users insert error:', insertError)
-    }
-
-    await supabase.from('audit_logs').insert({
-      account_owner_id: currentUserId,
-      user_id: currentUserId,
-      user_email: currentUserEmail,
-      action: 'User Invited',
-      resource: 'Users',
-      details: `Invited ${inviteForm.email} as ${inviteForm.role} to ${ownerProfile?.business_name || 'account'}`,
-    })
-
+    if (!res.ok || result.error) { setError(result.error || 'Failed to send invitation.'); setSaving(false); return }
+    await supabase.from('account_users').insert({ account_owner_id: currentUserId, email: inviteForm.email, full_name: inviteForm.full_name, role: inviteForm.role, status: 'pending' })
+    await supabase.from('audit_logs').insert({ account_owner_id: currentUserId, user_id: currentUserId, user_email: currentUserEmail, action: 'User Invited', resource: 'Users', details: `Invited ${inviteForm.email} as ${inviteForm.role}` })
     setSaving(false)
     setShowInviteForm(false)
     setInviteForm({ email: '', full_name: '', role: 'staff' })
-    setSuccess(`Invitation sent to ${inviteForm.email}. They will receive an email to set up their account.`)
+    setSuccess(`Invitation sent to ${inviteForm.email}.`)
     setTimeout(() => setSuccess(''), 6000)
     load()
   }
 
   async function handleRoleChange(userId: string, newRole: string) {
     await supabase.from('account_users').update({ role: newRole }).eq('id', userId)
-    await supabase.from('audit_logs').insert({
-      account_owner_id: currentUserId,
-      user_id: currentUserId,
-      user_email: currentUserEmail,
-      action: 'Role Changed',
-      resource: 'Users',
-      details: `Changed role to ${newRole} for user ${userId}`,
-    })
+    await supabase.from('audit_logs').insert({ account_owner_id: currentUserId, user_id: currentUserId, user_email: currentUserEmail, action: 'Role Changed', resource: 'Users', details: `Changed role to ${newRole} for user ${userId}` })
     load()
   }
 
   async function handleStatusChange(userId: string, newStatus: string) {
     await supabase.from('account_users').update({ status: newStatus }).eq('id', userId)
-    await supabase.from('audit_logs').insert({
-      account_owner_id: currentUserId,
-      user_id: currentUserId,
-      user_email: currentUserEmail,
-      action: newStatus === 'suspended' ? 'User Suspended' : 'User Activated',
-      resource: 'Users',
-      details: `User ${userId} status changed to ${newStatus}`,
-    })
+    await supabase.from('audit_logs').insert({ account_owner_id: currentUserId, user_id: currentUserId, user_email: currentUserEmail, action: newStatus === 'suspended' ? 'User Suspended' : 'User Activated', resource: 'Users', details: `User ${userId} status changed to ${newStatus}` })
     load()
   }
 
   async function handleRemove(userId: string, email: string) {
     if (!confirm(`Remove ${email} from your account?`)) return
     await supabase.from('account_users').delete().eq('id', userId)
-    await supabase.from('audit_logs').insert({
-      account_owner_id: currentUserId,
-      user_id: currentUserId,
-      user_email: currentUserEmail,
-      action: 'User Removed',
-      resource: 'Users',
-      details: `Removed ${email} from account`,
-    })
+    await supabase.from('audit_logs').insert({ account_owner_id: currentUserId, user_id: currentUserId, user_email: currentUserEmail, action: 'User Removed', resource: 'Users', details: `Removed ${email} from account` })
     load()
   }
 
   return (
     <div className="min-h-screen bg-slate-50 flex">
-      <AppSidebar product="invoice" />
+      <AppSidebar product="pos" />
 
       <main className="md:ml-64 flex-1 p-8">
         <div className="flex items-center justify-between mb-8">
@@ -184,7 +124,10 @@ export default function UsersPage() {
               <span className="font-semibold text-teal-600">{ownerProfile?.business_name || 'your account'}</span>
             </p>
           </div>
-          <button onClick={() => { setShowInviteForm(true); setError('') }} className="flex items-center gap-2 bg-teal-600 hover:bg-teal-700 text-white font-semibold px-5 py-2.5 rounded-lg text-sm transition-colors">
+          <button
+            onClick={() => { setShowInviteForm(true); setError('') }}
+            className="flex items-center gap-2 bg-teal-600 hover:bg-teal-700 text-white font-semibold px-5 py-2.5 rounded-lg text-sm transition-colors"
+          >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
             Invite User
           </button>
@@ -278,9 +221,7 @@ export default function UsersPage() {
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
             </div>
-
             {error && <div className="bg-red-50 border border-red-200 text-red-600 text-sm px-4 py-3 rounded-lg mb-4">{error}</div>}
-
             <div className="space-y-4">
               <div>
                 <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Email Address *</label>
@@ -293,17 +234,15 @@ export default function UsersPage() {
               <div>
                 <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Role</label>
                 <select value={inviteForm.role} onChange={e => setInviteForm(p => ({ ...p, role: e.target.value }))} className="w-full border border-slate-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-teal-500">
-                  {ROLES.map(r => <option key={r.value} value={r.value}>{r.label} - {r.desc}</option>)}
+                  {ROLES.map(r => <option key={r.value} value={r.value}>{r.label} — {r.desc}</option>)}
                 </select>
               </div>
             </div>
-
             <div className="bg-blue-50 border border-blue-100 rounded-lg px-4 py-3 mt-4">
               <p className="text-xs text-blue-700">
-                The invited person will receive an email from <strong>hello@digitglance.com</strong> with a link to set their password and access <strong>{ownerProfile?.business_name || 'your account'}</strong> directly. They will not go through business setup.
+                The invited person will receive an email from <strong>hello@digitglance.com</strong> with a link to set their password and access <strong>{ownerProfile?.business_name || 'your account'}</strong> directly.
               </p>
             </div>
-
             <div className="flex gap-3 mt-4">
               <button onClick={() => setShowInviteForm(false)} className="flex-1 border border-slate-200 text-slate-600 font-semibold py-2.5 rounded-lg text-sm hover:bg-slate-50">Cancel</button>
               <button onClick={handleInvite} disabled={saving} className="flex-1 bg-teal-600 hover:bg-teal-700 disabled:opacity-50 text-white font-semibold py-2.5 rounded-lg text-sm">

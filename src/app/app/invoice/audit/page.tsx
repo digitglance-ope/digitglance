@@ -18,7 +18,7 @@ const ACTION_COLORS: Record<string, string> = {
   'User Removed': 'bg-red-100 text-red-700',
   'User Suspended': 'bg-orange-100 text-orange-700',
   'User Activated': 'bg-green-100 text-green-700',
-  'Role Changed': 'bg-purple-100 text-purple-700',
+  'Role Changed': 'bg-blue-100 text-blue-700',
   'Invoice Created': 'bg-teal-100 text-teal-700',
   'Payment Recorded': 'bg-green-100 text-green-700',
 }

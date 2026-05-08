@@ -87,7 +87,7 @@ const CATEGORY_COLORS: Record<string, string> = {
   'Tax Practice':         'bg-teal-100 text-teal-700',
   'Accounting for SMEs':  'bg-blue-100 text-blue-700',
   'Excel and Automation': 'bg-amber-100 text-amber-700',
-  'Student Resources':    'bg-purple-100 text-purple-700',
+  'Student Resources':    'bg-slate-100 text-slate-700',
 }
 
 export default function BlogPage() {
@@ -287,39 +287,56 @@ export default function BlogPage() {
 
         {/* ─── FREE TEMPLATES ─── */}
         <div id="templates" className="border-t border-slate-100 pt-14">
-          <div className="text-center mb-10">
-            <p className="text-teal-600 text-sm font-semibold uppercase tracking-wider mb-3">Free Resources</p>
-            <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-3">Free Excel templates for Nigerian businesses</h2>
-            <p className="text-slate-500 max-w-xl mx-auto">
-              Professional spreadsheet templates designed for Nigerian business needs. Download free, use immediately.
-            </p>
+          <div className="flex items-start justify-between mb-8 flex-wrap gap-4">
+            <div>
+              <p className="text-teal-600 text-sm font-semibold uppercase tracking-wider mb-2">Free Resources</p>
+              <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-2">Free Excel templates for Nigerian businesses</h2>
+              <p className="text-slate-500 max-w-xl">Professional spreadsheet templates for 11 industries. Download free, use immediately.</p>
+            </div>
+            <div className="flex items-center gap-3 text-sm">
+              <span className="flex items-center gap-1.5 text-slate-500">
+                <span className="w-2.5 h-2.5 rounded-full bg-teal-500" />
+                {availableTemplates.length} available now
+              </span>
+              <span className="flex items-center gap-1.5 text-slate-400">
+                <span className="w-2.5 h-2.5 rounded-full bg-slate-300" />
+                {allTemplates.length - availableTemplates.length} coming soon
+              </span>
+            </div>
           </div>
 
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {allTemplates.map(pack => (
-              <div key={pack.slug} className={`bg-white border-2 rounded-2xl p-6 transition-all ${pack.available ? 'border-slate-200 hover:border-teal-300 hover:shadow-md' : 'border-slate-100 opacity-60'}`}>
-                <div className="flex items-center justify-between mb-4">
-                  <div className="w-10 h-10 bg-teal-50 rounded-xl flex items-center justify-center">
-                    <svg className="w-5 h-5 text-teal-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              <Link
+                key={pack.slug}
+                href={`/blog/templates/${pack.slug}`}
+                className={`group bg-white border rounded-2xl p-5 transition-all flex flex-col ${
+                  pack.available
+                    ? 'border-slate-200 hover:border-teal-300 hover:shadow-md cursor-pointer'
+                    : 'border-slate-100 opacity-70 cursor-default pointer-events-none'
+                }`}
+              >
+                <div className="flex items-start justify-between mb-3">
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${pack.accentIcon}`}>
+                    <svg className="w-5 h-5 text-slate-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d={pack.iconPath} />
                     </svg>
                   </div>
-                  <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${pack.available ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-400'}`}>
-                    {pack.available ? 'Free Download' : 'Coming Soon'}
+                  <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${pack.available ? 'bg-teal-100 text-teal-700' : 'bg-slate-100 text-slate-400'}`}>
+                    {pack.available ? 'Free' : 'Soon'}
                   </span>
                 </div>
-                <h3 className="font-bold text-slate-900 mb-2">{pack.industry} Template Pack</h3>
-                <p className="text-sm text-slate-500 leading-relaxed mb-4">{pack.tagline}</p>
-                {pack.available ? (
-                  <Link href={`/blog/templates/${pack.slug}`} className="w-full block text-center text-sm font-semibold bg-teal-600 text-white py-2.5 rounded-xl hover:bg-teal-700 transition-colors">
-                    Download Free
-                  </Link>
-                ) : (
-                  <button disabled className="w-full text-sm font-semibold bg-slate-100 text-slate-400 py-2.5 rounded-xl cursor-not-allowed">
-                    Coming Soon
-                  </button>
+                <h3 className="font-bold text-slate-900 text-sm mb-1 group-hover:text-teal-600 transition-colors">{pack.industry}</h3>
+                <p className="text-xs text-slate-500 leading-relaxed flex-1">{pack.tagline}</p>
+                {pack.available && (
+                  <div className="mt-3 flex items-center gap-1 text-xs font-semibold text-teal-600">
+                    <span>View templates</span>
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                    </svg>
+                  </div>
                 )}
-              </div>
+              </Link>
             ))}
           </div>
         </div>

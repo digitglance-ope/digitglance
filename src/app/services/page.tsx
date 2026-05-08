@@ -170,14 +170,14 @@ export default function ServicesPage() {
           <div className="max-w-7xl mx-auto">
             <div className="grid lg:grid-cols-[280px_1fr] gap-12 items-start">
               <div className="lg:sticky lg:top-24">
-                <div className="w-14 h-14 bg-purple-600 rounded-2xl flex items-center justify-center mb-5">
+                <div className="w-14 h-14 bg-teal-700 rounded-2xl flex items-center justify-center mb-5">
                   <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                   </svg>
                 </div>
                 <h2 className="text-2xl font-bold text-slate-900 mb-3">Training and Implementation</h2>
                 <p className="text-slate-500 text-sm leading-relaxed mb-4">Hands-on support to get your team using new tools effectively from day one.</p>
-                <Link href="/contact" className="inline-block text-purple-600 text-sm font-semibold hover:text-purple-700 transition-colors">
+                <Link href="/contact" className="inline-block text-teal-600 text-sm font-semibold hover:text-teal-700 transition-colors">
                   Book onboarding session →
                 </Link>
               </div>
@@ -194,9 +194,9 @@ export default function ServicesPage() {
                     desc: 'Chart of accounts design, opening balances, and system configuration tailored to your business structure and reporting needs.',
                   },
                 ].map(s => (
-                  <div key={s.title} className="bg-white border border-slate-200 rounded-2xl p-6 hover:border-purple-200 hover:shadow-sm transition-all">
-                    <div className="w-10 h-10 bg-purple-50 rounded-xl flex items-center justify-center mb-4">
-                      <svg className="w-5 h-5 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <div key={s.title} className="bg-white border border-slate-200 rounded-2xl p-6 hover:border-teal-200 hover:shadow-sm transition-all">
+                    <div className="w-10 h-10 bg-teal-50 rounded-xl flex items-center justify-center mb-4">
+                      <svg className="w-5 h-5 text-teal-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                         <path strokeLinecap="round" strokeLinejoin="round" d={s.icon} />
                       </svg>
                     </div>

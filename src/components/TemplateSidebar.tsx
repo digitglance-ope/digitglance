@@ -23,7 +23,7 @@ export default function TemplateSidebar() {
               return (
                 <Link
                   key={t.slug}
-                  href={`/resources/templates/${t.slug}`}
+                  href={`/blog/templates/${t.slug}`}
                   className={`flex items-center gap-2.5 px-2.5 py-2.5 rounded-lg transition-all ${
                     isActive
                       ? 'bg-slate-900 text-white'
@@ -73,7 +73,7 @@ export default function TemplateSidebar() {
           {templates.map(t => (
             <Link
               key={t.slug}
-              href={`/resources/templates/${t.slug}`}
+              href={`/blog/templates/${t.slug}`}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors ${
                 activeSlug === t.slug
                   ? 'bg-slate-900 text-white'
